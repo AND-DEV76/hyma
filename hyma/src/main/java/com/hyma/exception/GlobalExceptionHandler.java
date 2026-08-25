@@ -195,4 +195,18 @@ public class GlobalExceptionHandler {
                 status
         );
     }
+
+//   ==========================================================
+//   EXCEPCIONES para Doctor
+
+@ExceptionHandler(MedicoNotFoundException.class)
+public ResponseEntity<Map<String, Object>> handleMedicoNotFound(MedicoNotFoundException ex) {
+    return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+}
+
+@ExceptionHandler(UsuarioRolInvalidoException.class)
+public ResponseEntity<Map<String, Object>> handleUsuarioRolInvalido(UsuarioRolInvalidoException ex) {
+    return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+}
+
 }

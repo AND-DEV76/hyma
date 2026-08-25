@@ -5,8 +5,8 @@ import LoginPage from './features/auth/pages/LoginPage';
 import InicioPage from './features/inicio/pages/InicioPage';
 import UsuariosPage from './features/usuario/pages/UsuariosPage';
 import { AlergiaPage } from './features/alergia/pages/AlergiaPage';
-
 import RecepcionPage from './features/recepcion/pages/RecepcionPage';
+import MedicosPage from './features/doctor/pages/MedicosPage';
 
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = !!localStorage.getItem('user');
@@ -24,6 +24,15 @@ function App() {
         element={
           <PrivateRoute>
             <InicioPage />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/medicos"
+        element={
+          <PrivateRoute>
+            <MedicosPage />
           </PrivateRoute>
         }
       />
@@ -54,11 +63,7 @@ function App() {
           </PrivateRoute>
         }
       />
-
-      
     </Routes>
-
-    
   );
 }
 

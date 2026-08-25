@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 function InicioPage() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user')) || { username: 'Usuario' };
+  
+  // Condición de visibilidad para ADMIN y FARMACIA
+  const canAccessMedicos = user.nombreRol === 'ADMIN' || user.nombreRol === 'FARMACIA';
   const isAdmin = user.nombreRol === 'ADMIN';
 
   const handleLogout = () => {
@@ -27,35 +30,47 @@ function InicioPage() {
             Rol asignado: <strong>{user.nombreRol}</strong>
           </p>
 
-{isAdmin && (
-  <div style={styles.menuGrid}>
+          <div style={styles.menuGrid}>
+            {/* Opción Médicos (ADMIN o FARMACIA) */}
+            {canAccessMedicos && (
+              <button
+                onClick={() => navigate('/medicos')}
+                style={styles.menuCard}
+              >
+                <h3>👨‍⚕️ Médicos</h3>
+                <p>Gestión del cuerpo médico</p>
+              </button>
+            )}
 
-    <button
-      onClick={() => navigate('/usuarios')}
-      style={styles.menuCard}
-    >
-      <h3>👥 Usuarios</h3>
-      <p>Administración y permisos</p>
-    </button>
+            {/* Opciones exclusivas de ADMIN */}
+            {isAdmin && (
+              <>
+                <button
+                  onClick={() => navigate('/usuarios')}
+                  style={styles.menuCard}
+                >
+                  <h3>👥 Usuarios</h3>
+                  <p>Administración y permisos</p>
+                </button>
 
-    <button
-      onClick={() => navigate('/alergias')}
-      style={styles.menuCard}
-    >
-      <h3>🧪 Alergias</h3>
-      <p>Catálogo y gestión de alergias</p>
-    </button>
+                <button
+                  onClick={() => navigate('/alergias')}
+                  style={styles.menuCard}
+                >
+                  <h3>🧪 Alergias</h3>
+                  <p>Catálogo y gestión de alergias</p>
+                </button>
 
-    <button
-      onClick={() => navigate('/recepcion')}
-      style={styles.menuCard}
-    >
-      <h3>🏥 Recepción</h3>
-      <p>Admisión de pacientes y cola de atención</p>
-    </button>
-
-  </div>
-)}
+                <button
+                  onClick={() => navigate('/recepcion')}
+                  style={styles.menuCard}
+                >
+                  <h3>🏥 Recepción</h3>
+                  <p>Admisión de pacientes y cola de atención</p>
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </main>
     </div>

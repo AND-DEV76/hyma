@@ -15,21 +15,22 @@ import org.springframework.web.cors.CorsConfiguration;
 
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 import java.util.List;
 import org.springframework.security.config.Customizer;
+import org.springframework.beans.factory.annotation.Value;
+
 
 @Configuration
 public class SecurityConfig {
 
+    // Lee la variable definida en application.properties
+    @Value("${app.cors.allowed-origins}")
+    private String allowedOrigins;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
-
-        // Parámetros de Argon2id:
-        // saltLength = 16
-        // hashLength = 32
-        // parallelism = 1
-        // memory = 65536 KB
-        // iterations = 3
         return new Argon2PasswordEncoder(
                 16,
                 32,
@@ -40,23 +41,12 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http
-    ) throws Exception {
-
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Habilita CORS usando corsConfigurationSource()
             .cors(Customizer.withDefaults())
-
-            // API REST: no utilizamos CSRF
             .csrf(AbstractHttpConfigurer::disable)
-
             .authorizeHttpRequests(auth -> auth
-
-                // Por ahora todos los endpoints /api/**
-                // están permitidos.
                 .requestMatchers("/api/**").permitAll()
-
                 .anyRequest().authenticated()
             );
 
@@ -65,48 +55,27 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Frontend React + Vite
-        configuration.setAllowedOrigins(
-                List.of(
-                        "http://localhost:5173",
-                        "http://localhost:3000"
-                )
-        );
+        // Convierte la cadena separada por comas en una lista de URLs
+        List<String> originsList = Arrays.asList(allowedOrigins.split(","));
+        configuration.setAllowedOrigins(originsList);
 
         // Métodos permitidos
         configuration.setAllowedMethods(
-                List.of(
-                        "GET",
-                        "POST",
-                        "PUT",
-                        "PATCH",
-                        "DELETE",
-                        "OPTIONS"
-                )
+                List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
         );
 
         // Headers permitidos
         configuration.setAllowedHeaders(
-                List.of(
-                        "Authorization",
-                        "Content-Type",
-                        "X-Requested-With"
-                )
+                List.of("Authorization", "Content-Type", "X-Requested-With")
         );
 
-        // Permitir credenciales
+        // Permitir credenciales / cookies
         configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
-
-        source.registerCorsConfiguration(
-                "/**",
-                configuration
-        );
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
 
         return source;
     }
