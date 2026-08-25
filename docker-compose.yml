@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: hyma_postgres
+
+    restart: "no"
+
+    environment:
+      POSTGRES_DB: hyma_db
+      POSTGRES_USER: hyma_user
+      POSTGRES_PASSWORD: hyma_pass
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

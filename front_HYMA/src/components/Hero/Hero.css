@@ -1,0 +1,824 @@
+/* ==============================
+   HERO
+============================== */
+
+.hero {
+  min-height: 100vh;
+  background: #ffffff;
+  padding: 130px 7% 80px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.hero-content {
+  width: 100%;
+  max-width: 1400px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  align-items: center;
+  gap: 70px;
+}
+
+
+/* ==============================
+   HERO TEXT
+============================== */
+
+.hero-text {
+  max-width: 720px;
+}
+
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  color: #0077b6;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+
+  margin-bottom: 25px;
+}
+
+.hero-tag::before {
+  content: "";
+  width: 35px;
+  height: 2px;
+  background: #00b4d8;
+}
+
+
+.hero-text h1 {
+  margin: 0;
+  color: #03045e;
+
+  font-size: clamp(52px, 6vw, 88px);
+  line-height: 0.98;
+  letter-spacing: -3px;
+  font-weight: 800;
+}
+
+.hero-text h1 span {
+  color: #0077b6;
+}
+
+
+.hero-description {
+  max-width: 650px;
+
+  margin: 35px 0;
+
+  color: #5c677d;
+
+  font-size: 19px;
+  line-height: 1.7;
+}
+
+
+/* ==============================
+   BUTTONS
+============================== */
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.primary-btn,
+.secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+
+  padding: 16px 25px;
+
+  border-radius: 10px;
+
+  text-decoration: none;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  transition: all 0.3s ease;
+}
+
+
+.primary-btn {
+  background: #0077b6;
+  color: white;
+
+  box-shadow: 0 10px 25px rgba(0, 119, 182, 0.2);
+}
+
+.primary-btn:hover {
+  background: #03045e;
+  transform: translateY(-3px);
+}
+
+
+.primary-btn span {
+  font-size: 20px;
+}
+
+
+.secondary-btn {
+  border: 1px solid #dce6ec;
+  color: #03045e;
+  background: white;
+}
+
+.secondary-btn:hover {
+  border-color: #0077b6;
+  color: #0077b6;
+}
+
+
+/* ==============================
+   HERO VALUES
+============================== */
+
+.hero-values {
+  display: flex;
+  gap: 40px;
+
+  margin-top: 55px;
+
+  border-top: 1px solid #e8edf1;
+  padding-top: 25px;
+}
+
+.hero-values div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.hero-values strong {
+  color: #03045e;
+  font-size: 24px;
+}
+
+.hero-values span {
+  color: #7b8794;
+  font-size: 12px;
+}
+
+
+/* ==============================
+   HERO VISUAL
+============================== */
+
+.hero-visual {
+  min-height: 600px;
+
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.hero-circle {
+  width: 480px;
+  height: 480px;
+
+  position: absolute;
+
+  background: #f1faff;
+
+  border-radius: 50%;
+}
+
+
+.hero-logo-card {
+  position: relative;
+  z-index: 2;
+
+  width: 390px;
+  height: 390px;
+
+  background: white;
+
+  border-radius: 35px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow:
+    0 30px 80px rgba(3, 4, 94, 0.12);
+
+  border: 1px solid #eef3f6;
+}
+
+.hero-logo-card img {
+  width: 75%;
+  max-width: 300px;
+}
+
+
+/* ==============================
+   FLOATING CARDS
+============================== */
+
+.floating-card {
+  position: absolute;
+
+  z-index: 5;
+
+  background: white;
+
+  border: 1px solid #edf2f5;
+
+  border-radius: 15px;
+
+  box-shadow:
+    0 20px 45px rgba(3, 4, 94, 0.12);
+
+  padding: 15px;
+
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+
+.floating-card span {
+  display: block;
+
+  color: #8a96a3;
+
+  font-size: 11px;
+
+  margin-bottom: 3px;
+}
+
+
+.floating-card strong {
+  display: block;
+
+  color: #03045e;
+
+  font-size: 13px;
+}
+
+
+.health-card {
+  top: 90px;
+  left: 0;
+}
+
+
+.education-card {
+  right: 0;
+  bottom: 100px;
+}
+
+
+.floating-icon {
+  width: 55px;
+  height: 55px;
+
+  border-radius: 12px;
+
+  background: #f1faff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.floating-icon img {
+  width: 43px;
+  height: 43px;
+  object-fit: contain;
+}
+
+
+.small-icon {
+  width: 40px;
+  height: 40px;
+
+  border-radius: 10px;
+
+  background: #eaf8fb;
+
+  color: #0077b6;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 22px;
+  font-weight: bold;
+}
+
+
+/* ==============================
+   AREAS
+============================== */
+
+.areas-section {
+  background: #f8fafc;
+
+  padding: 120px 7%;
+}
+
+
+.section-heading {
+  max-width: 700px;
+
+  margin-bottom: 60px;
+}
+
+.section-heading > span {
+  color: #0077b6;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  letter-spacing: 2px;
+}
+
+.section-heading h2 {
+  margin: 15px 0;
+
+  color: #03045e;
+
+  font-size: clamp(38px, 4vw, 58px);
+  line-height: 1.1;
+}
+
+.section-heading h2 strong {
+  color: #0077b6;
+}
+
+.section-heading p {
+  color: #667085;
+
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+
+/* ==============================
+   AREA CARDS
+============================== */
+
+.areas-grid {
+  max-width: 1400px;
+
+  margin: auto;
+
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 25px;
+}
+
+
+.area-card {
+  position: relative;
+
+  background: white;
+
+  border: 1px solid #e9eef2;
+
+  border-radius: 20px;
+
+  padding: 35px;
+
+  min-height: 500px;
+
+  display: flex;
+  flex-direction: column;
+
+  transition: all 0.3s ease;
+}
+
+
+.area-card:hover {
+  transform: translateY(-8px);
+
+  box-shadow:
+    0 25px 60px rgba(3, 4, 94, 0.1);
+}
+
+
+.area-health {
+  border-top: 4px solid #0077b6;
+}
+
+
+.area-logo {
+  width: 75px;
+  height: 75px;
+
+  background: #f4fbfe;
+
+  border-radius: 15px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 30px;
+}
+
+.area-logo img {
+  width: 65px;
+  height: 65px;
+
+  object-fit: contain;
+}
+
+
+.development-logo img {
+  width: 55px;
+}
+
+
+.area-number {
+  position: absolute;
+
+  right: 30px;
+  top: 35px;
+
+  color: #dce7ed;
+
+  font-size: 38px;
+  font-weight: 800;
+}
+
+
+.area-card h3 {
+  color: #03045e;
+
+  font-size: 30px;
+
+  margin: 0 0 15px;
+}
+
+
+.area-card p {
+  color: #667085;
+
+  line-height: 1.7;
+
+  font-size: 15px;
+}
+
+
+.services {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 8px;
+
+  margin-top: 15px;
+}
+
+.services span {
+  padding: 7px 11px;
+
+  background: #f5f8fa;
+
+  border-radius: 6px;
+
+  color: #52606d;
+
+  font-size: 11px;
+}
+
+
+.area-link {
+  margin-top: auto;
+  padding-top: 30px;
+
+  color: #0077b6;
+
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.area-link span {
+  margin-left: 8px;
+  font-size: 18px;
+}
+
+
+/* ==============================
+   HEALTH FEATURE
+============================== */
+
+.health-feature {
+  padding: 120px 7%;
+
+  background: #03045e;
+}
+
+
+.health-feature-inner {
+  max-width: 1200px;
+
+  margin: auto;
+
+  display: grid;
+
+  grid-template-columns: 0.7fr 1.3fr;
+
+  gap: 80px;
+
+  align-items: center;
+}
+
+
+.health-feature-logo {
+  width: 330px;
+  height: 330px;
+
+  background: white;
+
+  border-radius: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.2);
+}
+
+
+.health-feature-logo img {
+  width: 75%;
+}
+
+
+.health-feature-text > span {
+  color: #00b4d8;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  letter-spacing: 2px;
+}
+
+
+.health-feature-text h2 {
+  margin: 15px 0;
+
+  color: white;
+
+  font-size: clamp(42px, 5vw, 65px);
+
+  line-height: 1;
+}
+
+
+.health-feature-text h2 strong {
+  color: #00b4d8;
+}
+
+
+.health-feature-text > p {
+  color: #c9d6df;
+
+  line-height: 1.8;
+
+  max-width: 650px;
+
+  font-size: 16px;
+}
+
+
+.health-services {
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 15px;
+
+  margin: 35px 0;
+}
+
+
+.health-services div {
+  color: white;
+
+  font-size: 13px;
+
+  padding: 15px;
+
+  background: rgba(255, 255, 255, 0.06);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  border-radius: 10px;
+}
+
+
+.health-services strong {
+  display: block;
+
+  color: #00b4d8;
+
+  font-size: 11px;
+
+  margin-bottom: 5px;
+}
+
+
+.health-button {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 15px;
+
+  padding: 15px 22px;
+
+  background: white;
+
+  color: #03045e;
+
+  border-radius: 9px;
+
+  text-decoration: none;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  transition: 0.3s;
+}
+
+
+.health-button:hover {
+  background: #00b4d8;
+
+  color: white;
+
+  transform: translateY(-3px);
+}
+
+
+.health-button span {
+  font-size: 20px;
+}
+
+
+/* ==============================
+   RESPONSIVE
+============================== */
+
+@media (max-width: 1100px) {
+
+  .hero-content {
+    grid-template-columns: 1fr;
+
+    text-align: center;
+  }
+
+  .hero-text {
+    max-width: 800px;
+
+    margin: auto;
+  }
+
+  .hero-description {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-actions {
+    justify-content: center;
+  }
+
+  .hero-values {
+    justify-content: center;
+  }
+
+  .hero-visual {
+    min-height: 550px;
+  }
+
+  .areas-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .area-card {
+    min-height: auto;
+  }
+
+  .health-feature-inner {
+    grid-template-columns: 1fr;
+
+    text-align: center;
+  }
+
+  .health-feature-logo {
+    margin: auto;
+  }
+
+  .health-feature-text > p {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .health-services {
+    text-align: left;
+  }
+}
+
+
+@media (max-width: 600px) {
+
+  .hero {
+    padding: 120px 6% 60px;
+  }
+
+  .hero-text h1 {
+    font-size: 50px;
+    letter-spacing: -2px;
+  }
+
+  .hero-description {
+    font-size: 16px;
+  }
+
+  .hero-values {
+    gap: 20px;
+  }
+
+  .hero-values strong {
+    font-size: 20px;
+  }
+
+  .hero-values span {
+    font-size: 10px;
+  }
+
+  .hero-visual {
+    min-height: 430px;
+  }
+
+  .hero-circle {
+    width: 320px;
+    height: 320px;
+  }
+
+  .hero-logo-card {
+    width: 280px;
+    height: 280px;
+  }
+
+  .floating-card {
+    transform: scale(0.85);
+  }
+
+  .health-card {
+    left: -20px;
+    top: 40px;
+  }
+
+  .education-card {
+    right: -20px;
+    bottom: 40px;
+  }
+
+  .areas-section,
+  .health-feature {
+    padding: 80px 6%;
+  }
+
+  .health-feature-logo {
+    width: 260px;
+    height: 260px;
+  }
+
+  .health-services {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+
+@media (max-width: 400px) {
+
+  .health-services {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-values {
+    flex-direction: column;
+  }
+}
