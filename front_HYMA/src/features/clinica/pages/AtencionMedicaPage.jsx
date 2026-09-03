@@ -256,7 +256,7 @@ export default function AtencionMedicaPage() {
 }
 
 const styles = {
-  page: { background: '#f7fcfe', minHeight: '100vh', fontFamily: 'system-ui, sans-serif' },
+  page: { background: '#f7fcfe', minHeight: '100vh', fontFamily: "'Segoe UI', Verdana, sans-serif" },
   content: { maxWidth: '1000px', margin: '0 auto', padding: '30px' },
   title: { color: '#03045e', marginBottom: '20px' },
   section: { background: 'white', padding: '20px', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' },

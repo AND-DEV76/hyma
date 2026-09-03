@@ -116,7 +116,7 @@ export default function DiagnosticosPage() {
 }
 
 const styles = {
-  page: { background: '#f7fcfe', minHeight: '100vh', fontFamily: 'system-ui, sans-serif' },
+  page: { background: '#f7fcfe', minHeight: '100vh', fontFamily: "'Segoe UI', Verdana, sans-serif" },
   content: { maxWidth: '900px', margin: '0 auto', padding: '30px' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
   btnPrimary: { background: '#0077b6', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '6px', cursor: 'pointer' },

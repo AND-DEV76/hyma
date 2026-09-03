@@ -1,6 +1,8 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import AppRoutes from './routes/AppRoutes';
 
+import Navbar from './components/Navbar/Navbar';
+import Hero from './components/Hero/Hero';
 import LoginPage from './features/auth/pages/LoginPage';
 import InicioPage from './features/inicio/pages/InicioPage';
 import RecepcionPage from './features/recepcion/pages/RecepcionPage';
@@ -17,7 +19,7 @@ import DiagnosticosPage from './features/diagnostico/pages/DiagnosticosPage';
 function App() {
   return (
           <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<><Navbar /><Hero /></>} />
         <Route path="/login" element={<LoginPage />} />
 
         {/* --- RUTAS PROTEGIDAS Y ROLES --- */}

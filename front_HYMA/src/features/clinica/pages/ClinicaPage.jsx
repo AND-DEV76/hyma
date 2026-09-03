@@ -56,7 +56,7 @@ export default function ClinicaPage() {
 }
 
 const styles = {
-  page: { minHeight: '100vh', background: '#f7fcfe', fontFamily: 'system-ui, sans-serif' },
+  page: { minHeight: '100vh', background: '#f7fcfe', fontFamily: "'Segoe UI', Verdana, sans-serif" },
   content: { maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' },
   header: { marginBottom: '30px' },
   eyebrow: { color: '#0077b6', fontWeight: 'bold', margin: 0, fontSize: '14px' },

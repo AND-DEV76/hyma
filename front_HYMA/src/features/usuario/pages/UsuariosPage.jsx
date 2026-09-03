@@ -161,7 +161,7 @@ const styles = {
   page: {
     minHeight: '100vh',
     backgroundColor: '#f8fafc',
-    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    fontFamily: "'Segoe UI', Verdana, sans-serif",
   },
   container: {
     maxWidth: '1280px',
