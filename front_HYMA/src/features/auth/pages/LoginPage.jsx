@@ -19,6 +19,10 @@ const handleSubmit = async (e) => {
     try {
         const data = await loginService(username, password);
 
+        // Guardar token JWT y datos de usuario para persistir la sesión
+        if (data.token) {
+            localStorage.setItem('token', data.token);
+        }
         localStorage.setItem('user', JSON.stringify(data.usuario));
 
         if (data.usuario.nombreRol === 'ENFERMERA') {

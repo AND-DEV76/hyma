@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 function BuscadorPaciente({
   busqueda,
@@ -10,194 +10,144 @@ function BuscadorPaciente({
   guardando,
 }) {
   useEffect(() => {
-    const timer = setTimeout(() => {
-      buscar(busqueda);
-    }, 350);
-
+    const timer = setTimeout(() => buscar(busqueda), 350);
     return () => clearTimeout(timer);
   }, [busqueda, buscar]);
 
   return (
-    <section style={styles.section}>
-      <div style={styles.sectionHeader}>
+    <section style={styles.card}>
+      <div style={styles.cardHeader}>
         <div>
+          <p style={styles.sectionKicker}>NUEVO INGRESO</p>
           <h2 style={styles.title}>Buscar paciente</h2>
-          <p style={styles.subtitle}>
-            Busca un paciente por nombre, apellido o teléfono.
-          </p>
+          <p style={styles.subtitle}>Consulta el expediente por nombre, apellido o teléfono.</p>
         </div>
       </div>
 
-      <div style={styles.searchContainer}>
-        <span style={styles.searchIcon}>⌕</span>
+      <label htmlFor="patient-search" style={styles.label}>Buscar en expedientes</label>
+      <input
+        id="patient-search"
+        type="search"
+        value={busqueda}
+        onChange={(e) => setBusqueda(e.target.value)}
+        placeholder="Escribe un nombre o apellido"
+        style={styles.input}
+      />
 
-        <input
-          type="text"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          placeholder="Buscar paciente..."
-          style={styles.input}
-        />
-      </div>
-
-      {cargando && (
-        <p style={styles.loading}>Buscando pacientes...</p>
-      )}
+      {cargando && <p style={styles.feedback}>Buscando pacientes...</p>}
 
       {!cargando && pacientes.length > 0 && (
         <div style={styles.results}>
+          <p style={styles.resultHeading}>Resultados encontrados</p>
           {pacientes.map((paciente) => (
-            <div
-              key={paciente.idPaciente}
-              style={styles.patient}
-            >
-              <div style={styles.avatar}>
-                {paciente.nombres?.charAt(0)}
-              </div>
-
+            <div key={paciente.idPaciente} style={styles.patient}>
               <div style={styles.patientInfo}>
-                <strong>
-                  {paciente.nombres} {paciente.apellidos}
-                </strong>
-
-                <span>
-                  {paciente.telefono || 'Sin teléfono'}
-                </span>
-
-                <span>
-                  {paciente.comunidad || 'Sin comunidad'}
-                </span>
+                <strong style={styles.patientName}>{paciente.nombres} {paciente.apellidos}</strong>
+                <span style={styles.patientMeta}>{paciente.telefono || 'Sin teléfono'} · {paciente.comunidad || 'Sin comunidad'}</span>
               </div>
-
               <button
-                onClick={() =>
-                  agregarPaciente(paciente.idPaciente)
-                }
+                onClick={() => agregarPaciente(paciente.idPaciente)}
                 disabled={guardando}
                 style={styles.addButton}
               >
-                + Agregar a cola
+                Agregar a cola
               </button>
             </div>
           ))}
         </div>
       )}
 
-      {!cargando &&
-        busqueda.trim() &&
-        pacientes.length === 0 && (
-          <div style={styles.empty}>
-            No se encontraron pacientes.
-          </div>
-        )}
+      {!cargando && busqueda.trim() && pacientes.length === 0 && (
+        <div style={styles.empty}>No se encontraron pacientes con esos datos.</div>
+      )}
     </section>
   );
 }
 
 const styles = {
-  section: {
+  card: {
     background: '#ffffff',
-    borderRadius: '18px',
-    padding: '24px',
-    boxShadow: '0 4px 20px rgba(3, 4, 94, 0.07)',
-  },
-
-  sectionHeader: {
-    marginBottom: '18px',
-  },
-
-  title: {
-    margin: 0,
-    color: '#03045e',
-    fontSize: '21px',
-  },
-
-  subtitle: {
-    margin: '6px 0 0',
-    color: '#64748b',
-    fontSize: '14px',
-  },
-
-  searchContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    background: '#f8fafc',
-    border: '1px solid #dbeafe',
+    border: '1px solid #caf0f8',
     borderRadius: '12px',
-    padding: '0 15px',
+    padding: '26px',
+    boxShadow: '0 12px 30px rgba(3, 4, 94, 0.05)',
   },
-
-  searchIcon: {
-    fontSize: '25px',
-    color: '#0077b6',
+  cardHeader: { marginBottom: '24px' },
+  sectionKicker: {
+    color: '#00b4d8',
+    fontSize: '0.68rem',
+    fontWeight: '800',
+    letterSpacing: '1.4px',
+    margin: '0 0 8px',
   },
-
+  title: {
+    color: '#03045e',
+    fontSize: '1.2rem',
+    margin: 0,
+    fontWeight: '750',
+  },
+  subtitle: {
+    color: '#496174',
+    fontSize: '0.84rem',
+    lineHeight: 1.5,
+    margin: '7px 0 0',
+  },
+  label: {
+    color: '#03045e',
+    display: 'block',
+    fontSize: '0.76rem',
+    fontWeight: '700',
+    marginBottom: '8px',
+  },
   input: {
     width: '100%',
-    border: 'none',
-    outline: 'none',
-    background: 'transparent',
-    padding: '15px 10px',
-    fontSize: '15px',
-  },
-
-  loading: {
-    color: '#0077b6',
-    fontSize: '14px',
-  },
-
-  results: {
-    marginTop: '15px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-  },
-
-  patient: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '14px',
-    padding: '14px',
-    border: '1px solid #e2e8f0',
-    borderRadius: '12px',
-  },
-
-  avatar: {
-    width: '44px',
-    height: '44px',
-    borderRadius: '50%',
-    background: '#caf0f8',
+    border: '1px solid #90e0ef',
+    borderRadius: '7px',
     color: '#03045e',
-    display: 'flex',
+    fontSize: '0.9rem',
+    outline: 'none',
+    padding: '12px 13px',
+    background: '#faffff',
+  },
+  feedback: { color: '#0077b6', fontSize: '0.82rem', margin: '14px 0 0' },
+  results: { marginTop: '24px' },
+  resultHeading: {
+    color: '#496174',
+    fontSize: '0.72rem',
+    fontWeight: '800',
+    letterSpacing: '0.5px',
+    margin: '0 0 10px',
+    textTransform: 'uppercase',
+  },
+  patient: {
     alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: '700',
-  },
-
-  patientInfo: {
-    flex: 1,
+    borderBottom: '1px solid #caf0f8',
     display: 'flex',
-    flexDirection: 'column',
-    gap: '3px',
+    gap: '16px',
+    justifyContent: 'space-between',
+    padding: '14px 0',
   },
-
+  patientInfo: { display: 'flex', flexDirection: 'column', gap: '5px', minWidth: 0 },
+  patientName: { color: '#03045e', fontSize: '0.88rem' },
+  patientMeta: { color: '#6a7d8b', fontSize: '0.76rem' },
   addButton: {
-    border: 'none',
-    borderRadius: '9px',
-    padding: '10px 14px',
-    background: '#0077b6',
-    color: '#ffffff',
+    background: '#caf0f8',
+    border: '1px solid #90e0ef',
+    borderRadius: '6px',
+    color: '#03045e',
     cursor: 'pointer',
-    fontWeight: '600',
+    flexShrink: 0,
+    fontSize: '0.76rem',
+    fontWeight: '700',
+    padding: '9px 12px',
   },
-
   empty: {
-    marginTop: '18px',
-    padding: '20px',
+    background: '#f7fcfe',
+    color: '#6a7d8b',
+    fontSize: '0.82rem',
+    marginTop: '20px',
+    padding: '16px',
     textAlign: 'center',
-    color: '#64748b',
-    background: '#f8fafc',
-    borderRadius: '10px',
   },
 };
 

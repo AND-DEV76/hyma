@@ -12,6 +12,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LoginResponse {
+    /** Mensaje de confirmación del resultado del login */
     private String mensaje;
+
+    /** Token de acceso JWT firmado */
+    private String token;
+
+    /** Tipo de token (por defecto 'Bearer') */
+    @Builder.Default
+    private String tokenType = "Bearer";
+
+    /** Información del perfil del usuario autenticado */
     private UsuarioResponse usuario;
 }

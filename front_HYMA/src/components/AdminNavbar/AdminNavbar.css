@@ -1,0 +1,150 @@
+.admin-navbar {
+  min-height: 72px;
+  background: #03045e;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  padding: 0 42px;
+  border-bottom: 1px solid rgba(144, 224, 239, 0.18);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.admin-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-shrink: 0;
+  gap: 2px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.brand-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.brand-sub {
+  color: #90e0ef;
+  font-size: 0.65rem;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+}
+
+.admin-nav-links {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  flex: 1;
+}
+
+.nav-tab {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #caf0f8;
+  padding: 25px 13px 21px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.nav-tab:hover,
+.nav-tab.active {
+  color: #ffffff;
+  border-bottom-color: #00b4d8;
+}
+
+.admin-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-shrink: 0;
+}
+
+.user-profile-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.user-name {
+  color: #ffffff;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.user-role-pill {
+  color: #90e0ef;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+}
+
+.btn-logout {
+  border: 1px solid #90e0ef;
+  border-radius: 6px;
+  background: transparent;
+  color: #caf0f8;
+  padding: 8px 13px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.btn-logout:hover {
+  background: #90e0ef;
+  color: #03045e;
+}
+
+@media (max-width: 980px) {
+  .admin-navbar {
+    gap: 20px;
+    padding: 0 22px;
+  }
+
+  .admin-nav-links {
+    overflow-x: auto;
+  }
+
+  .nav-tab {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 700px) {
+  .admin-navbar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    padding: 16px 18px 0;
+  }
+
+  .admin-nav-links {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .nav-tab {
+    padding: 12px 9px 14px;
+    font-size: 0.78rem;
+  }
+
+  .admin-nav-right {
+    margin-left: auto;
+  }
+
+  .user-profile-badge {
+    display: none;
+  }
+}

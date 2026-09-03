@@ -1,70 +1,43 @@
-import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Home from './pages/Home';
+import AppRoutes from './routes/AppRoutes';
+
 import LoginPage from './features/auth/pages/LoginPage';
 import InicioPage from './features/inicio/pages/InicioPage';
-import UsuariosPage from './features/usuario/pages/UsuariosPage';
-import { AlergiaPage } from './features/alergia/pages/AlergiaPage';
 import RecepcionPage from './features/recepcion/pages/RecepcionPage';
+import PreconsultaPage from './features/preconsulta/pages/PreconsultaPage';
+import FarmaciaPage from './features/farmacia/pages/FarmaciaPage';
 import MedicosPage from './features/doctor/pages/MedicosPage';
+import UsuariosPage from './features/usuario/pages/UsuariosPage';
+import AlergiaPage from './features/alergia/pages/AlergiaPage';
 
-const PrivateRoute = ({ children }) => {
-  const isAuthenticated = !!localStorage.getItem('user');
-  return isAuthenticated ? children : <Navigate to="/login" />;
-};
+import ClinicaPage from './features/clinica/pages/ClinicaPage';
+import AtencionMedicaPage from './features/clinica/pages/AtencionMedicaPage';
+import DiagnosticosPage from './features/diagnostico/pages/DiagnosticosPage';
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<LoginPage />} />
-      
-      <Route
-        path="/inicio"
-        element={
-          <PrivateRoute>
-            <InicioPage />
-          </PrivateRoute>
-        }
-      />
+          <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<LoginPage />} />
 
-      <Route
-        path="/medicos"
-        element={
-          <PrivateRoute>
-            <MedicosPage />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/usuarios"
-        element={
-          <PrivateRoute>
-            <UsuariosPage />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/alergias"
-        element={
-          <PrivateRoute>
-            <AlergiaPage />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/recepcion"
-        element={
-          <PrivateRoute>
-            <RecepcionPage />
-          </PrivateRoute>
-        }
-      />
-    </Routes>
-  );
+        {/* --- RUTAS PROTEGIDAS Y ROLES --- */}
+        <Route path="/*" element={
+          <AppRoutes>
+            <Route path="/inicio" element={<InicioPage />} />
+            <Route path="/recepcion" element={<RecepcionPage />} />
+            <Route path="/preconsulta" element={<PreconsultaPage />} />
+            <Route path="/farmacia/*" element={<FarmaciaPage />} />
+            <Route path="/medicos" element={<MedicosPage />} />
+            <Route path="/usuarios" element={<UsuariosPage />} />
+            <Route path="/alergias" element={<AlergiaPage />} />
+            
+            <Route path="/clinica" element={<ClinicaPage />} />
+            <Route path="/clinica/atencion" element={<AtencionMedicaPage />} />
+            <Route path="/diagnosticos" element={<DiagnosticosPage />} />
+          </AppRoutes>
+        } />
+      </Routes>
+      );
 }
 
 export default App;

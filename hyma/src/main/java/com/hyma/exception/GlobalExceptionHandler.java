@@ -19,194 +19,88 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /*
-     * ==========================================================
-     * ERRORES DE VALIDACIÓN
-     * ==========================================================
-     *
-     * Captura errores producidos por @Valid en los DTOs.
-     *
-     * Ejemplo:
-     *
-     * @NotBlank
-     * @NotNull
-     * @Size
-     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationExceptions(
-            MethodArgumentNotValidException ex
-    ) {
-
+    public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, Object> response = new HashMap<>();
         Map<String, String> errors = new HashMap<>();
 
-        ex.getBindingResult()
-                .getAllErrors()
-                .forEach(error -> {
-
-                    String fieldName =
-                            ((FieldError) error).getField();
-
-                    String errorMessage =
-                            error.getDefaultMessage();
-
-                    errors.put(fieldName, errorMessage);
-                });
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
 
         response.put("timestamp", LocalDateTime.now());
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("error", "Error de Validación");
         response.put("errors", errors);
 
-        return new ResponseEntity<>(
-                response,
-                HttpStatus.BAD_REQUEST
-        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-
-    /*
-     * ==========================================================
-     * PACIENTE NO ENCONTRADO
-     * ==========================================================
-     */
     @ExceptionHandler(PacienteNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handlePacienteNotFound(
-            PacienteNotFoundException ex
-    ) {
-
-        return buildErrorResponse(
-                HttpStatus.NOT_FOUND,
-                ex.getMessage()
-        );
+    public ResponseEntity<Map<String, Object>> handlePacienteNotFound(PacienteNotFoundException ex) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-
-    /*
-     * ==========================================================
-     * ALERGIA NO ENCONTRADA
-     * ==========================================================
-     */
     @ExceptionHandler(AlergiaNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleAlergiaNotFound(
-            AlergiaNotFoundException ex
-    ) {
-
-        return buildErrorResponse(
-                HttpStatus.NOT_FOUND,
-                ex.getMessage()
-        );
+    public ResponseEntity<Map<String, Object>> handleAlergiaNotFound(AlergiaNotFoundException ex) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-
-    /*
-     * ==========================================================
-     * COLA NO ENCONTRADA
-     * ==========================================================
-     */
     @ExceptionHandler(ColaAtencionNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleColaNotFound(
-            ColaAtencionNotFoundException ex
-    ) {
-
-        return buildErrorResponse(
-                HttpStatus.NOT_FOUND,
-                ex.getMessage()
-        );
+    public ResponseEntity<Map<String, Object>> handleColaNotFound(ColaAtencionNotFoundException ex) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-
-    /*
-     * ==========================================================
-     * PACIENTE YA ESTÁ EN COLA
-     * ==========================================================
-     *
-     * Esto devuelve HTTP 409 Conflict.
-     */
     @ExceptionHandler(PacienteYaEnColaException.class)
-    public ResponseEntity<Map<String, Object>> handlePacienteYaEnCola(
-            PacienteYaEnColaException ex
-    ) {
-
-        return buildErrorResponse(
-                HttpStatus.CONFLICT,
-                ex.getMessage()
-        );
+    public ResponseEntity<Map<String, Object>> handlePacienteYaEnCola(PacienteYaEnColaException ex) {
+        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    @ExceptionHandler(EstadoColaInvalidoException.class)
+    public ResponseEntity<Map<String, Object>> handleEstadoColaInvalido(EstadoColaInvalidoException ex) {
+        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
 
-    /*
-     * ==========================================================
-     * VALIDACIONES DE CONSTRAINT
-     * ==========================================================
-     */
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<Map<String, Object>> handleConstraintViolation(
-            ConstraintViolationException ex
-    ) {
-
-        return buildErrorResponse(
-                HttpStatus.BAD_REQUEST,
-                ex.getMessage()
-        );
+    public ResponseEntity<Map<String, Object>> handleConstraintViolation(ConstraintViolationException ex) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
-
-    /*
-     * ==========================================================
-     * CUALQUIER RuntimeException NO CONTROLADA
-     * ==========================================================
-     *
-     * Este es el "último recurso".
-     *
-     * Las excepciones específicas anteriores tienen prioridad.
-     */
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, Object>> handleRuntimeException(
-            RuntimeException ex
-    ) {
-
-        return buildErrorResponse(
-                HttpStatus.BAD_REQUEST,
-                ex.getMessage()
-        );
+    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
-
-    /*
-     * ==========================================================
-     * MÉTODO AUXILIAR
-     * ==========================================================
-     */
-    private ResponseEntity<Map<String, Object>> buildErrorResponse(
-            HttpStatus status,
-            String message
-    ) {
-
+    private ResponseEntity<Map<String, Object>> buildErrorResponse(HttpStatus status, String message) {
         Map<String, Object> response = new HashMap<>();
-
         response.put("timestamp", LocalDateTime.now());
         response.put("status", status.value());
         response.put("error", status.getReasonPhrase());
         response.put("message", message);
-
-        return new ResponseEntity<>(
-                response,
-                status
-        );
+        return new ResponseEntity<>(response, status);
     }
 
-//   ==========================================================
-//   EXCEPCIONES para Doctor
+    // EXCEPCIONES para Doctor
+    @ExceptionHandler(MedicoNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleMedicoNotFound(MedicoNotFoundException ex) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
 
-@ExceptionHandler(MedicoNotFoundException.class)
-public ResponseEntity<Map<String, Object>> handleMedicoNotFound(MedicoNotFoundException ex) {
-    return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage());
-}
+    @ExceptionHandler(UsuarioRolInvalidoException.class)
+    public ResponseEntity<Map<String, Object>> handleUsuarioRolInvalido(UsuarioRolInvalidoException ex) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
 
-@ExceptionHandler(UsuarioRolInvalidoException.class)
-public ResponseEntity<Map<String, Object>> handleUsuarioRolInvalido(UsuarioRolInvalidoException ex) {
-    return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
-}
+    // EXCEPCIONES para Clinica
+    @ExceptionHandler(ConsultaNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleConsultaNotFound(ConsultaNotFoundException ex) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
 
+    @ExceptionHandler(CatalogoCie10NotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleCatalogoCie10NotFound(CatalogoCie10NotFoundException ex) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
 }

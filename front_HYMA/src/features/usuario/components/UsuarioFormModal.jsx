@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
 const ROLES = [
-  { id: 1, nombre: 'ADMIN' },
-  { id: 2, nombre: 'MEDICO' },
-  { id: 3, nombre: 'ENFERMERA' },
-  { id: 4, nombre: 'FARMACIA' },
+  { id: 1, nombre: 'ADMIN', desc: 'Acceso total y configuración' },
+  { id: 2, nombre: 'MEDICO', desc: 'Consultas médicas y diagnósticos' },
+  { id: 3, nombre: 'ENFERMERA', desc: 'Recepción, cola y preconsulta' },
+  { id: 4, nombre: 'FARMACIA', desc: 'Dispensación y medicamentos' },
 ];
 
-function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToEdit }) {
+export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToEdit }) {
   const [idRol, setIdRol] = useState(1);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -20,7 +20,7 @@ function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToEdit }) {
       setIdRol(usuarioToEdit.idRol || 1);
       setUsername(usuarioToEdit.username || '');
       setEstado(usuarioToEdit.estado ?? true);
-      setPassword(''); 
+      setPassword('');
     } else {
       setIdRol(1);
       setUsername('');
@@ -37,12 +37,12 @@ function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToEdit }) {
     setValidationError('');
 
     if (username.trim().length < 3) {
-      setValidationError('El username debe tener al menos 3 caracteres');
+      setValidationError('El nombre de usuario debe contener al menos 3 caracteres.');
       return;
     }
 
     if (!usuarioToEdit && password.length < 8) {
-      setValidationError('La contraseña debe tener al menos 8 caracteres');
+      setValidationError('La contraseña debe tener al menos 8 caracteres para mayor seguridad.');
       return;
     }
 
@@ -64,7 +64,7 @@ function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToEdit }) {
       }
       onClose();
     } catch (err) {
-      setValidationError(err.response?.data?.message || err.message || 'Error al guardar');
+      setValidationError(err.response?.data?.message || err.message || 'Error al procesar la solicitud.');
     } finally {
       setIsSubmitting(false);
     }
@@ -72,70 +72,137 @@ function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToEdit }) {
 
   return (
     <div style={styles.overlay}>
-      <div style={styles.modal}>
-        <h3 style={styles.modalTitle}>
-          {usuarioToEdit ? 'Editar Usuario' : 'Nuevo Usuario'}
-        </h3>
+      <div style={styles.modalCard}>
+        {/* Cabecera del Modal */}
+        <div style={styles.modalHeader}>
+          <div>
+            <h3 style={styles.modalTitle}>
+              {usuarioToEdit ? 'Editar Cuenta de Usuario' : 'Registrar Nuevo Usuario'}
+            </h3>
+            <p style={styles.modalSub}>
+              {usuarioToEdit
+                ? `Modificando los datos del usuario ID #${usuarioToEdit.idUsuario}`
+                : 'Completa la información para crear una cuenta en el sistema.'}
+            </p>
+          </div>
+          <button onClick={onClose} style={styles.btnClose}>
+            ✕
+          </button>
+        </div>
 
-        {validationError && <div style={styles.errorAlert}>{validationError}</div>}
+        {validationError && (
+          <div style={styles.errorBanner}>
+            <span>⚠️</span>
+            <span>{validationError}</span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.field}>
-            <label style={styles.label}>Rol de Usuario</label>
+          {/* Campo Rol */}
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Rol y Permisos</label>
             <select
               value={idRol}
               onChange={(e) => setIdRol(Number(e.target.value))}
-              style={styles.input}
+              style={styles.select}
             >
               {ROLES.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.nombre}
+                  {r.nombre} — {r.desc}
                 </option>
               ))}
             </select>
           </div>
 
-          <div style={styles.field}>
-            <label style={styles.label}>Nombre de Usuario</label>
+          {/* Campo Username */}
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Nombre de Usuario (Login)</label>
             <input
               type="text"
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Ej: jdoe"
+              placeholder="Ej: dr_martinez o enf_lucia"
               style={styles.input}
             />
           </div>
 
-          <div style={styles.field}>
-            <label style={styles.label}>
-              Contraseña {usuarioToEdit && '(Opcional)'}
-            </label>
+          {/* Campo Contraseña */}
+          <div style={styles.formGroup}>
+            <div style={styles.labelWithHint}>
+              <label style={styles.label}>Contraseña</label>
+              {usuarioToEdit && (
+                <span style={styles.fieldHint}>Opcional (Dejar en blanco para no cambiar)</span>
+              )}
+            </div>
             <input
               type="password"
               required={!usuarioToEdit}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={usuarioToEdit ? 'Dejar en blanco para no cambiar' : '••••••••'}
+              placeholder={usuarioToEdit ? '•••••••• (Sin cambios)' : 'Mínimo 8 caracteres'}
               style={styles.input}
             />
           </div>
 
+          {/* Campo Estado (Solo en Edición) */}
           {usuarioToEdit && (
-            <div style={styles.fieldRow}>
-              <label style={styles.label}>Estado:</label>
-              <select
-                value={estado ? 'true' : 'false'}
-                onChange={(e) => setEstado(e.target.value === 'true')}
-                style={styles.input}
-              >
-                <option value="true">Activo</option>
-                <option value="false">Inactivo</option>
-              </select>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Estado de la Cuenta</label>
+              <div style={styles.statusToggleGroup}>
+                <label
+                  style={{
+                    ...styles.statusOption,
+                    borderColor: estado ? '#10b981' : '#e2e8f0',
+                    backgroundColor: estado ? '#f0fdf4' : '#ffffff',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="estado"
+                    checked={estado === true}
+                    onChange={() => setEstado(true)}
+                    style={styles.radioInput}
+                  />
+                  <div>
+                    <strong style={{ color: '#16a34a', display: 'block', fontSize: '0.88rem' }}>
+                      Activo
+                    </strong>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                      Puede iniciar sesión normalmente
+                    </span>
+                  </div>
+                </label>
+
+                <label
+                  style={{
+                    ...styles.statusOption,
+                    borderColor: !estado ? '#ef4444' : '#e2e8f0',
+                    backgroundColor: !estado ? '#fef2f2' : '#ffffff',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="estado"
+                    checked={estado === false}
+                    onChange={() => setEstado(false)}
+                    style={styles.radioInput}
+                  />
+                  <div>
+                    <strong style={{ color: '#dc2626', display: 'block', fontSize: '0.88rem' }}>
+                      Inactivo
+                    </strong>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                      Acceso temporalmente suspendido
+                    </span>
+                  </div>
+                </label>
+              </div>
             </div>
           )}
 
-          <div style={styles.actions}>
+          {/* Botones de Acción */}
+          <div style={styles.modalFooter}>
             <button
               type="button"
               onClick={onClose}
@@ -146,10 +213,10 @@ function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToEdit }) {
             </button>
             <button
               type="submit"
-              style={styles.btnSave}
+              style={styles.btnSubmit}
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Guardando...' : 'Guardar'}
+              {isSubmitting ? 'Guardando...' : usuarioToEdit ? 'Guardar Cambios' : 'Crear Usuario'}
             </button>
           </div>
         </form>
@@ -165,83 +232,154 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(3, 4, 94, 0.5)',
+    backgroundColor: 'rgba(3, 4, 94, 0.45)',
+    backdropFilter: 'blur(4px)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
+    padding: '1rem',
   },
-  modal: {
+  modalCard: {
     backgroundColor: '#ffffff',
-    borderRadius: '10px',
-    padding: '25px',
-    width: '400px',
-    maxWidth: '90%',
-    boxShadow: '0 5px 20px rgba(0,0,0,0.2)',
+    borderRadius: '16px',
+    padding: '2rem',
+    width: '100%',
+    maxWidth: '480px',
+    boxShadow: '0 20px 40px rgba(3, 4, 94, 0.2)',
+    border: '1px solid #e2e8f0',
+  },
+  modalHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '1.5rem',
   },
   modalTitle: {
-    margin: '0 0 15px 0',
-    color: '#03045e',
+    fontSize: '1.3rem',
+    fontWeight: '800',
+    color: '#0f172a',
+    margin: '0 0 4px 0',
+  },
+  modalSub: {
+    fontSize: '0.82rem',
+    color: '#64748b',
+    margin: 0,
+  },
+  btnClose: {
+    background: '#f1f5f9',
+    border: 'none',
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    color: '#64748b',
+    fontWeight: 'bold',
+    fontSize: '0.9rem',
+  },
+  errorBanner: {
+    backgroundColor: '#fee2e2',
+    color: '#991b1b',
+    border: '1px solid #fecaca',
+    padding: '10px 14px',
+    borderRadius: '8px',
+    fontSize: '0.85rem',
+    fontWeight: '600',
+    display: 'flex',
+    gap: '8px',
+    alignItems: 'center',
+    marginBottom: '1.25rem',
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px',
+    gap: '1.25rem',
   },
-  field: {
+  formGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '5px',
+    gap: '6px',
   },
-  fieldRow: {
+  labelWithHint: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  label: {
+    fontSize: '0.84rem',
+    fontWeight: '700',
+    color: '#334155',
+  },
+  fieldHint: {
+    fontSize: '0.72rem',
+    color: '#94a3b8',
+    fontStyle: 'italic',
+  },
+  input: {
+    padding: '11px 14px',
+    borderRadius: '9px',
+    border: '1px solid #cbd5e1',
+    fontSize: '0.92rem',
+    outline: 'none',
+    color: '#0f172a',
+    transition: 'border-color 0.2s ease',
+  },
+  select: {
+    padding: '11px 14px',
+    borderRadius: '9px',
+    border: '1px solid #cbd5e1',
+    fontSize: '0.92rem',
+    outline: 'none',
+    backgroundColor: '#ffffff',
+    color: '#0f172a',
+    cursor: 'pointer',
+  },
+  statusToggleGroup: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '10px',
+  },
+  statusOption: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
+    padding: '10px',
+    borderRadius: '10px',
+    border: '1.5px solid #e2e8f0',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
   },
-  label: {
-    fontSize: '0.85rem',
-    color: '#0077b6',
-    fontWeight: 'bold',
+  radioInput: {
+    cursor: 'pointer',
   },
-  input: {
-    padding: '8px 10px',
-    borderRadius: '6px',
-    border: '1px solid #90e0ef',
-    outline: 'none',
-    fontSize: '0.95rem',
-  },
-  actions: {
+  modalFooter: {
     display: 'flex',
     justifyContent: 'flex-end',
     gap: '10px',
-    marginTop: '15px',
+    marginTop: '0.5rem',
   },
   btnCancel: {
-    padding: '8px 15px',
-    border: '1px solid #0077b6',
-    backgroundColor: 'transparent',
-    color: '#0077b6',
-    borderRadius: '6px',
+    padding: '11px 18px',
+    backgroundColor: '#f8fafc',
+    color: '#475569',
+    border: '1px solid #cbd5e1',
+    borderRadius: '9px',
+    fontWeight: '700',
+    fontSize: '0.88rem',
     cursor: 'pointer',
-    fontWeight: 'bold',
   },
-  btnSave: {
-    padding: '8px 15px',
-    border: 'none',
+  btnSubmit: {
+    padding: '11px 22px',
     backgroundColor: '#0077b6',
     color: '#ffffff',
-    borderRadius: '6px',
+    border: 'none',
+    borderRadius: '9px',
+    fontWeight: '700',
+    fontSize: '0.88rem',
     cursor: 'pointer',
-    fontWeight: 'bold',
-  },
-  errorAlert: {
-    backgroundColor: '#ffdddd',
-    color: '#d8000c',
-    padding: '8px 12px',
-    borderRadius: '6px',
-    marginBottom: '10px',
-    fontSize: '0.85rem',
+    boxShadow: '0 4px 12px rgba(0, 119, 182, 0.25)',
   },
 };
-
-export default UsuarioFormModal;

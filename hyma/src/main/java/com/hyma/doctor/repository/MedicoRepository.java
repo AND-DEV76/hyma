@@ -10,4 +10,6 @@ import com.hyma.doctor.model.Medico;
 public interface MedicoRepository extends JpaRepository<Medico, Long> {
     boolean existsByUsuarioIdUsuario(Long idUsuario);
     boolean existsByUsuarioIdUsuarioAndIdMedicoNot(Long idUsuario, Long idMedico);
+    
+    java.util.Optional<Medico> findByUsuario_IdUsuario(Long idUsuario);
 }

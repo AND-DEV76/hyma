@@ -1,22 +1,26 @@
-import axios from 'axios';
+import api from '../../../api/axios';
 
-const API_URL = 'http://localhost:8080/api/alergias';
+/**
+ * Servicios para interactuar con los endpoints de Alergias.
+ * Utiliza la instancia centralizada 'api' que incluye automáticamente
+ * el token JWT en las cabeceras.
+ */
 
 export const getAlergias = async () => {
-  const response = await axios.get(API_URL);
+  const response = await api.get('/alergias');
   return response.data;
 };
 
 export const createAlergia = async (alergia) => {
-  const response = await axios.post(API_URL, alergia);
+  const response = await api.post('/alergias', alergia);
   return response.data;
 };
 
 export const updateAlergia = async (id, alergia) => {
-  const response = await axios.put(`${API_URL}/${id}`, alergia);
+  const response = await api.put(`/alergias/${id}`, alergia);
   return response.data;
 };
 
 export const deleteAlergia = async (id) => {
-  await axios.delete(`${API_URL}/${id}`);
+  await api.delete(`/alergias/${id}`);
 };

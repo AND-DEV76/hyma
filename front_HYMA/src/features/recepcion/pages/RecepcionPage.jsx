@@ -1,19 +1,14 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useRecepcion } from '../hooks/useRecepcion';
+import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import BuscadorPaciente from '../components/BuscadorPaciente';
 import ColaAtencion from '../components/ColaAtencion';
 import FormularioPaciente from '../components/FormularioPaciente';
 
-
 function RecepcionPage() {
-  const navigate = useNavigate();
-
-  const user =
-    JSON.parse(localStorage.getItem('user')) || {
-      username: 'Usuario',
-      nombreRol: '',
-    };
+  const user = JSON.parse(localStorage.getItem('user')) || {
+    username: 'Usuario',
+  };
 
   const {
     pacientes,
@@ -30,107 +25,67 @@ function RecepcionPage() {
     error,
   } = useRecepcion();
 
-  const [mostrarFormulario, setMostrarFormulario] =
-    useState(false);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
 
   const handleNuevoPaciente = async (datos) => {
     await crearNuevoPaciente(datos);
-
     setMostrarFormulario(false);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
-
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <div>
-          <div style={styles.brand}>HYMA</div>
-          <span style={styles.module}>
-            Recepción
-          </span>
-        </div>
-
-        <div style={styles.userArea}>
-          <span>
-            {user.username}
-          </span>
-
-          <button
-            onClick={handleLogout}
-            style={styles.logout}
-          >
-            Cerrar sesión
-          </button>
-        </div>
-      </header>
+    <div style={styles.page}>
+      <AdminNavbar />
 
       <main style={styles.content}>
-        <div style={styles.welcome}>
+        <section style={styles.pageIntro}>
           <div>
-            <p style={styles.eyebrow}>
-              RECEPCIÓN
-            </p>
-
-            <h1 style={styles.title}>
-              Bienvenido, {user.username}
-            </h1>
-
+            <p style={styles.eyebrow}>RECEPCIÓN</p>
+            <h1 style={styles.title}>Buenos días, {user.username}</h1>
             <p style={styles.description}>
-              Busca un paciente existente o registra
-              uno nuevo para iniciar su atención.
+              Gestiona el ingreso de pacientes y organiza la atención del día.
             </p>
           </div>
 
-          <button
-            onClick={() =>
-              setMostrarFormulario(true)
-            }
-            style={styles.newButton}
-          >
-            + Nuevo paciente
+          <button onClick={() => setMostrarFormulario(true)} style={styles.primaryButton}>
+            Nuevo paciente
           </button>
+        </section>
+
+        <div style={styles.summaryRow}>
+          <div style={styles.summaryItem}>
+            <span style={styles.summaryLabel}>Pacientes en espera</span>
+            <strong style={styles.summaryValue}>{cola.length}</strong>
+          </div>
+          <div style={styles.summaryDivider} />
+          <p style={styles.summaryText}>Turnos pendientes de preconsulta</p>
         </div>
 
-        {error && (
-          <div style={styles.error}>
-            {error}
-          </div>
-        )}
+        {error && <div role="alert" style={styles.error}>{error}</div>}
 
         <div style={styles.layout}>
-          <div>
-            <BuscadorPaciente
-              busqueda={busqueda}
-              setBusqueda={setBusqueda}
-              pacientes={pacientes}
-              buscar={buscar}
-              agregarPaciente={agregarPaciente}
-              cargando={cargandoPacientes}
-              guardando={guardando}
-            />
-          </div>
+          <BuscadorPaciente
+            busqueda={busqueda}
+            setBusqueda={setBusqueda}
+            pacientes={pacientes}
+            buscar={buscar}
+            agregarPaciente={agregarPaciente}
+            cargando={cargandoPacientes}
+            guardando={guardando}
+          />
 
-          <div>
-            <ColaAtencion
-              cola={cola}
-              quitarDeCola={quitarDeCola}
-              cargando={cargandoCola}
-              guardando={guardando}
-            />
-          </div>
+          <ColaAtencion
+            cola={cola}
+            quitarDeCola={quitarDeCola}
+            cargando={cargandoCola}
+            guardando={guardando}
+          />
         </div>
       </main>
 
       {mostrarFormulario && (
         <FormularioPaciente
           onGuardar={handleNuevoPaciente}
-          onCerrar={() =>
-            setMostrarFormulario(false)
-          }
+          onCerrar={() => setMostrarFormulario(false)}
           guardando={guardando}
         />
       )}
@@ -139,104 +94,100 @@ function RecepcionPage() {
 }
 
 const styles = {
-  container: {
+  page: {
     minHeight: '100vh',
-    background: '#f5fbfd',
+    background: '#f7fcfe',
   },
-
-  header: {
-    height: '72px',
-    background: '#03045e',
-    color: '#ffffff',
+  content: {
+    maxWidth: '1380px',
+    margin: '0 auto',
+    padding: '46px 5% 64px',
+  },
+  pageIntro: {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     justifyContent: 'space-between',
-    padding: '0 5%',
+    gap: '24px',
+    marginBottom: '30px',
   },
-
-  brand: {
-    fontSize: '25px',
+  eyebrow: {
+    color: '#0077b6',
+    fontSize: '0.72rem',
     fontWeight: '800',
-    letterSpacing: '1px',
+    letterSpacing: '1.8px',
+    margin: '0 0 10px',
   },
-
-  module: {
-    fontSize: '12px',
-    opacity: 0.75,
+  title: {
+    color: '#03045e',
+    fontSize: 'clamp(1.8rem, 3vw, 2.55rem)',
+    fontWeight: '750',
+    letterSpacing: '-0.04em',
+    margin: 0,
   },
-
-  userArea: {
+  description: {
+    color: '#496174',
+    fontSize: '0.95rem',
+    margin: '10px 0 0',
+  },
+  primaryButton: {
+    border: '0',
+    borderRadius: '7px',
+    background: '#0077b6',
+    color: '#ffffff',
+    padding: '12px 18px',
+    fontSize: '0.86rem',
+    fontWeight: '700',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    boxShadow: '0 8px 18px rgba(0, 119, 182, 0.16)',
+  },
+  summaryRow: {
     display: 'flex',
     alignItems: 'center',
     gap: '18px',
+    borderTop: '1px solid #90e0ef',
+    borderBottom: '1px solid #caf0f8',
+    padding: '16px 0',
+    marginBottom: '26px',
   },
-
-  logout: {
-    border: '1px solid rgba(255,255,255,.4)',
-    background: 'transparent',
-    color: '#ffffff',
-    borderRadius: '8px',
-    padding: '8px 13px',
-    cursor: 'pointer',
-  },
-
-  content: {
-    maxWidth: '1400px',
-    margin: '0 auto',
-    padding: '35px 5%',
-  },
-
-  welcome: {
+  summaryItem: {
     display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: '20px',
-    marginBottom: '30px',
+    alignItems: 'baseline',
+    gap: '10px',
   },
-
-  eyebrow: {
-    color: '#0077b6',
-    fontWeight: '700',
-    fontSize: '12px',
-    letterSpacing: '1.5px',
-    margin: 0,
-  },
-
-  title: {
-    color: '#03045e',
-    fontSize: '32px',
-    margin: '6px 0',
-  },
-
-  description: {
-    color: '#64748b',
-    margin: 0,
-  },
-
-  newButton: {
-    border: 'none',
-    background: '#0077b6',
-    color: '#ffffff',
-    padding: '13px 18px',
-    borderRadius: '10px',
-    cursor: 'pointer',
+  summaryLabel: {
+    color: '#496174',
+    fontSize: '0.83rem',
     fontWeight: '600',
-    whiteSpace: 'nowrap',
   },
-
+  summaryValue: {
+    color: '#03045e',
+    fontSize: '1.3rem',
+  },
+  summaryDivider: {
+    width: '1px',
+    height: '18px',
+    background: '#90e0ef',
+  },
+  summaryText: {
+    color: '#0077b6',
+    fontSize: '0.8rem',
+    margin: 0,
+  },
   layout: {
     display: 'grid',
-    gridTemplateColumns:
-      'minmax(0, 1fr) minmax(0, 1fr)',
+    gridTemplateColumns: 'minmax(300px, 0.82fr) minmax(0, 1.18fr)',
     gap: '24px',
+    alignItems: 'start',
   },
-
   error: {
-    background: '#fee2e2',
-    color: '#991b1b',
+    background: '#caf0f8',
+    border: '1px solid #90e0ef',
+    borderRadius: '8px',
+    color: '#03045e',
     padding: '12px 15px',
-    borderRadius: '10px',
     marginBottom: '20px',
+    fontSize: '0.86rem',
   },
 };
 
