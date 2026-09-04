@@ -1,0 +1,723 @@
+/* ==========================================================
+   USUARIOS MODULE STYLES (Odoo Minimal & Elegant)
+   Palette: #03045e, #0077b6, #00b4d8, #90e0ef, #caf0f8
+   Typography: 'Segoe UI', Verdana, sans-serif
+========================================================== */
+
+.usuarios-page {
+  min-height: 100vh;
+  background: #f8fafc;
+  color: #03045e;
+  font-family: 'Segoe UI', Verdana, sans-serif;
+}
+
+.usuarios-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 32px 48px;
+}
+
+/* ==========================================================
+   CONTROL PANEL / ODOO-STYLE HEADER
+========================================================== */
+.usuarios-control-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(3, 4, 94, 0.04);
+  flex-wrap: wrap;
+}
+
+.usuarios-panel-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.usuarios-main-title {
+  color: #03045e;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  margin: 0;
+}
+
+.usuarios-count-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #e0f2fe;
+  color: #0077b6;
+  border: 1px solid #bae6fd;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.usuarios-count-pill strong {
+  font-weight: 800;
+  color: #03045e;
+}
+
+.usuarios-panel-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Buscador Integrado */
+.usuarios-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0 12px;
+  height: 38px;
+  min-width: 260px;
+  transition: all 0.2s ease;
+}
+
+.usuarios-search-box:focus-within {
+  background: #ffffff;
+  border-color: #0077b6;
+  box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.12);
+}
+
+.usuarios-search-icon {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.usuarios-search-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.88rem;
+  color: #0f172a;
+  width: 100%;
+  font-family: inherit;
+}
+
+.usuarios-search-clear {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s ease;
+}
+
+.usuarios-search-clear:hover {
+  color: #0f172a;
+}
+
+/* Filtro por Rol */
+.usuarios-role-select {
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.86rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.usuarios-role-select:focus {
+  border-color: #0077b6;
+  box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.12);
+}
+
+/* Botón Nuevo Usuario */
+.usuarios-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0077b6;
+  color: #ffffff;
+  border: none;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 119, 182, 0.2);
+  white-space: nowrap;
+}
+
+.usuarios-btn-primary:hover {
+  background: #03045e;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(3, 4, 94, 0.2);
+}
+
+/* Alerta de Error */
+.usuarios-alert-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 11px 16px;
+  border-radius: 8px;
+  margin-bottom: 18px;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+/* Loading State */
+.usuarios-loading {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 50px 20px;
+  text-align: center;
+  color: #64748b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.usuarios-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e0f2fe;
+  border-top-color: #0077b6;
+  border-radius: 50%;
+  animation: spinUsuarios 0.7s linear infinite;
+}
+
+@keyframes spinUsuarios {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================================
+   TABLA DE USUARIOS
+========================================================== */
+.usuarios-table-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(3, 4, 94, 0.03);
+}
+
+.usuarios-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.usuarios-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.88rem;
+}
+
+.usuarios-th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.usuarios-tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.15s ease;
+}
+
+.usuarios-tr:hover {
+  background-color: #f8fafc;
+}
+
+.usuarios-td {
+  padding: 13px 20px;
+  vertical-align: middle;
+  color: #0f172a;
+}
+
+/* Celda de Usuario */
+.usuarios-user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.usuarios-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0077b6 0%, #00b4d8 100%);
+  color: #ffffff;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 6px rgba(0, 119, 182, 0.25);
+  flex-shrink: 0;
+}
+
+.usuarios-username {
+  font-weight: 700;
+  color: #03045e;
+  font-size: 0.92rem;
+}
+
+/* Badges de Rol */
+.usuarios-role-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.usuarios-role-admin {
+  background: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+
+.usuarios-role-medico {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.usuarios-role-enfermera {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.usuarios-role-farmacia {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.usuarios-role-default {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+/* Badges de Estado */
+.usuarios-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.usuarios-status-badge.activo {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.usuarios-status-badge.inactivo {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.usuarios-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.usuarios-status-badge.activo .usuarios-status-dot {
+  background: #10b981;
+}
+
+.usuarios-status-badge.inactivo .usuarios-status-dot {
+  background: #ef4444;
+}
+
+/* Botones de Acciones */
+.usuarios-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.usuarios-btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.usuarios-btn-edit {
+  color: #0077b6;
+  background: #f0f9ff;
+  border-color: #e0f2fe;
+}
+
+.usuarios-btn-edit:hover {
+  background: #0077b6;
+  color: #ffffff;
+  border-color: #0077b6;
+}
+
+.usuarios-btn-delete {
+  color: #e11d48;
+  background: #fff1f2;
+  border-color: #ffe4e6;
+}
+
+.usuarios-btn-delete:hover {
+  background: #e11d48;
+  color: #ffffff;
+  border-color: #e11d48;
+}
+
+/* Empty State */
+.usuarios-empty {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 50px 24px;
+  text-align: center;
+  color: #64748b;
+}
+
+.usuarios-empty-icon {
+  margin-bottom: 12px;
+  color: #94a3b8;
+}
+
+.usuarios-empty-title {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #03045e;
+  margin: 0 0 6px 0;
+}
+
+.usuarios-empty-desc {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* ==========================================================
+   MODAL FORMULARIO
+========================================================== */
+.usuarios-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 4, 94, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 16px;
+}
+
+.usuarios-modal-card {
+  background: #ffffff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 460px;
+  box-shadow: 0 20px 40px rgba(3, 4, 94, 0.18);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  animation: modalSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.usuarios-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+.usuarios-modal-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #03045e;
+  margin: 0;
+}
+
+.usuarios-modal-close {
+  background: #f1f5f9;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.15s ease;
+}
+
+.usuarios-modal-close:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.usuarios-modal-body {
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.usuarios-modal-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.usuarios-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.usuarios-form-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.usuarios-form-hint {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: normal;
+}
+
+.usuarios-form-input,
+.usuarios-form-select {
+  padding: 10px 13px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.88rem;
+  outline: none;
+  color: #0f172a;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: #ffffff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.usuarios-form-input:focus,
+.usuarios-form-select:focus {
+  border-color: #0077b6;
+  box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.12);
+}
+
+.usuarios-input-password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.usuarios-input-password-wrapper .usuarios-form-input {
+  padding-right: 38px;
+}
+
+.usuarios-password-toggle {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+}
+
+.usuarios-password-toggle:hover {
+  color: #0077b6;
+}
+
+/* Toggle de Estado Activo / Inactivo */
+.usuarios-status-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.usuarios-status-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+.usuarios-status-option.selected-active {
+  background: #ecfdf5;
+  border-color: #10b981;
+  color: #059669;
+}
+
+.usuarios-status-option.selected-inactive {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.usuarios-status-option input {
+  accent-color: #0077b6;
+  cursor: pointer;
+}
+
+/* Footer del Modal */
+.usuarios-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 22px;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+}
+
+.usuarios-btn-cancel {
+  padding: 9px 16px;
+  background: #ffffff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.usuarios-btn-cancel:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.usuarios-btn-submit {
+  padding: 9px 18px;
+  background: #0077b6;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 119, 182, 0.25);
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.usuarios-btn-submit:hover:not(:disabled) {
+  background: #03045e;
+  transform: translateY(-1px);
+}
+
+.usuarios-btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+@media (max-width: 768px) {
+  .usuarios-container {
+    padding: 16px;
+  }
+
+  .usuarios-control-panel {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .usuarios-panel-right {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .usuarios-search-box {
+    min-width: 100%;
+  }
+
+  .usuarios-btn-primary {
+    justify-content: center;
+  }
+}
+

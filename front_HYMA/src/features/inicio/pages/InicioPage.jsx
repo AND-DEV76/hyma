@@ -1,5 +1,16 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Calendar,
+  Activity,
+  ShieldCheck,
+  Zap,
+  HeartPulse,
+  Stethoscope,
+  Users,
+  FlaskConical,
+  ArrowRight
+} from 'lucide-react';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 
 export default function InicioPage() {
@@ -29,7 +40,10 @@ export default function InicioPage() {
         {/* Banner de Bienvenida */}
         <section style={styles.welcomeBanner}>
           <div style={styles.bannerInfo}>
-            <span style={styles.dateBadge}>📅 {currentDate}</span>
+            <span style={styles.dateBadge}>
+              <Calendar size={14} style={{ display: 'inline', verticalAlign: '-2px', marginRight: '6px' }} />
+              {currentDate}
+            </span>
             <h1 style={styles.welcomeTitle}>
               ¡Hola de nuevo, <span style={styles.highlightName}>{user.username}</span>!
             </h1>
@@ -47,7 +61,7 @@ export default function InicioPage() {
         <section style={styles.statsGrid}>
           <div style={styles.statCard}>
             <div style={{ ...styles.statIconBox, background: '#e0f2fe', color: '#0284c7' }}>
-              🏥
+              <Activity size={22} />
             </div>
             <div>
               <div style={styles.statLabel}>Módulo Activo</div>
@@ -57,7 +71,7 @@ export default function InicioPage() {
 
           <div style={styles.statCard}>
             <div style={{ ...styles.statIconBox, background: '#dcfce7', color: '#16a34a' }}>
-              🔒
+              <ShieldCheck size={22} />
             </div>
             <div>
               <div style={styles.statLabel}>Seguridad</div>
@@ -67,7 +81,7 @@ export default function InicioPage() {
 
           <div style={styles.statCard}>
             <div style={{ ...styles.statIconBox, background: '#fef3c7', color: '#d97706' }}>
-              ⚡
+              <Zap size={22} />
             </div>
             <div>
               <div style={styles.statLabel}>Estado Sistema</div>
@@ -88,7 +102,7 @@ export default function InicioPage() {
             <div style={styles.moduleCard} onClick={() => navigate('/recepcion')}>
               <div style={styles.cardTop}>
                 <div style={{ ...styles.cardIcon, background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' }}>
-                  🏥
+                  <HeartPulse size={24} color="#ffffff" />
                 </div>
                 <span style={styles.badgePermiso}>Recepción / Cola</span>
               </div>
@@ -98,7 +112,7 @@ export default function InicioPage() {
               </p>
               <div style={styles.cardAction}>
                 <span>Ingresar al módulo</span>
-                <span style={styles.arrowIcon}>→</span>
+                <ArrowRight size={16} style={styles.arrowIcon} />
               </div>
             </div>
           )}
@@ -108,7 +122,7 @@ export default function InicioPage() {
             <div style={styles.moduleCard} onClick={() => navigate('/medicos')}>
               <div style={styles.cardTop}>
                 <div style={{ ...styles.cardIcon, background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)' }}>
-                  👨‍⚕️
+                  <Stethoscope size={24} color="#ffffff" />
                 </div>
                 <span style={styles.badgePermiso}>Personal Médico</span>
               </div>
@@ -118,7 +132,7 @@ export default function InicioPage() {
               </p>
               <div style={styles.cardAction}>
                 <span>Ingresar al módulo</span>
-                <span style={styles.arrowIcon}>→</span>
+                <ArrowRight size={16} style={styles.arrowIcon} />
               </div>
             </div>
           )}
@@ -129,7 +143,7 @@ export default function InicioPage() {
               <div style={styles.moduleCard} onClick={() => navigate('/usuarios')}>
                 <div style={styles.cardTop}>
                   <div style={{ ...styles.cardIcon, background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' }}>
-                    👥
+                    <Users size={24} color="#ffffff" />
                   </div>
                   <span style={{ ...styles.badgePermiso, background: '#ede9fe', color: '#6d28d9' }}>
                     Solo Admin
@@ -141,14 +155,14 @@ export default function InicioPage() {
                 </p>
                 <div style={styles.cardAction}>
                   <span>Administrar usuarios</span>
-                  <span style={styles.arrowIcon}>→</span>
+                  <ArrowRight size={16} style={styles.arrowIcon} />
                 </div>
               </div>
 
               <div style={styles.moduleCard} onClick={() => navigate('/alergias')}>
                 <div style={styles.cardTop}>
                   <div style={{ ...styles.cardIcon, background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
-                    🧪
+                    <FlaskConical size={24} color="#ffffff" />
                   </div>
                   <span style={{ ...styles.badgePermiso, background: '#fef3c7', color: '#b45309' }}>
                     Solo Admin
@@ -160,7 +174,7 @@ export default function InicioPage() {
                 </p>
                 <div style={styles.cardAction}>
                   <span>Gestionar catálogo</span>
-                  <span style={styles.arrowIcon}>→</span>
+                  <ArrowRight size={16} style={styles.arrowIcon} />
                 </div>
               </div>
             </>

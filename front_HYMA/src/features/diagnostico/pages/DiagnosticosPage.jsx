@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useDiagnosticos } from '../hooks/useDiagnosticos';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 
@@ -57,7 +58,10 @@ export default function DiagnosticosPage() {
       <div style={styles.content}>
         <div style={styles.header}>
           <h2>Catálogo de Diagnósticos CIE-10</h2>
-          <button onClick={() => handleOpenModal()} style={styles.btnPrimary}>Nuevo Diagnóstico</button>
+          <button onClick={() => handleOpenModal()} style={styles.btnPrimary}>
+            <Plus size={16} style={{ marginRight: '6px', verticalAlign: '-2px' }} />
+            Nuevo Diagnóstico
+          </button>
         </div>
         
         <input type="text" placeholder="Buscar por código o descripción..." value={buscar} onChange={e => {setBuscar(e.target.value); setPage(0);}} style={styles.searchInput} />
@@ -73,8 +77,14 @@ export default function DiagnosticosPage() {
                   <td><strong>{d.codigo}</strong></td>
                   <td>{d.descripcion}</td>
                   <td>
-                    <button onClick={() => handleOpenModal(d)} style={styles.btnSmallInfo}>Editar</button>
-                    <button onClick={() => handleDelete(d.idCie10)} style={styles.btnSmallDanger}>Eliminar</button>
+                    <button onClick={() => handleOpenModal(d)} style={styles.btnSmallInfo}>
+                      <Pencil size={13} style={{ marginRight: '4px', verticalAlign: '-1px' }} />
+                      Editar
+                    </button>
+                    <button onClick={() => handleDelete(d.idCie10)} style={styles.btnSmallDanger}>
+                      <Trash2 size={13} style={{ marginRight: '4px', verticalAlign: '-1px' }} />
+                      Eliminar
+                    </button>
                   </td>
                 </tr>
               ))}

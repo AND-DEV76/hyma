@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { UserPlus, Users, Search, X, AlertCircle } from 'lucide-react';
 import { useUsuarios } from '../hooks/useUsuarios';
 import UsuarioTable from '../components/UsuarioTable';
 import UsuarioFormModal from '../components/UsuarioFormModal';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
+import '../styles/usuarios.css';
 
 export default function UsuariosPage() {
-  const navigate = useNavigate();
   const { usuarios, loading, error, addUsuario, editUsuario, removeUsuario } = useUsuarios();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,10 +25,6 @@ export default function UsuariosPage() {
     });
   }, [usuarios, searchTerm, roleFilter]);
 
-  // Contadores de resumen
-  const totalActivos = useMemo(() => usuarios.filter((u) => u.estado).length, [usuarios]);
-  const totalInactivos = useMemo(() => usuarios.filter((u) => !u.estado).length, [usuarios]);
-
   const handleOpenCreate = () => {
     setSelectedUsuario(null);
     setIsModalOpen(true);
@@ -40,7 +36,7 @@ export default function UsuariosPage() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este usuario del sistema?')) {
+    if (window.confirm('¿Deseas eliminar este usuario del sistema?')) {
       await removeUsuario(id);
     }
   };
@@ -54,88 +50,83 @@ export default function UsuariosPage() {
   };
 
   return (
-    <div style={styles.page}>
+    <div className="usuarios-page">
       <AdminNavbar />
 
-      <main style={styles.container}>
-        {/* Encabezado Principal */}
-        <div style={styles.header}>
-          <div>
-            <div style={styles.breadcrumb}>
-              <span onClick={() => navigate('/inicio')} style={styles.breadcrumbLink}>
-                Inicio
-              </span>{' '}
-              / <span>Usuarios</span>
+      <main className="usuarios-container">
+        {/* Barra Superior de Control estilo Odoo */}
+        <header className="usuarios-control-panel">
+          <div className="usuarios-panel-left">
+            <h1 className="usuarios-main-title">Administración de Usuarios</h1>
+            <div className="usuarios-count-pill">
+              <Users size={14} />
+              <span>
+                <strong>{filteredUsuarios.length}</strong> {filteredUsuarios.length === 1 ? 'cuenta' : 'cuentas'}
+              </span>
             </div>
-            <h1 style={styles.title}>Administración de Usuarios</h1>
-            <p style={styles.subtitle}>
-              Gestiona el acceso, roles y estado de las cuentas de usuario de la clínica.
-            </p>
           </div>
 
-          <button onClick={handleOpenCreate} style={styles.btnCreate}>
-            <span style={styles.btnIcon}>+</span> Nuevo Usuario
-          </button>
-        </div>
+          <div className="usuarios-panel-right">
+            {/* Buscador */}
+            <div className="usuarios-search-box">
+              <Search size={16} className="usuarios-search-icon" />
+              <input
+                type="text"
+                placeholder="Buscar usuario..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="usuarios-search-input"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="usuarios-search-clear"
+                  title="Limpiar búsqueda"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
 
-        {/* Resumen de Métricas */}
-        <div style={styles.metricsRow}>
-          <div style={styles.metricCard}>
-            <div style={styles.metricLabel}>Total Registrados</div>
-            <div style={styles.metricValue}>{usuarios.length}</div>
-          </div>
-          <div style={styles.metricCard}>
-            <div style={styles.metricLabel}>Cuentas Activas</div>
-            <div style={{ ...styles.metricValue, color: '#16a34a' }}>{totalActivos}</div>
-          </div>
-          <div style={styles.metricCard}>
-            <div style={styles.metricLabel}>Cuentas Inactivas</div>
-            <div style={{ ...styles.metricValue, color: '#dc2626' }}>{totalInactivos}</div>
-          </div>
-        </div>
-
-        {/* Barra de Búsqueda y Filtros */}
-        <div style={styles.filterCard}>
-          <div style={styles.searchBox}>
-            <span style={styles.searchIcon}>🔍</span>
-            <input
-              type="text"
-              placeholder="Buscar por nombre de usuario o rol..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={styles.searchInput}
-            />
-            {searchTerm && (
-              <button onClick={() => setSearchTerm('')} style={styles.btnClearSearch}>
-                ✕
-              </button>
-            )}
-          </div>
-
-          <div style={styles.roleFilterGroup}>
-            <label style={styles.filterLabel}>Filtrar Rol:</label>
+            {/* Filtro por Rol */}
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              style={styles.filterSelect}
+              className="usuarios-role-select"
             >
               <option value="ALL">Todos los roles</option>
               <option value="ADMIN">ADMIN</option>
-              <option value="MEDICO">MEDICO</option>
+              <option value="MEDICO">MÉDICO</option>
               <option value="ENFERMERA">ENFERMERA</option>
               <option value="FARMACIA">FARMACIA</option>
             </select>
+
+            {/* Botón Nuevo Usuario */}
+            <button
+              type="button"
+              onClick={handleOpenCreate}
+              className="usuarios-btn-primary"
+            >
+              <UserPlus size={16} />
+              <span>Nuevo Usuario</span>
+            </button>
           </div>
-        </div>
+        </header>
 
         {/* Alerta de Error */}
-        {error && <div style={styles.errorAlert}>⚠️ {error}</div>}
+        {error && (
+          <div className="usuarios-alert-error" role="alert">
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            <span>{error}</span>
+          </div>
+        )}
 
-        {/* Contenido de la Tabla */}
+        {/* Contenido / Tabla */}
         {loading ? (
-          <div style={styles.loadingContainer}>
-            <div style={styles.spinner}></div>
-            <p style={{ color: '#64748b', fontWeight: 600 }}>Cargando catálogo de usuarios...</p>
+          <div className="usuarios-loading">
+            <div className="usuarios-spinner" />
+            <p>Cargando usuarios...</p>
           </div>
         ) : (
           <UsuarioTable
@@ -156,171 +147,3 @@ export default function UsuariosPage() {
     </div>
   );
 }
-
-const styles = {
-  page: {
-    minHeight: '100vh',
-    backgroundColor: '#f8fafc',
-    fontFamily: "'Segoe UI', Verdana, sans-serif",
-  },
-  container: {
-    maxWidth: '1280px',
-    margin: '0 auto',
-    padding: '2.5rem 1.5rem',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '2rem',
-    flexWrap: 'wrap',
-    gap: '1rem',
-  },
-  breadcrumb: {
-    fontSize: '0.82rem',
-    color: '#64748b',
-    fontWeight: 600,
-    marginBottom: '6px',
-  },
-  breadcrumbLink: {
-    color: '#0077b6',
-    cursor: 'pointer',
-  },
-  title: {
-    fontSize: '1.75rem',
-    fontWeight: '800',
-    color: '#0f172a',
-    margin: '0 0 6px 0',
-  },
-  subtitle: {
-    fontSize: '0.92rem',
-    color: '#64748b',
-    margin: 0,
-  },
-  btnCreate: {
-    background: 'linear-gradient(135deg, #0077b6 0%, #0096c7 100%)',
-    color: '#ffffff',
-    border: 'none',
-    padding: '12px 22px',
-    borderRadius: '10px',
-    fontWeight: '700',
-    fontSize: '0.92rem',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    boxShadow: '0 4px 14px rgba(0, 119, 182, 0.3)',
-    transition: 'all 0.2s ease',
-  },
-  btnIcon: {
-    fontSize: '1.2rem',
-    lineHeight: '1',
-  },
-  metricsRow: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-    gap: '1rem',
-    marginBottom: '1.75rem',
-  },
-  metricCard: {
-    backgroundColor: '#ffffff',
-    padding: '1.2rem 1.5rem',
-    borderRadius: '12px',
-    border: '1px solid #e2e8f0',
-    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
-  },
-  metricLabel: {
-    fontSize: '0.75rem',
-    color: '#64748b',
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  },
-  metricValue: {
-    fontSize: '1.6rem',
-    fontWeight: '800',
-    color: '#0f172a',
-    marginTop: '4px',
-  },
-  filterCard: {
-    backgroundColor: '#ffffff',
-    padding: '1.25rem',
-    borderRadius: '12px',
-    border: '1px solid #e2e8f0',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: '1rem',
-    marginBottom: '1.5rem',
-    flexWrap: 'wrap',
-    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
-  },
-  searchBox: {
-    display: 'flex',
-    alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: '8px',
-    padding: '0 12px',
-    flex: '1',
-    minWidth: '260px',
-  },
-  searchIcon: {
-    fontSize: '0.9rem',
-    marginRight: '8px',
-    color: '#64748b',
-  },
-  searchInput: {
-    border: 'none',
-    background: 'transparent',
-    padding: '10px 0',
-    fontSize: '0.92rem',
-    outline: 'none',
-    width: '100%',
-    color: '#0f172a',
-  },
-  btnClearSearch: {
-    background: 'transparent',
-    border: 'none',
-    color: '#94a3b8',
-    cursor: 'pointer',
-    fontSize: '0.9rem',
-    padding: '4px',
-  },
-  roleFilterGroup: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  filterLabel: {
-    fontSize: '0.85rem',
-    fontWeight: '600',
-    color: '#475569',
-  },
-  filterSelect: {
-    padding: '9px 14px',
-    borderRadius: '8px',
-    border: '1px solid #cbd5e1',
-    backgroundColor: '#ffffff',
-    fontSize: '0.88rem',
-    color: '#0f172a',
-    outline: 'none',
-    cursor: 'pointer',
-  },
-  errorAlert: {
-    backgroundColor: '#fee2e2',
-    color: '#991b1b',
-    border: '1px solid #fecaca',
-    padding: '12px 16px',
-    borderRadius: '10px',
-    marginBottom: '1.5rem',
-    fontSize: '0.9rem',
-    fontWeight: '600',
-  },
-  loadingContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: '12px',
-    padding: '3.5rem',
-    textAlign: 'center',
-    border: '1px solid #e2e8f0',
-  },
-};

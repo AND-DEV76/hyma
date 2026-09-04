@@ -1,15 +1,13 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { UserPlus, Users, AlertCircle } from 'lucide-react';
 import { useRecepcion } from '../hooks/useRecepcion';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import BuscadorPaciente from '../components/BuscadorPaciente';
 import ColaAtencion from '../components/ColaAtencion';
 import FormularioPaciente from '../components/FormularioPaciente';
+import '../styles/recepcion.css';
 
 function RecepcionPage() {
-  const user = JSON.parse(localStorage.getItem('user')) || {
-    username: 'Usuario',
-  };
-
   const {
     pacientes,
     cola,
@@ -33,36 +31,42 @@ function RecepcionPage() {
   };
 
   return (
-    <div style={styles.page}>
+    <div className="recepcion-page">
       <AdminNavbar />
 
-      <main style={styles.content}>
-        <section style={styles.pageIntro}>
-          <div>
-            <p style={styles.eyebrow}>RECEPCIÓN</p>
-            <h1 style={styles.title}>Buenos días, {user.username}</h1>
-            <p style={styles.description}>
-              Gestiona el ingreso de pacientes y organiza la atención del día.
-            </p>
+      <main className="recepcion-container">
+        {/* Barra Superior de Control estilo Odoo */}
+        <header className="recepcion-control-panel">
+          <div className="recepcion-panel-left">
+            <h1 className="recepcion-main-title">Registrar Paciente</h1>
+            <div className="recepcion-queue-pill">
+              <Users size={14} />
+              <span><strong>{cola.length}</strong> en cola</span>
+            </div>
           </div>
 
-          <button onClick={() => setMostrarFormulario(true)} style={styles.primaryButton}>
-            Nuevo paciente
-          </button>
-        </section>
-
-        <div style={styles.summaryRow}>
-          <div style={styles.summaryItem}>
-            <span style={styles.summaryLabel}>Pacientes en espera</span>
-            <strong style={styles.summaryValue}>{cola.length}</strong>
+          <div className="recepcion-panel-actions">
+            <button
+              type="button"
+              onClick={() => setMostrarFormulario(true)}
+              className="recepcion-btn-primary"
+            >
+              <UserPlus size={16} />
+              <span>Nuevo Paciente</span>
+            </button>
           </div>
-          <div style={styles.summaryDivider} />
-          <p style={styles.summaryText}>Turnos pendientes de preconsulta</p>
-        </div>
+        </header>
 
-        {error && <div role="alert" style={styles.error}>{error}</div>}
+        {/* Error global si ocurre */}
+        {error && (
+          <div className="recepcion-alert-error" role="alert">
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            <span>{error}</span>
+          </div>
+        )}
 
-        <div style={styles.layout}>
+        {/* Espacio de Trabajo: Buscador y Cola */}
+        <div className="recepcion-workspace-grid">
           <BuscadorPaciente
             busqueda={busqueda}
             setBusqueda={setBusqueda}
@@ -82,6 +86,7 @@ function RecepcionPage() {
         </div>
       </main>
 
+      {/* Modal de Registro de Paciente */}
       {mostrarFormulario && (
         <FormularioPaciente
           onGuardar={handleNuevoPaciente}
@@ -92,103 +97,5 @@ function RecepcionPage() {
     </div>
   );
 }
-
-const styles = {
-  page: {
-    minHeight: '100vh',
-    background: '#f7fcfe',
-  },
-  content: {
-    maxWidth: '1380px',
-    margin: '0 auto',
-    padding: '46px 5% 64px',
-  },
-  pageIntro: {
-    display: 'flex',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    gap: '24px',
-    marginBottom: '30px',
-  },
-  eyebrow: {
-    color: '#0077b6',
-    fontSize: '0.72rem',
-    fontWeight: '800',
-    letterSpacing: '1.8px',
-    margin: '0 0 10px',
-  },
-  title: {
-    color: '#03045e',
-    fontSize: 'clamp(1.8rem, 3vw, 2.55rem)',
-    fontWeight: '750',
-    letterSpacing: '-0.04em',
-    margin: 0,
-  },
-  description: {
-    color: '#496174',
-    fontSize: '0.95rem',
-    margin: '10px 0 0',
-  },
-  primaryButton: {
-    border: '0',
-    borderRadius: '7px',
-    background: '#0077b6',
-    color: '#ffffff',
-    padding: '12px 18px',
-    fontSize: '0.86rem',
-    fontWeight: '700',
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    boxShadow: '0 8px 18px rgba(0, 119, 182, 0.16)',
-  },
-  summaryRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '18px',
-    borderTop: '1px solid #90e0ef',
-    borderBottom: '1px solid #caf0f8',
-    padding: '16px 0',
-    marginBottom: '26px',
-  },
-  summaryItem: {
-    display: 'flex',
-    alignItems: 'baseline',
-    gap: '10px',
-  },
-  summaryLabel: {
-    color: '#496174',
-    fontSize: '0.83rem',
-    fontWeight: '600',
-  },
-  summaryValue: {
-    color: '#03045e',
-    fontSize: '1.3rem',
-  },
-  summaryDivider: {
-    width: '1px',
-    height: '18px',
-    background: '#90e0ef',
-  },
-  summaryText: {
-    color: '#0077b6',
-    fontSize: '0.8rem',
-    margin: 0,
-  },
-  layout: {
-    display: 'grid',
-    gridTemplateColumns: 'minmax(300px, 0.82fr) minmax(0, 1.18fr)',
-    gap: '24px',
-    alignItems: 'start',
-  },
-  error: {
-    background: '#caf0f8',
-    border: '1px solid #90e0ef',
-    borderRadius: '8px',
-    color: '#03045e',
-    padding: '12px 15px',
-    marginBottom: '20px',
-    fontSize: '0.86rem',
-  },
-};
 
 export default RecepcionPage;

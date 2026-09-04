@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AlertTriangle, Search, X } from 'lucide-react';
 import { useAlergias } from '../hooks/useAlergias';
 import { AlergiaForm } from '../components/AlergiaForm';
 import { AlergiaList } from '../components/AlergiaList';
@@ -71,7 +72,12 @@ export const AlergiaPage = () => {
         </div>
 
         {/* Alerta de Error */}
-        {error && <div style={styles.errorAlert}>⚠️ {error}</div>}
+        {error && (
+          <div style={styles.errorAlert}>
+            <AlertTriangle size={18} style={{ flexShrink: 0, marginRight: '8px' }} />
+            <span>{error}</span>
+          </div>
+        )}
 
         {/* Layout en Grid: Formulario + Listado */}
         <div style={styles.layoutGrid}>
@@ -88,7 +94,7 @@ export const AlergiaPage = () => {
           <div style={styles.listCol}>
             {/* Buscador */}
             <div style={styles.searchCard}>
-              <span style={styles.searchIcon}>🔍</span>
+              <Search size={18} style={{ color: '#0077b6' }} />
               <input
                 type="text"
                 placeholder="Buscar alergia (ej: Penicilina, Polen, Maní)..."
@@ -98,7 +104,7 @@ export const AlergiaPage = () => {
               />
               {searchTerm && (
                 <button onClick={() => setSearchTerm('')} style={styles.btnClear}>
-                  ✕
+                  <X size={15} />
                 </button>
               )}
             </div>

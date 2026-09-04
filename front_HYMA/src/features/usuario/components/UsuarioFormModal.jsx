@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { X, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const ROLES = [
   { id: 1, nombre: 'ADMIN', desc: 'Acceso total y configuración' },
@@ -11,6 +12,7 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
   const [idRol, setIdRol] = useState(1);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [estado, setEstado] = useState(true);
   const [validationError, setValidationError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,11 +23,13 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
       setUsername(usuarioToEdit.username || '');
       setEstado(usuarioToEdit.estado ?? true);
       setPassword('');
+      setShowPassword(false);
     } else {
       setIdRol(1);
       setUsername('');
       setPassword('');
       setEstado(true);
+      setShowPassword(false);
     }
     setValidationError('');
   }, [usuarioToEdit, isOpen]);
@@ -37,12 +41,12 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
     setValidationError('');
 
     if (username.trim().length < 3) {
-      setValidationError('El nombre de usuario debe contener al menos 3 caracteres.');
+      setValidationError('El nombre de usuario debe tener al menos 3 caracteres.');
       return;
     }
 
     if (!usuarioToEdit && password.length < 8) {
-      setValidationError('La contraseña debe tener al menos 8 caracteres para mayor seguridad.');
+      setValidationError('La contraseña debe tener al menos 8 caracteres.');
       return;
     }
 
@@ -71,149 +75,136 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
   };
 
   return (
-    <div style={styles.overlay}>
-      <div style={styles.modalCard}>
+    <div className="usuarios-modal-overlay">
+      <div className="usuarios-modal-card">
         {/* Cabecera del Modal */}
-        <div style={styles.modalHeader}>
-          <div>
-            <h3 style={styles.modalTitle}>
-              {usuarioToEdit ? 'Editar Cuenta de Usuario' : 'Registrar Nuevo Usuario'}
-            </h3>
-            <p style={styles.modalSub}>
-              {usuarioToEdit
-                ? `Modificando los datos del usuario ID #${usuarioToEdit.idUsuario}`
-                : 'Completa la información para crear una cuenta en el sistema.'}
-            </p>
-          </div>
-          <button onClick={onClose} style={styles.btnClose}>
-            ✕
+        <div className="usuarios-modal-header">
+          <h3 className="usuarios-modal-title">
+            {usuarioToEdit ? 'Editar Usuario' : 'Nuevo Usuario'}
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="usuarios-modal-close"
+            title="Cerrar"
+          >
+            <X size={18} />
           </button>
         </div>
 
+        {/* Mensaje de Error */}
         {validationError && (
-          <div style={styles.errorBanner}>
-            <span>⚠️</span>
+          <div style={{ margin: '14px 22px 0' }} className="usuarios-modal-error">
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
             <span>{validationError}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          {/* Campo Rol */}
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Rol y Permisos</label>
-            <select
-              value={idRol}
-              onChange={(e) => setIdRol(Number(e.target.value))}
-              style={styles.select}
-            >
-              {ROLES.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.nombre} — {r.desc}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Campo Username */}
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Nombre de Usuario (Login)</label>
-            <input
-              type="text"
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Ej: dr_martinez o enf_lucia"
-              style={styles.input}
-            />
-          </div>
-
-          {/* Campo Contraseña */}
-          <div style={styles.formGroup}>
-            <div style={styles.labelWithHint}>
-              <label style={styles.label}>Contraseña</label>
-              {usuarioToEdit && (
-                <span style={styles.fieldHint}>Opcional (Dejar en blanco para no cambiar)</span>
-              )}
+        <form onSubmit={handleSubmit}>
+          <div className="usuarios-modal-body">
+            {/* Campo Rol */}
+            <div className="usuarios-form-group">
+              <label className="usuarios-form-label">Rol de Acceso</label>
+              <select
+                value={idRol}
+                onChange={(e) => setIdRol(Number(e.target.value))}
+                className="usuarios-form-select"
+              >
+                {ROLES.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.nombre} — {r.desc}
+                  </option>
+                ))}
+              </select>
             </div>
-            <input
-              type="password"
-              required={!usuarioToEdit}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={usuarioToEdit ? '•••••••• (Sin cambios)' : 'Mínimo 8 caracteres'}
-              style={styles.input}
-            />
-          </div>
 
-          {/* Campo Estado (Solo en Edición) */}
-          {usuarioToEdit && (
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Estado de la Cuenta</label>
-              <div style={styles.statusToggleGroup}>
-                <label
-                  style={{
-                    ...styles.statusOption,
-                    borderColor: estado ? '#10b981' : '#e2e8f0',
-                    backgroundColor: estado ? '#f0fdf4' : '#ffffff',
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="estado"
-                    checked={estado === true}
-                    onChange={() => setEstado(true)}
-                    style={styles.radioInput}
-                  />
-                  <div>
-                    <strong style={{ color: '#16a34a', display: 'block', fontSize: '0.88rem' }}>
-                      Activo
-                    </strong>
-                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                      Puede iniciar sesión normalmente
-                    </span>
-                  </div>
-                </label>
+            {/* Campo Username */}
+            <div className="usuarios-form-group">
+              <label className="usuarios-form-label">Nombre de Usuario</label>
+              <input
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Ej: dr_martinez"
+                className="usuarios-form-input"
+              />
+            </div>
 
-                <label
-                  style={{
-                    ...styles.statusOption,
-                    borderColor: !estado ? '#ef4444' : '#e2e8f0',
-                    backgroundColor: !estado ? '#fef2f2' : '#ffffff',
-                  }}
+            {/* Campo Contraseña */}
+            <div className="usuarios-form-group">
+              <div className="usuarios-form-label">
+                <span>Contraseña</span>
+                {usuarioToEdit && (
+                  <span className="usuarios-form-hint">Opcional si no se cambia</span>
+                )}
+              </div>
+              <div className="usuarios-input-password-wrapper">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required={!usuarioToEdit}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={usuarioToEdit ? '••••••••' : 'Mínimo 8 caracteres'}
+                  className="usuarios-form-input"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="usuarios-password-toggle"
+                  title={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
                 >
-                  <input
-                    type="radio"
-                    name="estado"
-                    checked={estado === false}
-                    onChange={() => setEstado(false)}
-                    style={styles.radioInput}
-                  />
-                  <div>
-                    <strong style={{ color: '#dc2626', display: 'block', fontSize: '0.88rem' }}>
-                      Inactivo
-                    </strong>
-                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                      Acceso temporalmente suspendido
-                    </span>
-                  </div>
-                </label>
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
-          )}
 
-          {/* Botones de Acción */}
-          <div style={styles.modalFooter}>
+            {/* Estado (Solo en Edición) */}
+            {usuarioToEdit && (
+              <div className="usuarios-form-group">
+                <label className="usuarios-form-label">Estado de la Cuenta</label>
+                <div className="usuarios-status-toggle">
+                  <label
+                    className={`usuarios-status-option ${estado ? 'selected-active' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="estado"
+                      checked={estado === true}
+                      onChange={() => setEstado(true)}
+                    />
+                    <span>Activo</span>
+                  </label>
+
+                  <label
+                    className={`usuarios-status-option ${!estado ? 'selected-inactive' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="estado"
+                      checked={estado === false}
+                      onChange={() => setEstado(false)}
+                    />
+                    <span>Inactivo</span>
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="usuarios-modal-footer">
             <button
               type="button"
               onClick={onClose}
-              style={styles.btnCancel}
+              className="usuarios-btn-cancel"
               disabled={isSubmitting}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              style={styles.btnSubmit}
+              className="usuarios-btn-submit"
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Guardando...' : usuarioToEdit ? 'Guardar Cambios' : 'Crear Usuario'}
@@ -224,162 +215,3 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
     </div>
   );
 }
-
-const styles = {
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(3, 4, 94, 0.45)',
-    backdropFilter: 'blur(4px)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-    padding: '1rem',
-  },
-  modalCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: '16px',
-    padding: '2rem',
-    width: '100%',
-    maxWidth: '480px',
-    boxShadow: '0 20px 40px rgba(3, 4, 94, 0.2)',
-    border: '1px solid #e2e8f0',
-  },
-  modalHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '1.5rem',
-  },
-  modalTitle: {
-    fontSize: '1.3rem',
-    fontWeight: '800',
-    color: '#0f172a',
-    margin: '0 0 4px 0',
-  },
-  modalSub: {
-    fontSize: '0.82rem',
-    color: '#64748b',
-    margin: 0,
-  },
-  btnClose: {
-    background: '#f1f5f9',
-    border: 'none',
-    width: '32px',
-    height: '32px',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    color: '#64748b',
-    fontWeight: 'bold',
-    fontSize: '0.9rem',
-  },
-  errorBanner: {
-    backgroundColor: '#fee2e2',
-    color: '#991b1b',
-    border: '1px solid #fecaca',
-    padding: '10px 14px',
-    borderRadius: '8px',
-    fontSize: '0.85rem',
-    fontWeight: '600',
-    display: 'flex',
-    gap: '8px',
-    alignItems: 'center',
-    marginBottom: '1.25rem',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.25rem',
-  },
-  formGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
-  },
-  labelWithHint: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  label: {
-    fontSize: '0.84rem',
-    fontWeight: '700',
-    color: '#334155',
-  },
-  fieldHint: {
-    fontSize: '0.72rem',
-    color: '#94a3b8',
-    fontStyle: 'italic',
-  },
-  input: {
-    padding: '11px 14px',
-    borderRadius: '9px',
-    border: '1px solid #cbd5e1',
-    fontSize: '0.92rem',
-    outline: 'none',
-    color: '#0f172a',
-    transition: 'border-color 0.2s ease',
-  },
-  select: {
-    padding: '11px 14px',
-    borderRadius: '9px',
-    border: '1px solid #cbd5e1',
-    fontSize: '0.92rem',
-    outline: 'none',
-    backgroundColor: '#ffffff',
-    color: '#0f172a',
-    cursor: 'pointer',
-  },
-  statusToggleGroup: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '10px',
-  },
-  statusOption: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    padding: '10px',
-    borderRadius: '10px',
-    border: '1.5px solid #e2e8f0',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  radioInput: {
-    cursor: 'pointer',
-  },
-  modalFooter: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    gap: '10px',
-    marginTop: '0.5rem',
-  },
-  btnCancel: {
-    padding: '11px 18px',
-    backgroundColor: '#f8fafc',
-    color: '#475569',
-    border: '1px solid #cbd5e1',
-    borderRadius: '9px',
-    fontWeight: '700',
-    fontSize: '0.88rem',
-    cursor: 'pointer',
-  },
-  btnSubmit: {
-    padding: '11px 22px',
-    backgroundColor: '#0077b6',
-    color: '#ffffff',
-    border: 'none',
-    borderRadius: '9px',
-    fontWeight: '700',
-    fontSize: '0.88rem',
-    cursor: 'pointer',
-    boxShadow: '0 4px 12px rgba(0, 119, 182, 0.25)',
-  },
-};

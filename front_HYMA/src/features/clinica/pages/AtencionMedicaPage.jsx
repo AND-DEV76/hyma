@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Trash2, X, Plus, AlertTriangle } from 'lucide-react';
 import { useClinica } from '../hooks/useClinica';
 import * as clinicaService from '../services/clinicaService';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
@@ -201,7 +202,17 @@ export default function AtencionMedicaPage() {
           </div>
           <ul>
             {diagnosticos.map(d => (
-              <li key={d.codigoCie10}>{d.codigoCie10} - {d.descripcion} <button onClick={() => removeDiagnostico(d.codigoCie10)} style={styles.btnSmallDanger}>X</button></li>
+              <li key={d.codigoCie10} style={{ marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>{d.codigoCie10} - {d.descripcion}</span>
+                <button
+                  type="button"
+                  onClick={() => removeDiagnostico(d.codigoCie10)}
+                  style={{ ...styles.btnSmallDanger, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}
+                  title="Eliminar diagnóstico"
+                >
+                  <X size={14} />
+                </button>
+              </li>
             ))}
           </ul>
         </section>
@@ -235,7 +246,16 @@ export default function AtencionMedicaPage() {
                     <td><input value={dt.frecuencia} onChange={e=>updateDetalle(dt.idMedicamento, 'frecuencia', e.target.value)} style={styles.tdInput} /></td>
                     <td><input value={dt.duracion} onChange={e=>updateDetalle(dt.idMedicamento, 'duracion', e.target.value)} style={styles.tdInput} /></td>
                     <td><input type="number" min="1" value={dt.cantidad} onChange={e=>updateDetalle(dt.idMedicamento, 'cantidad', e.target.value)} style={styles.tdInput} /></td>
-                    <td><button onClick={() => removeDetalle(dt.idMedicamento)} style={styles.btnSmallDanger}>Eliminar</button></td>
+                    <td>
+                      <button
+                        type="button"
+                        onClick={() => removeDetalle(dt.idMedicamento)}
+                        style={{ ...styles.btnSmallDanger, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <Trash2 size={13} />
+                        Eliminar
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

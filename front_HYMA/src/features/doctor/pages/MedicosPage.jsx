@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Search, X, AlertTriangle, Stethoscope, Phone, Mail, Pencil, Trash2, Plus } from 'lucide-react';
 import { useMedicos } from '../hooks/useMedicos';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 
@@ -135,7 +136,7 @@ export default function MedicosPage() {
           </div>
 
           <button onClick={() => handleOpenModal()} style={styles.btnCreate}>
-            <span style={styles.btnIcon}>+</span> Nuevo Médico
+            <Plus size={18} style={{ marginRight: '4px' }} /> Nuevo Médico
           </button>
         </div>
 
@@ -158,7 +159,7 @@ export default function MedicosPage() {
         {/* Barra de Búsqueda */}
         <div style={styles.filterCard}>
           <div style={styles.searchBox}>
-            <span style={styles.searchIcon}>🔍</span>
+            <Search size={18} style={{ color: '#0077b6' }} />
             <input
               type="text"
               placeholder="Buscar por nombre, especialidad o correo..."
@@ -168,14 +169,19 @@ export default function MedicosPage() {
             />
             {searchTerm && (
               <button onClick={() => setSearchTerm('')} style={styles.btnClearSearch}>
-                ✕
+                <X size={15} />
               </button>
             )}
           </div>
         </div>
 
         {/* Error Global */}
-        {error && <div style={styles.errorAlert}>⚠️ {error}</div>}
+        {error && (
+          <div style={styles.errorAlert}>
+            <AlertTriangle size={18} style={{ flexShrink: 0, marginRight: '8px' }} />
+            <span>{error}</span>
+          </div>
+        )}
 
         {/* Tabla */}
         {loading ? (
@@ -184,7 +190,9 @@ export default function MedicosPage() {
           </div>
         ) : filteredMedicos.length === 0 ? (
           <div style={styles.emptyCard}>
-            <div style={styles.emptyIcon}>👨‍⚕️</div>
+            <div style={{ ...styles.emptyIcon, display: 'flex', justifyContent: 'center' }}>
+              <Stethoscope size={48} color="#0077b6" />
+            </div>
             <h3 style={styles.emptyTitle}>No se encontraron médicos</h3>
             <p style={styles.emptyText}>
               No hay registros que coincidan con la búsqueda o aún no se ha registrado ningún médico.
@@ -230,10 +238,12 @@ export default function MedicosPage() {
 
                     <td style={styles.td}>
                       <div style={styles.contactItem}>
-                        <span>📞</span> {m.telefono || 'Sin teléfono'}
+                        <Phone size={13} style={{ marginRight: '6px', color: '#0077b6' }} />
+                        <span>{m.telefono || 'Sin teléfono'}</span>
                       </div>
                       <div style={styles.contactItemSub}>
-                        <span>✉️</span> {m.correo || 'Sin correo'}
+                        <Mail size={13} style={{ marginRight: '6px', color: '#0077b6' }} />
+                        <span>{m.correo || 'Sin correo'}</span>
                       </div>
                     </td>
 
@@ -255,14 +265,14 @@ export default function MedicosPage() {
                           style={styles.btnEdit}
                           title="Editar información"
                         >
-                          ✏️ Editar
+                          <Pencil size={13} style={{ marginRight: '4px' }} /> Editar
                         </button>
                         <button
                           onClick={() => handleDelete(m.idMedico)}
                           style={styles.btnDelete}
                           title="Eliminar médico"
                         >
-                          🗑️ Eliminar
+                          <Trash2 size={13} style={{ marginRight: '4px' }} /> Eliminar
                         </button>
                       </div>
                     </td>
@@ -290,13 +300,13 @@ export default function MedicosPage() {
                 </p>
               </div>
               <button onClick={handleCloseModal} style={styles.btnClose}>
-                ✕
+                <X size={18} />
               </button>
             </div>
 
             {formError && (
               <div style={styles.formErrorBanner}>
-                <span>⚠️</span>
+                <AlertTriangle size={16} style={{ flexShrink: 0, marginRight: '6px' }} />
                 <span>{formError}</span>
               </div>
             )}

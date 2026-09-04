@@ -1,10 +1,13 @@
 import React from 'react';
+import { FlaskConical, Pencil, Trash2 } from 'lucide-react';
 
 export const AlergiaList = ({ alergias, onEdit, onDelete }) => {
   if (!alergias || alergias.length === 0) {
     return (
       <div style={styles.emptyCard}>
-        <div style={styles.emptyIcon}>🧪</div>
+        <div style={{ ...styles.emptyIcon, display: 'flex', justifyContent: 'center' }}>
+          <FlaskConical size={48} color="#f59e0b" />
+        </div>
         <h3 style={styles.emptyTitle}>No hay alergias encontradas</h3>
         <p style={styles.emptyText}>
           No se encontraron elementos con el término buscado. Puedes agregar una nueva usando el formulario.
@@ -32,7 +35,9 @@ export const AlergiaList = ({ alergias, onEdit, onDelete }) => {
 
               <td style={styles.td}>
                 <div style={styles.nameRow}>
-                  <span style={styles.allergyPill}>🧪</span>
+                  <span style={styles.allergyPill}>
+                    <FlaskConical size={14} color="#d97706" />
+                  </span>
                   <strong style={styles.nameText}>{a.nombre}</strong>
                 </div>
               </td>
@@ -44,14 +49,14 @@ export const AlergiaList = ({ alergias, onEdit, onDelete }) => {
                     style={styles.btnEdit}
                     title="Editar alergia"
                   >
-                    ✏️ Editar
+                    <Pencil size={13} style={{ marginRight: '4px' }} /> Editar
                   </button>
                   <button
                     onClick={() => onDelete(a.idAlergia)}
                     style={styles.btnDelete}
                     title="Eliminar alergia"
                   >
-                    🗑️ Eliminar
+                    <Trash2 size={13} style={{ marginRight: '4px' }} /> Eliminar
                   </button>
                 </div>
               </td>

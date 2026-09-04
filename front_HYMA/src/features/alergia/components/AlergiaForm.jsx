@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Pencil, Plus, AlertTriangle } from 'lucide-react';
 
 export const AlergiaForm = ({ onSubmit, alergiaEditar, onCancel }) => {
   const [nombre, setNombre] = useState('');
@@ -39,7 +40,7 @@ export const AlergiaForm = ({ onSubmit, alergiaEditar, onCancel }) => {
     <div style={styles.card}>
       <div style={styles.cardHeader}>
         <div style={{ ...styles.iconBox, background: alergiaEditar ? '#fef3c7' : '#e0f2fe' }}>
-          {alergiaEditar ? '✏️' : '➕'}
+          {alergiaEditar ? <Pencil size={18} color="#b45309" /> : <Plus size={20} color="#0284c7" />}
         </div>
         <div>
           <h3 style={styles.cardTitle}>
@@ -55,7 +56,7 @@ export const AlergiaForm = ({ onSubmit, alergiaEditar, onCancel }) => {
 
       {errorMessage && (
         <div style={styles.errorAlert}>
-          <span>⚠️</span>
+          <AlertTriangle size={16} style={{ flexShrink: 0 }} />
           <span>{errorMessage}</span>
         </div>
       )}
