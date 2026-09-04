@@ -22,7 +22,7 @@ public class CatalogoCie10Controller {
 
     @GetMapping
     public ResponseEntity<Page<CatalogoCie10Response>> listar(
-            @RequestParam(required = false) String buscar,
+            @RequestParam(name = "buscar", required = false) String buscar,
             Pageable pageable) {
         return ResponseEntity.ok(catalogoService.buscar(buscar, pageable));
     }
@@ -33,12 +33,14 @@ public class CatalogoCie10Controller {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CatalogoCie10Response> actualizar(@PathVariable Long id, @Valid @RequestBody CatalogoCie10Request request) {
+    public ResponseEntity<CatalogoCie10Response> actualizar(
+            @PathVariable(name = "id") Long id,
+            @Valid @RequestBody CatalogoCie10Request request) {
         return ResponseEntity.ok(catalogoService.actualizar(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminar(@PathVariable(name = "id") Long id) {
         catalogoService.eliminar(id);
         return ResponseEntity.noContent().build();
     }

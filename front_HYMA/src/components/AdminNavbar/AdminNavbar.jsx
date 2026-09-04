@@ -103,7 +103,7 @@ export default function AdminNavbar() {
       show: isAdmin || isMedico,
     },
     {
-      label: 'Diagnósticos CIE-10',
+      label: 'Diagnósticos',
       path: '/diagnosticos',
       icon: BookOpen,
       show: isAdmin || isMedico,

@@ -35,8 +35,8 @@ public class ClinicaController {
 
     @GetMapping("/pacientes/{idPaciente}")
     public ResponseEntity<PacienteConsultaResponse> obtenerDatosPaciente(
-            @PathVariable Long idPaciente,
-            @RequestParam(required = false) Long idCola) {
+            @PathVariable(name = "idPaciente") Long idPaciente,
+            @RequestParam(name = "idCola", required = false) Long idCola) {
         return ResponseEntity.ok(clinicaService.obtenerDatosPacienteParaConsulta(idPaciente, idCola));
     }
 
@@ -49,7 +49,8 @@ public class ClinicaController {
     }
 
     @GetMapping("/medicamentos")
-    public ResponseEntity<List<MedicamentoResponse>> buscarMedicamentos(@RequestParam(required = false) String buscar) {
+    public ResponseEntity<List<MedicamentoResponse>> buscarMedicamentos(
+            @RequestParam(name = "buscar", required = false) String buscar) {
         return ResponseEntity.ok(farmaciaService.listarMedicamentos(null, null, true, buscar));
     }
 }

@@ -72,10 +72,10 @@ public class FarmaciaController {
 
     @GetMapping("/medicamentos")
     public ResponseEntity<List<MedicamentoResponse>> listarMedicamentos(
-            @RequestParam(required = false) Long categoriaId,
-            @RequestParam(required = false) Long casaId,
-            @RequestParam(required = false) Boolean estado,
-            @RequestParam(required = false) String buscar) {
+            @RequestParam(name = "categoriaId", required = false) Long categoriaId,
+            @RequestParam(name = "casaId", required = false) Long casaId,
+            @RequestParam(name = "estado", required = false) Boolean estado,
+            @RequestParam(name = "buscar", required = false) String buscar) {
         return ResponseEntity.ok(farmaciaService.listarMedicamentos(categoriaId, casaId, estado, buscar));
     }
 
@@ -87,23 +87,23 @@ public class FarmaciaController {
 
     @PutMapping("/medicamentos/{id}")
     public ResponseEntity<MedicamentoResponse> actualizarMedicamento(
-            @PathVariable Long id,
+            @PathVariable(name = "id") Long id,
             @Valid @RequestBody MedicamentoRequest request) {
         return ResponseEntity.ok(farmaciaService.actualizarMedicamento(id, request));
     }
 
     @GetMapping("/lotes")
     public ResponseEntity<List<LoteResponse>> listarLotes(
-            @RequestParam(required = false) EstadoLote estado,
-            @RequestParam(required = false) Long medicamentoId,
-            @RequestParam(required = false) LocalDate hasta) {
+            @RequestParam(name = "estado", required = false) EstadoLote estado,
+            @RequestParam(name = "medicamentoId", required = false) Long medicamentoId,
+            @RequestParam(name = "hasta", required = false) LocalDate hasta) {
         return ResponseEntity.ok(farmaciaService.listarLotes(estado, medicamentoId, hasta));
     }
 
     @GetMapping("/entradas")
     public ResponseEntity<List<EntradaResponse>> listarEntradas(
-            @RequestParam(required = false) LocalDate desde,
-            @RequestParam(required = false) LocalDate hasta) {
+            @RequestParam(name = "desde", required = false) LocalDate desde,
+            @RequestParam(name = "hasta", required = false) LocalDate hasta) {
         return ResponseEntity.ok(farmaciaService.listarEntradas(desde, hasta));
     }
 

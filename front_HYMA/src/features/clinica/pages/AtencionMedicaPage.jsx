@@ -187,7 +187,7 @@ export default function AtencionMedicaPage() {
 
         {/* Section D: Diagnósticos */}
         <section style={styles.section}>
-          <h2>Diagnósticos CIE-10</h2>
+          <h2>Diagnósticos</h2>
           <div>
             <input type="text" placeholder="Buscar código o descripción..." value={searchDiag} onChange={handleSearchDiag} style={styles.input} />
             {diagResults.length > 0 && (
