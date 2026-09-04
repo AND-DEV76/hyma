@@ -1,213 +1,127 @@
 import React, { useState, useEffect } from 'react';
-import { Pencil, Plus, AlertTriangle } from 'lucide-react';
+import { X, AlertCircle, Loader2 } from 'lucide-react';
 
-export const AlergiaForm = ({ onSubmit, alergiaEditar, onCancel }) => {
+export const AlergiaForm = ({ isOpen, onClose, onSubmit, alergiaEditar }) => {
   const [nombre, setNombre] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (alergiaEditar) {
-      setNombre(alergiaEditar.nombre);
+      setNombre(alergiaEditar.nombre || '');
     } else {
       setNombre('');
     }
     setErrorMessage('');
-  }, [alergiaEditar]);
+  }, [alergiaEditar, isOpen]);
+
+  if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!nombre.trim()) {
+    const cleanNombre = nombre.trim();
+    if (!cleanNombre) {
       setErrorMessage('El nombre de la alergia es obligatorio.');
       return;
     }
 
     try {
       setIsSubmitting(true);
-      const res = await onSubmit({ nombre: nombre.trim() });
+      setErrorMessage('');
+      const res = await onSubmit({ nombre: cleanNombre });
       if (res.success) {
-        setNombre('');
-        setErrorMessage('');
+        onClose();
       } else {
-        setErrorMessage(res.error);
+        setErrorMessage(res.error || 'Ocurrió un error al guardar.');
       }
+    } catch (err) {
+      setErrorMessage(
+        err.response?.data?.errors?.nombre ||
+        err.response?.data?.message ||
+        'Error al procesar la solicitud.'
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div style={styles.card}>
-      <div style={styles.cardHeader}>
-        <div style={{ ...styles.iconBox, background: alergiaEditar ? '#fef3c7' : '#e0f2fe' }}>
-          {alergiaEditar ? <Pencil size={18} color="#b45309" /> : <Plus size={20} color="#0284c7" />}
-        </div>
-        <div>
-          <h3 style={styles.cardTitle}>
+    <div className="alergias-modal-overlay">
+      <div className="alergias-modal-card">
+        {/* Cabecera del Modal */}
+        <div className="alergias-modal-header">
+          <h3 className="alergias-modal-title">
             {alergiaEditar ? 'Editar Alergia' : 'Nueva Alergia'}
           </h3>
-          <p style={styles.cardSub}>
-            {alergiaEditar
-              ? `Editando registro #${alergiaEditar.idAlergia}`
-              : 'Agrega un nuevo elemento al catálogo clínico'}
-          </p>
-        </div>
-      </div>
-
-      {errorMessage && (
-        <div style={styles.errorAlert}>
-          <AlertTriangle size={16} style={{ flexShrink: 0 }} />
-          <span>{errorMessage}</span>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Nombre de la Alergia o Fármaco *</label>
-          <input
-            type="text"
-            required
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            placeholder="Ej: Penicilina, Mariscos, Polen..."
-            style={styles.input}
-            disabled={isSubmitting}
-          />
-          <span style={styles.hintText}>
-            Debe ser un nombre descriptivo para identificarlo en las recetas médicas.
-          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="alergias-modal-close"
+            title="Cerrar modal"
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        <div style={styles.actions}>
-          {alergiaEditar && (
+        {/* Mensaje de Error */}
+        {errorMessage && (
+          <div style={{ margin: '14px 22px 0' }} className="alergias-modal-error">
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="alergias-modal-body">
+            <div className="alergias-form-group">
+              <label className="alergias-form-label">
+                Nombre de la Alergia o Fármaco *
+              </label>
+              <input
+                type="text"
+                required
+                autoFocus
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Ej: Penicilina, Mariscos, Polen..."
+                className="alergias-form-input"
+                disabled={isSubmitting}
+              />
+              <span className="alergias-form-hint">
+                Se registrará en el catálogo para advertir al médico durante la consulta y prescripción.
+              </span>
+            </div>
+          </div>
+
+          <div className="alergias-modal-footer">
             <button
               type="button"
-              onClick={onCancel}
-              style={styles.btnCancel}
+              onClick={onClose}
+              className="alergias-btn-cancel"
               disabled={isSubmitting}
             >
               Cancelar
             </button>
-          )}
-          <button
-            type="submit"
-            style={{
-              ...styles.btnSubmit,
-              backgroundColor: alergiaEditar ? '#f59e0b' : '#0077b6',
-            }}
-            disabled={isSubmitting}
-          >
-            {isSubmitting
-              ? 'Guardando...'
-              : alergiaEditar
-              ? 'Actualizar Alergia'
-              : '+ Agregar Alergia'}
-          </button>
-        </div>
-      </form>
+            <button
+              type="submit"
+              className="alergias-btn-submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={14} className="spin-icon" style={{ marginRight: '6px' }} />
+                  <span>Guardando...</span>
+                </>
+              ) : alergiaEditar ? (
+                'Guardar Cambios'
+              ) : (
+                'Crear Alergia'
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
-
-const styles = {
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: '16px',
-    padding: '1.75rem',
-    border: '1px solid #e2e8f0',
-    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.03)',
-  },
-  cardHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    marginBottom: '1.5rem',
-  },
-  iconBox: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '10px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '1.2rem',
-  },
-  cardTitle: {
-    fontSize: '1.15rem',
-    fontWeight: '800',
-    color: '#0f172a',
-    margin: '0 0 2px 0',
-  },
-  cardSub: {
-    fontSize: '0.78rem',
-    color: '#64748b',
-    margin: 0,
-  },
-  errorAlert: {
-    backgroundColor: '#fee2e2',
-    color: '#991b1b',
-    border: '1px solid #fecaca',
-    padding: '10px 14px',
-    borderRadius: '8px',
-    fontSize: '0.84rem',
-    fontWeight: '600',
-    display: 'flex',
-    gap: '8px',
-    alignItems: 'center',
-    marginBottom: '1.25rem',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.25rem',
-  },
-  formGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
-  },
-  label: {
-    fontSize: '0.84rem',
-    fontWeight: '700',
-    color: '#334155',
-  },
-  input: {
-    padding: '11px 14px',
-    borderRadius: '9px',
-    border: '1px solid #cbd5e1',
-    fontSize: '0.92rem',
-    outline: 'none',
-    color: '#0f172a',
-  },
-  hintText: {
-    fontSize: '0.74rem',
-    color: '#94a3b8',
-  },
-  actions: {
-    display: 'flex',
-    gap: '10px',
-    marginTop: '0.5rem',
-  },
-  btnCancel: {
-    flex: 1,
-    padding: '11px',
-    backgroundColor: '#f8fafc',
-    color: '#475569',
-    border: '1px solid #cbd5e1',
-    borderRadius: '9px',
-    fontWeight: '700',
-    fontSize: '0.88rem',
-    cursor: 'pointer',
-  },
-  btnSubmit: {
-    flex: 2,
-    padding: '11px',
-    color: '#ffffff',
-    border: 'none',
-    borderRadius: '9px',
-    fontWeight: '700',
-    fontSize: '0.88rem',
-    cursor: 'pointer',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-  },
-};
+export default AlergiaForm;

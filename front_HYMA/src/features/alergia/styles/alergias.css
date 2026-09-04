@@ -1,0 +1,559 @@
+/* ==========================================================
+   ALERGIAS MODULE STYLES (Odoo Minimal & Elegant)
+   Palette: #03045e, #0077b6, #00b4d8, #90e0ef, #caf0f8
+   Typography: 'Segoe UI', Verdana, sans-serif
+========================================================== */
+
+.alergias-page {
+  min-height: 100vh;
+  background: #f8fafc;
+  color: #03045e;
+  font-family: 'Segoe UI', Verdana, sans-serif;
+}
+
+.alergias-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 32px 48px;
+}
+
+/* ==========================================================
+   CONTROL PANEL / ODOO-STYLE HEADER
+========================================================== */
+.alergias-control-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(3, 4, 94, 0.04);
+  flex-wrap: wrap;
+}
+
+.alergias-panel-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.alergias-main-title {
+  color: #03045e;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  margin: 0;
+}
+
+.alergias-count-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #e0f2fe;
+  color: #0077b6;
+  border: 1px solid #bae6fd;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.alergias-count-pill strong {
+  font-weight: 800;
+  color: #03045e;
+}
+
+.alergias-panel-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Buscador Integrado */
+.alergias-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0 12px;
+  height: 38px;
+  min-width: 260px;
+  transition: all 0.2s ease;
+}
+
+.alergias-search-box:focus-within {
+  background: #ffffff;
+  border-color: #0077b6;
+  box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.12);
+}
+
+.alergias-search-icon {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.alergias-search-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.88rem;
+  color: #0f172a;
+  width: 100%;
+  font-family: inherit;
+}
+
+.alergias-search-clear {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s ease;
+}
+
+.alergias-search-clear:hover {
+  color: #0f172a;
+}
+
+/* Botón Nueva Alergia */
+.alergias-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0077b6;
+  color: #ffffff;
+  border: none;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 119, 182, 0.2);
+  white-space: nowrap;
+}
+
+.alergias-btn-primary:hover {
+  background: #03045e;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(3, 4, 94, 0.2);
+}
+
+/* Alerta de Error */
+.alergias-alert-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 11px 16px;
+  border-radius: 8px;
+  margin-bottom: 18px;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+/* Loading State */
+.alergias-loading {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 50px 20px;
+  text-align: center;
+  color: #64748b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.alergias-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e0f2fe;
+  border-top-color: #0077b6;
+  border-radius: 50%;
+  animation: spinAlergias 0.7s linear infinite;
+}
+
+@keyframes spinAlergias {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================================
+   TABLA DE ALERGIAS
+========================================================== */
+.alergias-table-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(3, 4, 94, 0.03);
+}
+
+.alergias-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.alergias-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.88rem;
+}
+
+.alergias-th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.alergias-tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.15s ease;
+}
+
+.alergias-tr:hover {
+  background-color: #f8fafc;
+}
+
+.alergias-td {
+  padding: 13px 20px;
+  vertical-align: middle;
+  color: #0f172a;
+}
+
+/* Celda de Alergia */
+.alergias-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.alergias-icon-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #e0f2fe;
+  color: #0077b6;
+  border: 1px solid #bae6fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.alergias-tr:hover .alergias-icon-badge {
+  background: #0077b6;
+  color: #ffffff;
+  border-color: #0077b6;
+}
+
+.alergias-name-text {
+  font-weight: 700;
+  color: #03045e;
+  font-size: 0.92rem;
+}
+
+/* Botones de Acciones */
+.alergias-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.alergias-btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.alergias-btn-edit {
+  color: #0077b6;
+  background: #f0f9ff;
+  border-color: #e0f2fe;
+}
+
+.alergias-btn-edit:hover {
+  background: #0077b6;
+  color: #ffffff;
+  border-color: #0077b6;
+}
+
+.alergias-btn-delete {
+  color: #e11d48;
+  background: #fff1f2;
+  border-color: #ffe4e6;
+}
+
+.alergias-btn-delete:hover {
+  background: #e11d48;
+  color: #ffffff;
+  border-color: #e11d48;
+}
+
+/* Empty State */
+.alergias-empty {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 50px 24px;
+  text-align: center;
+  color: #64748b;
+}
+
+.alergias-empty-icon {
+  margin-bottom: 12px;
+  color: #94a3b8;
+}
+
+.alergias-empty-title {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #03045e;
+  margin: 0 0 6px 0;
+}
+
+.alergias-empty-desc {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* ==========================================================
+   MODAL FORMULARIO
+========================================================== */
+.alergias-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 4, 94, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 16px;
+}
+
+.alergias-modal-card {
+  background: #ffffff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 20px 40px rgba(3, 4, 94, 0.18);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  animation: modalAlergiaSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalAlergiaSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.alergias-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+.alergias-modal-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #03045e;
+  margin: 0;
+}
+
+.alergias-modal-close {
+  background: #f1f5f9;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.15s ease;
+}
+
+.alergias-modal-close:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.alergias-modal-body {
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.alergias-modal-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.alergias-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.alergias-form-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.alergias-form-input {
+  padding: 10px 13px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.88rem;
+  outline: none;
+  color: #0f172a;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: #ffffff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.alergias-form-input:focus {
+  border-color: #0077b6;
+  box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.12);
+}
+
+.alergias-form-hint {
+  font-size: 0.74rem;
+  color: #94a3b8;
+}
+
+.alergias-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 22px;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+}
+
+.alergias-btn-cancel {
+  padding: 9px 16px;
+  background: #ffffff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.alergias-btn-cancel:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.alergias-btn-submit {
+  padding: 9px 18px;
+  background: #0077b6;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 119, 182, 0.25);
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.alergias-btn-submit:hover:not(:disabled) {
+  background: #03045e;
+  transform: translateY(-1px);
+}
+
+.alergias-btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+@media (max-width: 768px) {
+  .alergias-container {
+    padding: 16px;
+  }
+
+  .alergias-control-panel {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .alergias-panel-right {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .alergias-search-box {
+    min-width: 100%;
+  }
+
+  .alergias-btn-primary {
+    justify-content: center;
+  }
+}
+

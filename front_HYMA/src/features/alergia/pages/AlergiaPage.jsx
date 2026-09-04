@@ -1,253 +1,141 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Search, X } from 'lucide-react';
+import { Plus, Search, X, AlertCircle, FlaskConical } from 'lucide-react';
 import { useAlergias } from '../hooks/useAlergias';
 import { AlergiaForm } from '../components/AlergiaForm';
 import { AlergiaList } from '../components/AlergiaList';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
+import '../styles/alergias.css';
 
 export const AlergiaPage = () => {
-  const navigate = useNavigate();
   const { alergias, loading, error, agregarAlergia, editarAlergia, borrarAlergia } = useAlergias();
   const [alergiaEditar, setAlergiaEditar] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Filtrado reactivo de alergias
+  // Filtrado reactivo de alergias por término de búsqueda
   const filteredAlergias = useMemo(() => {
+    const cleanSearch = searchTerm.trim().toLowerCase();
     return alergias.filter((a) =>
-      a.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+      cleanSearch === '' || a.nombre.toLowerCase().includes(cleanSearch)
     );
   }, [alergias, searchTerm]);
 
+  const handleOpenCreate = () => {
+    setAlergiaEditar(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (alergia) => {
+    setAlergiaEditar(alergia);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setAlergiaEditar(null);
+  };
+
   const handleFormSubmit = async (data) => {
     if (alergiaEditar) {
-      const res = await editarAlergia(alergiaEditar.idAlergia, data);
-      if (res.success) setAlergiaEditar(null);
-      return res;
+      return await editarAlergia(alergiaEditar.idAlergia, data);
     } else {
       return await agregarAlergia(data);
     }
   };
 
   const handleDelete = (id) => {
-    if (window.confirm('¿Seguro que deseas eliminar esta alergia del catálogo?')) {
+    if (window.confirm('¿Deseas eliminar esta alergia del catálogo clínico?')) {
       borrarAlergia(id);
       if (alergiaEditar && alergiaEditar.idAlergia === id) {
-        setAlergiaEditar(null);
+        handleCloseModal();
       }
     }
   };
 
   return (
-    <div style={styles.page}>
+    <div className="alergias-page">
       <AdminNavbar />
 
-      <main style={styles.container}>
-        {/* Encabezado */}
-        <div style={styles.header}>
-          <div>
-            <div style={styles.breadcrumb}>
-              <span onClick={() => navigate('/inicio')} style={styles.breadcrumbLink}>
-                Inicio
-              </span>{' '}
-              / <span>Alergias</span>
+      <main className="alergias-container">
+        {/* Barra Superior de Control estilo Odoo */}
+        <header className="alergias-control-panel">
+          <div className="alergias-panel-left">
+            <h1 className="alergias-main-title">Catálogo de Alergias</h1>
+            <div className="alergias-count-pill">
+              <FlaskConical size={14} />
+              <span>
+                <strong>{filteredAlergias.length}</strong> {filteredAlergias.length === 1 ? 'alergia' : 'alergias'}
+              </span>
             </div>
-            <h1 style={styles.title}>Catálogo de Alergias</h1>
-            <p style={styles.subtitle}>
-              Registro de alérgenos y reacciones médicas para el historial clínico y seguridad de los pacientes.
-            </p>
-          </div>
-        </div>
-
-        {/* Métricas */}
-        <div style={styles.metricsRow}>
-          <div style={styles.metricCard}>
-            <div style={styles.metricLabel}>Total Alergias Registradas</div>
-            <div style={{ ...styles.metricValue, color: '#f59e0b' }}>{alergias.length}</div>
-          </div>
-          <div style={styles.metricCard}>
-            <div style={styles.metricLabel}>Resultados Filtrados</div>
-            <div style={{ ...styles.metricValue, color: '#0284c7' }}>{filteredAlergias.length}</div>
-          </div>
-        </div>
-
-        {/* Alerta de Error */}
-        {error && (
-          <div style={styles.errorAlert}>
-            <AlertTriangle size={18} style={{ flexShrink: 0, marginRight: '8px' }} />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {/* Layout en Grid: Formulario + Listado */}
-        <div style={styles.layoutGrid}>
-          {/* Panel Izquierdo: Formulario */}
-          <div style={styles.formCol}>
-            <AlergiaForm
-              onSubmit={handleFormSubmit}
-              alergiaEditar={alergiaEditar}
-              onCancel={() => setAlergiaEditar(null)}
-            />
           </div>
 
-          {/* Panel Derecho: Lista */}
-          <div style={styles.listCol}>
+          <div className="alergias-panel-right">
             {/* Buscador */}
-            <div style={styles.searchCard}>
-              <Search size={18} style={{ color: '#0077b6' }} />
+            <div className="alergias-search-box">
+              <Search size={16} className="alergias-search-icon" />
               <input
                 type="text"
-                placeholder="Buscar alergia (ej: Penicilina, Polen, Maní)..."
+                placeholder="Buscar alergia (ej: Penicilina, Polen)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={styles.searchInput}
+                className="alergias-search-input"
               />
               {searchTerm && (
-                <button onClick={() => setSearchTerm('')} style={styles.btnClear}>
-                  <X size={15} />
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="alergias-search-clear"
+                  title="Limpiar búsqueda"
+                >
+                  <X size={14} />
                 </button>
               )}
             </div>
 
-            {loading ? (
-              <div style={styles.loadingBox}>
-                <p style={{ color: '#64748b', fontWeight: 600 }}>Cargando catálogo...</p>
-              </div>
-            ) : (
-              <AlergiaList
-                alergias={filteredAlergias}
-                onEdit={(alergia) => setAlergiaEditar(alergia)}
-                onDelete={handleDelete}
-              />
-            )}
+            {/* Botón Nueva Alergia */}
+            <button
+              type="button"
+              onClick={handleOpenCreate}
+              className="alergias-btn-primary"
+            >
+              <Plus size={16} />
+              <span>Nueva Alergia</span>
+            </button>
           </div>
-        </div>
+        </header>
+
+        {/* Alerta de Error si ocurre */}
+        {error && (
+          <div className="alergias-alert-error" role="alert">
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Listado / Tabla */}
+        {loading ? (
+          <div className="alergias-loading">
+            <div className="alergias-spinner" />
+            <p>Cargando catálogo de alergias...</p>
+          </div>
+        ) : (
+          <AlergiaList
+            alergias={filteredAlergias}
+            onEdit={handleOpenEdit}
+            onDelete={handleDelete}
+          />
+        )}
       </main>
+
+      {/* Modal de Creación / Edición */}
+      <AlergiaForm
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSubmit={handleFormSubmit}
+        alergiaEditar={alergiaEditar}
+      />
     </div>
   );
 };
 
-const styles = {
-  page: {
-    minHeight: '100vh',
-    backgroundColor: '#f8fafc',
-    fontFamily: "'Segoe UI', Verdana, sans-serif",
-  },
-  container: {
-    maxWidth: '1280px',
-    margin: '0 auto',
-    padding: '2.5rem 1.5rem',
-  },
-  header: {
-    marginBottom: '2rem',
-  },
-  breadcrumb: {
-    fontSize: '0.82rem',
-    color: '#64748b',
-    fontWeight: 600,
-    marginBottom: '6px',
-  },
-  breadcrumbLink: {
-    color: '#0077b6',
-    cursor: 'pointer',
-  },
-  title: {
-    fontSize: '1.75rem',
-    fontWeight: '800',
-    color: '#0f172a',
-    margin: '0 0 6px 0',
-  },
-  subtitle: {
-    fontSize: '0.92rem',
-    color: '#64748b',
-    margin: 0,
-  },
-  metricsRow: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '1rem',
-    marginBottom: '1.75rem',
-  },
-  metricCard: {
-    backgroundColor: '#ffffff',
-    padding: '1.2rem 1.5rem',
-    borderRadius: '12px',
-    border: '1px solid #e2e8f0',
-    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
-  },
-  metricLabel: {
-    fontSize: '0.75rem',
-    color: '#64748b',
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  },
-  metricValue: {
-    fontSize: '1.6rem',
-    fontWeight: '800',
-    color: '#0f172a',
-    marginTop: '4px',
-  },
-  errorAlert: {
-    backgroundColor: '#fee2e2',
-    color: '#991b1b',
-    border: '1px solid #fecaca',
-    padding: '12px 16px',
-    borderRadius: '10px',
-    marginBottom: '1.5rem',
-    fontSize: '0.9rem',
-    fontWeight: '600',
-  },
-  layoutGrid: {
-    display: 'grid',
-    gridTemplateColumns: '380px 1fr',
-    gap: '1.75rem',
-    alignItems: 'start',
-  },
-  formCol: {
-    position: 'sticky',
-    top: '90px',
-  },
-  listCol: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
-  },
-  searchCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: '12px',
-    padding: '8px 14px',
-    display: 'flex',
-    alignItems: 'center',
-    border: '1px solid #e2e8f0',
-    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
-  },
-  searchIcon: {
-    fontSize: '0.95rem',
-    color: '#64748b',
-    marginRight: '8px',
-  },
-  searchInput: {
-    border: 'none',
-    outline: 'none',
-    fontSize: '0.92rem',
-    width: '100%',
-    color: '#0f172a',
-  },
-  btnClear: {
-    background: 'transparent',
-    border: 'none',
-    color: '#94a3b8',
-    cursor: 'pointer',
-    fontSize: '0.9rem',
-    padding: '4px',
-  },
-  loadingBox: {
-    backgroundColor: '#ffffff',
-    borderRadius: '12px',
-    padding: '3rem',
-    textAlign: 'center',
-    border: '1px solid #e2e8f0',
-  },
-};
 export default AlergiaPage;

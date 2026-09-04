@@ -1,17 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   UserPlus,
   X,
   AlertCircle,
   FlaskConical,
-  Check,
   Calendar,
+  FileText,
+  User,
   Phone,
   MapPin,
-  FileText,
-  Loader2
+  Loader2,
+  Sparkles
 } from 'lucide-react';
-import api from '../../../api/axios.js';
+import { getAlergias } from '../../alergia/api/alergiaApi';
+import AlergiasSelector from './AlergiasSelector';
 
 const initialForm = {
   nombres: '',
@@ -30,35 +32,43 @@ function FormularioPaciente({ onGuardar, onCerrar, guardando }) {
   const [error, setError] = useState('');
   const [form, setForm] = useState(initialForm);
 
-  useEffect(() => {
-    const cargarAlergias = async () => {
-      try {
-        const response = await api.get('/alergias');
-        setAlergias(response.data);
-      } catch {
-        setError('No se pudieron cargar las alergias.');
-      }
-    };
-    cargarAlergias();
+  // Carga inicial de catálogo de alergias reutilizando alergiaApi
+  const cargarCatalogoAlergias = useCallback(async () => {
+    try {
+      const data = await getAlergias();
+      setAlergias(data);
+    } catch {
+      setError('No se pudieron cargar las alergias del catálogo.');
+    }
   }, []);
+
+  useEffect(() => {
+    cargarCatalogoAlergias();
+  }, [cargarCatalogoAlergias]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((previous) => ({ ...previous, [name]: value }));
   };
 
-  const toggleAlergia = (id) => {
-    setForm((previous) => ({
-      ...previous,
-      alergiaIds: previous.alergiaIds.includes(id)
-        ? previous.alergiaIds.filter((alergiaId) => alergiaId !== id)
-        : [...previous.alergiaIds, id],
-    }));
-  };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
+
+    // Validación básica rápida en frontend
+    if (!form.nombres.trim() || !form.apellidos.trim()) {
+      setError('Por favor completa los nombres y apellidos del paciente.');
+      return;
+    }
+    if (!form.fechaNacimiento) {
+      setError('Por favor indica la fecha de nacimiento.');
+      return;
+    }
+    if (!form.sexo) {
+      setError('Por favor selecciona el sexo biológico.');
+      return;
+    }
+
     try {
       await onGuardar(form);
     } catch (err) {
@@ -66,22 +76,33 @@ function FormularioPaciente({ onGuardar, onCerrar, guardando }) {
     }
   };
 
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget && !guardando) {
+      onCerrar();
+    }
+  };
+
   return (
-    <div className="recepcion-modal-overlay">
-      <div className="recepcion-modal-card" role="dialog" aria-modal="true" aria-labelledby="new-patient-title">
-        
-        {/* Cabecera Modal */}
+    <div
+      className="recepcion-modal-overlay"
+      onClick={handleOverlayClick}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="new-patient-title"
+    >
+      <div className="recepcion-modal-card">
+        {/* Cabecera Fija del Modal */}
         <div className="recepcion-modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <div className="recepcion-modal-badge-icon">
               <UserPlus size={22} />
             </div>
             <div>
-              <h2 id="new-patient-title" style={{ color: '#03045e', fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>
+              <h2 id="new-patient-title" className="recepcion-modal-title">
                 Registrar Nuevo Paciente
               </h2>
-              <p style={{ color: '#64748b', fontSize: '0.84rem', margin: '3px 0 0' }}>
-                Ingresa los datos generales para crear el expediente y asignarlo a la cola.
+              <p className="recepcion-modal-subtitle">
+                Crea el expediente clínico y asigna al paciente a la cola de espera de preconsulta.
               </p>
             </div>
           </div>
@@ -90,175 +111,199 @@ function FormularioPaciente({ onGuardar, onCerrar, guardando }) {
             type="button"
             onClick={onCerrar}
             className="recepcion-modal-close"
-            title="Cerrar modal"
+            title="Cerrar modal (Esc)"
+            disabled={guardando}
           >
             <X size={18} />
           </button>
         </div>
 
+        {/* Alerta de Error si ocurre */}
         {error && (
-          <div className="recepcion-alert-error" role="alert">
-            <AlertCircle size={17} style={{ flexShrink: 0 }} />
+          <div style={{ margin: '14px 24px 0' }} className="recepcion-alert-error" role="alert">
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          {/* Sección 1: Datos Personales */}
-          <div className="recepcion-form-section-title">
-            <Calendar size={15} />
-            <span>1. Datos Personales y Demográficos</span>
-          </div>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+          {/* Cuerpo Desplazable del Formulario */}
+          <div className="recepcion-modal-body">
+            {/* SECCIÓN 1: Datos Personales y Demográficos */}
+            <div className="recepcion-form-section-card">
+              <div className="recepcion-form-section-header">
+                <div className="recepcion-form-section-title">
+                  <User size={16} className="recepcion-form-section-title-icon" />
+                  <span>1. Datos Personales y Contacto</span>
+                </div>
+                <span className="recepcion-form-section-sub">Campos obligatorios marcados con *</span>
+              </div>
 
-          <div className="recepcion-form-grid">
-            <div className="recepcion-form-group">
-              <label className="recepcion-form-label">Nombres *</label>
-              <input
-                name="nombres"
-                type="text"
-                value={form.nombres}
-                onChange={handleChange}
-                required
-                maxLength={100}
-                placeholder="Ej. Juan Alberto"
-                className="recepcion-form-input"
-              />
-            </div>
+              <div className="recepcion-form-grid-2">
+                <div className="recepcion-form-group">
+                  <label className="recepcion-form-label">
+                    Nombres <span className="recepcion-required-star">*</span>
+                  </label>
+                  <input
+                    name="nombres"
+                    type="text"
+                    value={form.nombres}
+                    onChange={handleChange}
+                    required
+                    autoFocus
+                    maxLength={100}
+                    placeholder="Ej. Juan Alberto"
+                    className="recepcion-form-input"
+                  />
+                </div>
 
-            <div className="recepcion-form-group">
-              <label className="recepcion-form-label">Apellidos *</label>
-              <input
-                name="apellidos"
-                type="text"
-                value={form.apellidos}
-                onChange={handleChange}
-                required
-                maxLength={100}
-                placeholder="Ej. Gómez Pérez"
-                className="recepcion-form-input"
-              />
-            </div>
+                <div className="recepcion-form-group">
+                  <label className="recepcion-form-label">
+                    Apellidos <span className="recepcion-required-star">*</span>
+                  </label>
+                  <input
+                    name="apellidos"
+                    type="text"
+                    value={form.apellidos}
+                    onChange={handleChange}
+                    required
+                    maxLength={100}
+                    placeholder="Ej. Gómez Pérez"
+                    className="recepcion-form-input"
+                  />
+                </div>
 
-            <div className="recepcion-form-group">
-              <label className="recepcion-form-label">Fecha de Nacimiento *</label>
-              <input
-                type="date"
-                name="fechaNacimiento"
-                value={form.fechaNacimiento}
-                onChange={handleChange}
-                required
-                className="recepcion-form-input"
-              />
-            </div>
+                <div className="recepcion-form-group">
+                  <label className="recepcion-form-label">
+                    Fecha de Nacimiento <span className="recepcion-required-star">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    name="fechaNacimiento"
+                    value={form.fechaNacimiento}
+                    onChange={handleChange}
+                    required
+                    className="recepcion-form-input"
+                  />
+                </div>
 
-            <div className="recepcion-form-group">
-              <label className="recepcion-form-label">Sexo *</label>
-              <select
-                name="sexo"
-                value={form.sexo}
-                onChange={handleChange}
-                required
-                className="recepcion-form-input"
-              >
-                <option value="">Seleccionar sexo</option>
-                <option value="M">Masculino</option>
-                <option value="F">Femenino</option>
-              </select>
-            </div>
-
-            <div className="recepcion-form-group">
-              <label className="recepcion-form-label">Teléfono</label>
-              <input
-                name="telefono"
-                type="tel"
-                value={form.telefono}
-                onChange={handleChange}
-                maxLength={20}
-                placeholder="Ej. 8888-9999"
-                className="recepcion-form-input"
-              />
-            </div>
-
-            <div className="recepcion-form-group">
-              <label className="recepcion-form-label">Comunidad / Dirección</label>
-              <input
-                name="comunidad"
-                type="text"
-                value={form.comunidad}
-                onChange={handleChange}
-                maxLength={150}
-                placeholder="Ej. Sector 3, San Marcos"
-                className="recepcion-form-input"
-              />
-            </div>
-          </div>
-
-          {/* Sección 2: Alergias Conocidas */}
-          <div className="recepcion-form-section-title" style={{ marginTop: '22px' }}>
-            <FlaskConical size={15} />
-            <span>2. Alergias Conocidas del Paciente</span>
-          </div>
-
-          {alergias.length === 0 ? (
-            <p style={{ color: '#94a3b8', fontSize: '0.84rem', margin: '4px 0 10px' }}>
-              No hay alergias registradas en el catálogo.
-            </p>
-          ) : (
-            <div className="recepcion-allergies-box">
-              {alergias.map((alergia) => {
-                const isSelected = form.alergiaIds.includes(alergia.idAlergia);
-
-                return (
-                  <button
-                    key={alergia.idAlergia}
-                    type="button"
-                    onClick={() => toggleAlergia(alergia.idAlergia)}
-                    className={`recepcion-allergy-chip ${isSelected ? 'selected' : ''}`}
+                <div className="recepcion-form-group">
+                  <label className="recepcion-form-label">
+                    Sexo Biológico <span className="recepcion-required-star">*</span>
+                  </label>
+                  <select
+                    name="sexo"
+                    value={form.sexo}
+                    onChange={handleChange}
+                    required
+                    className="recepcion-form-input"
                   >
-                    {isSelected && <Check size={14} />}
-                    <span>{alergia.nombre}</span>
-                  </button>
-                );
-              })}
+                    <option value="">Seleccionar sexo...</option>
+                    <option value="M">Masculino</option>
+                    <option value="F">Femenino</option>
+                  </select>
+                </div>
+
+                <div className="recepcion-form-group">
+                  <label className="recepcion-form-label">
+                    Teléfono de Contacto
+                  </label>
+                  <input
+                    name="telefono"
+                    type="tel"
+                    value={form.telefono}
+                    onChange={handleChange}
+                    maxLength={20}
+                    placeholder="Ej. 8888-9999"
+                    className="recepcion-form-input"
+                  />
+                </div>
+
+                <div className="recepcion-form-group">
+                  <label className="recepcion-form-label">
+                    Comunidad o Dirección
+                  </label>
+                  <input
+                    name="comunidad"
+                    type="text"
+                    value={form.comunidad}
+                    onChange={handleChange}
+                    maxLength={150}
+                    placeholder="Ej. Sector 3, San Marcos"
+                    className="recepcion-form-input"
+                  />
+                </div>
+              </div>
             </div>
-          )}
 
-          {/* Sección 3: Antecedentes Clínicos */}
-          <div className="recepcion-form-section-title" style={{ marginTop: '22px' }}>
-            <FileText size={15} />
-            <span>3. Antecedentes Clínicos Previos</span>
-          </div>
+            {/* SECCIÓN 2: Alergias Conocidas (Odoo Selector) */}
+            <div className="recepcion-form-section-card">
+              <div className="recepcion-form-section-header">
+                <div className="recepcion-form-section-title">
+                  <FlaskConical size={16} className="recepcion-form-section-title-icon" />
+                  <span>2. Alergias Conocidas del Paciente</span>
+                </div>
+                <span className="recepcion-form-section-sub">
+                  Busca o crea alérgenos en tiempo real
+                </span>
+              </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
-            <div className="recepcion-form-group">
-              <label className="recepcion-form-label">Antecedentes Personales Patológicos</label>
-              <textarea
-                name="antecedentesPersonalesPatologicos"
-                value={form.antecedentesPersonalesPatologicos}
-                onChange={handleChange}
-                rows={2}
-                placeholder="Enfermedades crónicas, cirugías previas, tratamientos continuos..."
-                className="recepcion-form-input"
-                style={{ resize: 'vertical' }}
+              <AlergiasSelector
+                alergias={alergias}
+                selectedIds={form.alergiaIds}
+                onChange={(nuevosIds) => setForm((prev) => ({ ...prev, alergiaIds: nuevosIds }))}
+                onNuevaAlergia={(nueva) => setAlergias((prev) => [...prev, nueva])}
               />
             </div>
 
-            <div className="recepcion-form-group">
-              <label className="recepcion-form-label">Antecedentes Personales Familiares</label>
-              <textarea
-                name="antecedentesPersonalesFamiliares"
-                value={form.antecedentesPersonalesFamiliares}
-                onChange={handleChange}
-                rows={2}
-                placeholder="Hipertensión, diabetes, afecciones hereditarias familiares..."
-                className="recepcion-form-input"
-                style={{ resize: 'vertical' }}
-              />
+            {/* SECCIÓN 3: Antecedentes Clínicos */}
+            <div className="recepcion-form-section-card">
+              <div className="recepcion-form-section-header">
+                <div className="recepcion-form-section-title">
+                  <FileText size={16} className="recepcion-form-section-title-icon" />
+                  <span>3. Antecedentes Clínicos (Opcional)</span>
+                </div>
+                <span className="recepcion-form-section-sub">
+                  Información de apoyo para el médico y enfermería
+                </span>
+              </div>
+
+              <div className="recepcion-form-grid-2">
+                <div className="recepcion-form-group">
+                  <label className="recepcion-form-label">
+                    Antecedentes Patológicos
+                  </label>
+                  <textarea
+                    name="antecedentesPersonalesPatologicos"
+                    value={form.antecedentesPersonalesPatologicos}
+                    onChange={handleChange}
+                    rows={2}
+                    placeholder="Enfermedades crónicas, intervenciones previas, cirugías..."
+                    className="recepcion-form-input"
+                    style={{ resize: 'vertical' }}
+                  />
+                </div>
+
+                <div className="recepcion-form-group">
+                  <label className="recepcion-form-label">
+                    Antecedentes Familiares
+                  </label>
+                  <textarea
+                    name="antecedentesPersonalesFamiliares"
+                    value={form.antecedentesPersonalesFamiliares}
+                    onChange={handleChange}
+                    rows={2}
+                    placeholder="Diabetes, hipertensión o cardiopatías en familiares cercanos..."
+                    className="recepcion-form-input"
+                    style={{ resize: 'vertical' }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Acciones */}
-          <div className="recepcion-modal-actions">
+          {/* Pie Fijo de Acciones */}
+          <div className="recepcion-modal-footer">
             <button
               type="button"
               onClick={onCerrar}
@@ -274,7 +319,7 @@ function FormularioPaciente({ onGuardar, onCerrar, guardando }) {
             >
               {guardando ? (
                 <>
-                  <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                  <Loader2 size={16} className="spin-icon" />
                   <span>Guardando...</span>
                 </>
               ) : (
@@ -286,7 +331,6 @@ function FormularioPaciente({ onGuardar, onCerrar, guardando }) {
             </button>
           </div>
         </form>
-
       </div>
     </div>
   );

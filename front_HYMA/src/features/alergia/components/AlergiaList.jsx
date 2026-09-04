@@ -4,164 +4,69 @@ import { FlaskConical, Pencil, Trash2 } from 'lucide-react';
 export const AlergiaList = ({ alergias, onEdit, onDelete }) => {
   if (!alergias || alergias.length === 0) {
     return (
-      <div style={styles.emptyCard}>
-        <div style={{ ...styles.emptyIcon, display: 'flex', justifyContent: 'center' }}>
-          <FlaskConical size={48} color="#f59e0b" />
+      <div className="alergias-empty">
+        <div className="alergias-empty-icon">
+          <FlaskConical size={44} />
         </div>
-        <h3 style={styles.emptyTitle}>No hay alergias encontradas</h3>
-        <p style={styles.emptyText}>
-          No se encontraron elementos con el término buscado. Puedes agregar una nueva usando el formulario.
+        <h3 className="alergias-empty-title">No se encontraron alergias</h3>
+        <p className="alergias-empty-desc">
+          No hay elementos registrados que coincidan con la búsqueda. Puedes agregar una nueva usando el botón superior.
         </p>
       </div>
     );
   }
 
   return (
-    <div style={styles.tableWrapper}>
-      <table style={styles.table}>
-        <thead>
-          <tr>
-            <th style={styles.th}>ID</th>
-            <th style={styles.th}>Nombre de la Alergia</th>
-            <th style={{ ...styles.th, textAlign: 'right' }}>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {alergias.map((a) => (
-            <tr key={a.idAlergia} style={styles.row}>
-              <td style={{ ...styles.td, color: '#64748b', fontWeight: 600, width: '80px' }}>
-                #{a.idAlergia}
-              </td>
-
-              <td style={styles.td}>
-                <div style={styles.nameRow}>
-                  <span style={styles.allergyPill}>
-                    <FlaskConical size={14} color="#d97706" />
-                  </span>
-                  <strong style={styles.nameText}>{a.nombre}</strong>
-                </div>
-              </td>
-
-              <td style={{ ...styles.td, textAlign: 'right', width: '180px' }}>
-                <div style={styles.actionButtons}>
-                  <button
-                    onClick={() => onEdit(a)}
-                    style={styles.btnEdit}
-                    title="Editar alergia"
-                  >
-                    <Pencil size={13} style={{ marginRight: '4px' }} /> Editar
-                  </button>
-                  <button
-                    onClick={() => onDelete(a.idAlergia)}
-                    style={styles.btnDelete}
-                    title="Eliminar alergia"
-                  >
-                    <Trash2 size={13} style={{ marginRight: '4px' }} /> Eliminar
-                  </button>
-                </div>
-              </td>
+    <div className="alergias-table-card">
+      <div className="alergias-table-responsive">
+        <table className="alergias-table">
+          <thead>
+            <tr>
+              <th className="alergias-th">Alergia o Fármaco</th>
+              <th className="alergias-th" style={{ textAlign: 'right', width: '180px' }}>
+                Acciones
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {alergias.map((a) => (
+              <tr key={a.idAlergia} className="alergias-tr">
+                <td className="alergias-td">
+                  <div className="alergias-name-cell">
+                    <div className="alergias-icon-badge">
+                      <FlaskConical size={16} />
+                    </div>
+                    <span className="alergias-name-text">{a.nombre}</span>
+                  </div>
+                </td>
+
+                <td className="alergias-td" style={{ textAlign: 'right' }}>
+                  <div className="alergias-actions">
+                    <button
+                      type="button"
+                      onClick={() => onEdit(a)}
+                      className="alergias-btn-action alergias-btn-edit"
+                      title="Editar alergia"
+                    >
+                      <Pencil size={13} />
+                      <span>Editar</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(a.idAlergia)}
+                      className="alergias-btn-action alergias-btn-delete"
+                      title="Eliminar alergia"
+                    >
+                      <Trash2 size={13} />
+                      <span>Eliminar</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
-};
-
-const styles = {
-  tableWrapper: {
-    backgroundColor: '#ffffff',
-    borderRadius: '14px',
-    border: '1px solid #e2e8f0',
-    overflow: 'hidden',
-    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.03)',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    textAlign: 'left',
-    fontSize: '0.9rem',
-  },
-  th: {
-    backgroundColor: '#f8fafc',
-    color: '#475569',
-    fontWeight: '700',
-    padding: '14px 20px',
-    borderBottom: '1px solid #e2e8f0',
-    fontSize: '0.8rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.6px',
-  },
-  row: {
-    borderBottom: '1px solid #f1f5f9',
-    transition: 'background-color 0.15s ease',
-  },
-  td: {
-    padding: '16px 20px',
-    verticalAlign: 'middle',
-    color: '#0f172a',
-  },
-  nameRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-  },
-  allergyPill: {
-    fontSize: '1rem',
-    backgroundColor: '#fef3c7',
-    padding: '4px 8px',
-    borderRadius: '8px',
-  },
-  nameText: {
-    fontSize: '0.95rem',
-    color: '#0f172a',
-  },
-  actionButtons: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    justifyContent: 'flex-end',
-  },
-  btnEdit: {
-    backgroundColor: '#f8fafc',
-    color: '#d97706',
-    border: '1px solid #fde68a',
-    padding: '6px 12px',
-    borderRadius: '8px',
-    fontSize: '0.82rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-  },
-  btnDelete: {
-    backgroundColor: '#fff1f2',
-    color: '#e11d48',
-    border: '1px solid #fecdd3',
-    padding: '6px 12px',
-    borderRadius: '8px',
-    fontSize: '0.82rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-  },
-  emptyCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: '14px',
-    padding: '3.5rem 2rem',
-    textAlign: 'center',
-    border: '1px solid #e2e8f0',
-  },
-  emptyIcon: {
-    fontSize: '2.5rem',
-    marginBottom: '0.75rem',
-    opacity: 0.6,
-  },
-  emptyTitle: {
-    fontSize: '1.1rem',
-    fontWeight: '800',
-    color: '#0f172a',
-    margin: '0 0 6px 0',
-  },
-  emptyText: {
-    color: '#64748b',
-    fontSize: '0.88rem',
-  },
 };
