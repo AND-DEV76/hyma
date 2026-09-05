@@ -22,10 +22,14 @@ public class Diagnostico {
     @JoinColumn(name = "id_consulta", nullable = false, foreignKey = @ForeignKey(name = "fk_diagnostico_consulta"))
     private Consulta consulta;
 
-    @Column(name = "codigo_cie10", length = 20)
+    @Column(name = "codigo_cie10", length = 70)
     private String codigoCie10;
 
     @Column(name = "descripcion", nullable = false, columnDefinition = "TEXT")
     private String descripcion;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_categoria")
+    private CategoriaDiagnostico categoria;
 }
 

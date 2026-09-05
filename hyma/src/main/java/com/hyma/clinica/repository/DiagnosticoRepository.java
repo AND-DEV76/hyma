@@ -8,5 +8,7 @@ import java.util.List;
 @Repository
 public interface DiagnosticoRepository extends JpaRepository<Diagnostico, Long> {
     List<Diagnostico> findByConsulta_IdConsulta(Long idConsulta);
+    boolean existsByCategoria_IdCategoria(Long idCategoria);
+    long countByCategoria_IdCategoria(Long idCategoria);
 }
 

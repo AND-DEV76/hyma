@@ -23,8 +23,9 @@ public class CatalogoCie10Controller {
     @GetMapping
     public ResponseEntity<Page<CatalogoCie10Response>> listar(
             @RequestParam(name = "buscar", required = false) String buscar,
+            @RequestParam(name = "idCategoria", required = false) Long idCategoria,
             Pageable pageable) {
-        return ResponseEntity.ok(catalogoService.buscar(buscar, pageable));
+        return ResponseEntity.ok(catalogoService.buscar(buscar, idCategoria, pageable));
     }
 
     @PostMapping

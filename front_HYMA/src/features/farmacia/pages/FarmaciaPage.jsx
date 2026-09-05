@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { ArrowDownToLine, History } from 'lucide-react';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import { useFarmacia } from '../hooks/useFarmacia';
 import MedicamentosList from '../components/MedicamentosList';
@@ -43,6 +45,7 @@ function FarmaciaPage() {
 
   const section = location.pathname.split('/')[2] || 'dashboard';
   const currentTab = tabs.some((tab) => tab.key === section) ? section : 'dashboard';
+  const [vistaEntrada, setVistaEntrada] = useState('registro');
   const goTo = (nextSection) => navigate(nextSection === 'dashboard' ? '/farmacia' : '/farmacia/' + nextSection);
 
   const deleteWithConfirmation = async (type, id) => {
@@ -86,6 +89,9 @@ function FarmaciaPage() {
                 <span>{tab.label}</span>
                 {tab.key === 'medicamentos' && medicamentos.length > 0 && (
                   <span className="farmacia-tab-badge">{medicamentos.length}</span>
+                )}
+                {tab.key === 'entradas' && entradas.length > 0 && (
+                  <span className="farmacia-tab-badge">{entradas.length}</span>
                 )}
                 {tab.key === 'lotes' && lotes.length > 0 && (
                   <span className="farmacia-tab-badge">{lotes.length}</span>
@@ -136,11 +142,45 @@ function FarmaciaPage() {
               />
             )}
 
-            {/* 4. Entradas de inventario */}
+            {/* 4. Entradas de inventario divididas en dos vistas: Registro e Historial */}
             {currentTab === 'entradas' && (
-              <div className="farmacia-layout-2">
-                <EntradaMedicamentoForm medicamentos={medicamentos} onSave={guardarEntrada} />
-                <HistorialEntradas entradas={entradas} />
+              <div className="farmacia-entradas-wrapper">
+                <div className="farmacia-subtabs-toolbar">
+                  <div className="farmacia-subtabs-group">
+                    <button
+                      type="button"
+                      className={`farmacia-subtab-btn ${vistaEntrada === 'registro' ? 'active' : ''}`}
+                      onClick={() => setVistaEntrada('registro')}
+                    >
+                      <ArrowDownToLine size={15} />
+                      Registrar Entrada
+                    </button>
+                    <button
+                      type="button"
+                      className={`farmacia-subtab-btn ${vistaEntrada === 'historial' ? 'active' : ''}`}
+                      onClick={() => setVistaEntrada('historial')}
+                    >
+                      <History size={15} />
+                      Historial de Entradas
+                      {entradas.length > 0 && (
+                        <span className="farmacia-subtab-badge">{entradas.length}</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {vistaEntrada === 'registro' ? (
+                  <EntradaMedicamentoForm
+                    medicamentos={medicamentos}
+                    onSave={guardarEntrada}
+                    onNavigateHistorial={() => setVistaEntrada('historial')}
+                  />
+                ) : (
+                  <HistorialEntradas
+                    entradas={entradas}
+                    onNavigateNuevo={() => setVistaEntrada('registro')}
+                  />
+                )}
               </div>
             )}
 

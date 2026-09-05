@@ -54,7 +54,7 @@
 }
 
 /* ==========================================================
-   BARRA DE PESTAÑAS (ODOO-STYLE TABS)
+   BARRA DE PESTAÑAS PRINCIPALES (ODOO TABS)
 ========================================================== */
 .farmacia-tabs-bar {
   display: flex;
@@ -110,6 +110,71 @@
 
 .farmacia-nav-tab.active .farmacia-tab-badge {
   background: #0077b6;
+  color: #ffffff;
+}
+
+/* ==========================================================
+   SUBTABS / VISTA SWITCHER (ENTRADAS)
+========================================================== */
+.farmacia-subtabs-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.farmacia-subtabs-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 4px;
+  box-shadow: 0 1px 3px rgba(3, 4, 94, 0.03);
+}
+
+.farmacia-subtab-btn {
+  border: none;
+  background: transparent;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #64748b;
+  padding: 8px 16px;
+  border-radius: 7px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.farmacia-subtab-btn:hover {
+  color: #0077b6;
+  background: #f1f5f9;
+}
+
+.farmacia-subtab-btn.active {
+  background: #0077b6;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 119, 182, 0.22);
+}
+
+.farmacia-subtab-badge {
+  background: #e0f2fe;
+  color: #0077b6;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.farmacia-subtab-btn.active .farmacia-subtab-badge {
+  background: rgba(255, 255, 255, 0.25);
   color: #ffffff;
 }
 
@@ -404,9 +469,9 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  overflow: hidden;
   box-shadow: 0 1px 3px rgba(3, 4, 94, 0.03);
   margin-bottom: 24px;
+  overflow: hidden;
 }
 
 .farmacia-table-responsive,
@@ -453,8 +518,10 @@
   color: #0f172a;
 }
 
-.farmacia-table td strong {
+.farmacia-table td strong,
+.farmacia-text-bold {
   color: #03045e;
+  font-weight: 700;
 }
 
 .farmacia-table td span {
@@ -520,6 +587,12 @@
   background: #f1f5f9;
   color: #64748b;
   border: 1px solid #e2e8f0;
+}
+
+.farmacia-status-pill.category {
+  background: #e0f2fe;
+  color: #0077b6;
+  border: 1px solid #bae6fd;
 }
 
 /* Celdas de Acciones */
@@ -672,6 +745,352 @@
 }
 
 /* ==========================================================
+   BUSCADOR AUTOCOMPLETE DE MEDICAMENTOS (EN DETALLE ENTRADA)
+========================================================== */
+.med-search-container {
+  position: relative;
+  width: 100%;
+}
+
+.med-search-container.is-dropdown-open {
+  z-index: 9999;
+}
+
+.med-search-input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 0 10px;
+  height: 38px;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.med-search-input-wrap:focus-within {
+  border-color: #0077b6;
+  box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.12);
+}
+
+.med-search-input-icon {
+  color: #64748b;
+  flex-shrink: 0;
+  margin-right: 6px;
+}
+
+.med-search-input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 0.84rem;
+  color: #0f172a;
+  background: transparent;
+  font-family: inherit;
+}
+
+.med-search-clear-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s ease;
+}
+
+.med-search-clear-btn:hover {
+  color: #0f172a;
+}
+
+.med-search-selected-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #e0f2fe;
+  border: 1.5px solid #bae6fd;
+  border-radius: 8px;
+  padding: 4px 10px;
+  height: 38px;
+  box-sizing: border-box;
+}
+
+.med-search-pill-icon {
+  color: #0077b6;
+  flex-shrink: 0;
+}
+
+.med-search-pill-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.med-search-pill-name {
+  font-size: 0.84rem;
+  color: #03045e;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.med-search-pill-conc {
+  font-size: 0.74rem;
+  color: #0077b6;
+  background: #caf0f8;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.med-search-pill-remove {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.med-search-pill-remove:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* El popover flotante con z-index alto para quedar SOBRE 'Agregar otro medicamento' */
+.med-search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  min-width: 330px;
+  background: #ffffff;
+  border: 1.5px solid #0077b6;
+  border-radius: 8px;
+  box-shadow: 0 16px 36px rgba(3, 4, 94, 0.22);
+  z-index: 99999;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.med-search-results {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+}
+
+.med-search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.med-search-item:last-child {
+  border-bottom: none;
+}
+
+.med-search-item:hover {
+  background: #e0f2fe;
+}
+
+.med-search-item.is-active {
+  background: #caf0f8;
+}
+
+.med-search-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.med-search-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.med-search-item-name {
+  font-size: 0.86rem;
+  color: #03045e;
+  font-weight: 700;
+}
+
+.med-search-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.med-search-item-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0077b6;
+  background: #caf0f8;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.med-search-item-sub {
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+.med-search-check {
+  color: #0077b6;
+  flex-shrink: 0;
+}
+
+.med-search-empty {
+  padding: 16px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+/* ==========================================================
+   TABLA DE DETALLES Y TOTALES DE ENTRADA
+========================================================== */
+.farmacia-detalles-table-wrap {
+  position: relative;
+  overflow: visible;
+  min-height: 120px;
+  z-index: 25;
+}
+
+.farmacia-detalles-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.85rem;
+}
+
+.farmacia-detalles-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  padding: 12px 14px;
+  border-bottom: 1.5px solid #e2e8f0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.farmacia-detalles-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+  position: relative;
+}
+
+.farmacia-add-detail-bar {
+  padding: 14px 18px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  margin-top: 12px;
+  border-radius: 0 0 8px 8px;
+}
+
+.farmacia-entrada-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-top: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  flex-wrap: wrap;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+  margin-top: 16px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.farmacia-totales-box {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+.farmacia-total-item {
+  font-size: 0.88rem;
+  color: #475569;
+}
+
+.farmacia-total-item strong {
+  color: #03045e;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+/* ==========================================================
+   LISTA DE CHIPS EN HISTORIAL DE ENTRADAS
+========================================================== */
+.farmacia-entrada-meds-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.farmacia-entrada-med-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  flex-wrap: wrap;
+}
+
+.farmacia-entrada-med-chip strong {
+  color: #03045e;
+}
+
+.chip-cant {
+  font-weight: 700;
+  color: #0077b6;
+  background: #e0f2fe;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.chip-lote {
+  font-size: 0.72rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.chip-precio {
+  font-size: 0.72rem;
+  color: #059669;
+  font-weight: 600;
+}
+
+/* ==========================================================
    VISTA DE CATÁLOGOS (NUEVO MEDICAMENTO + CATEGORÍAS + CASAS)
 ========================================================== */
 .farmacia-catalogos-grid {
@@ -693,6 +1112,7 @@
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(3, 4, 94, 0.03);
   padding: 22px;
+  overflow: visible;
 }
 
 .farmacia-card + .farmacia-card {
@@ -830,7 +1250,6 @@
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 20px;
 }
 
 /* Auxiliar Catalogs Styles */
@@ -1191,7 +1610,7 @@
 }
 
 /* ==========================================================
-   ENTRADAS, LOTES Y OTROS SUBMÓDULOS
+   OTROS SUBMÓDULOS
 ========================================================== */
 .farmacia-layout-2 {
   display: grid;
@@ -1276,5 +1695,16 @@
   .farmacia-btn-primary,
   .farmacia-btn-secondary {
     width: 100%;
+  }
+
+  .farmacia-entrada-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .farmacia-totales-box {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 }

@@ -11,15 +11,35 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CatalogoCie10Repository extends JpaRepository<CatalogoCie10, Long> {
     
-    @Query("""
+    @Query(value = """
         SELECT c FROM CatalogoCie10 c
-        WHERE LOWER(c.codigo) LIKE LOWER(CONCAT('%', :query, '%'))
-           OR LOWER(c.descripcion) LIKE LOWER(CONCAT('%', :query, '%'))
+        LEFT JOIN FETCH c.categoria cat
+        WHERE (:idCategoria IS NULL OR cat.idCategoria = :idCategoria)
+          AND (
+            LOWER(c.codigo) LIKE LOWER(CONCAT('%', :query, '%'))
+            OR LOWER(c.descripcion) LIKE LOWER(CONCAT('%', :query, '%'))
+            OR LOWER(cat.nombre) LIKE LOWER(CONCAT('%', :query, '%'))
+          )
         ORDER BY c.codigo ASC
+        """,
+        countQuery = """
+        SELECT count(c) FROM CatalogoCie10 c
+        LEFT JOIN c.categoria cat
+        WHERE (:idCategoria IS NULL OR cat.idCategoria = :idCategoria)
+          AND (
+            LOWER(c.codigo) LIKE LOWER(CONCAT('%', :query, '%'))
+            OR LOWER(c.descripcion) LIKE LOWER(CONCAT('%', :query, '%'))
+            OR LOWER(cat.nombre) LIKE LOWER(CONCAT('%', :query, '%'))
+          )
         """)
-    Page<CatalogoCie10> buscar(@Param("query") String query, Pageable pageable);
+    Page<CatalogoCie10> buscar(
+            @Param("query") String query,
+            @Param("idCategoria") Long idCategoria,
+            Pageable pageable);
     
     boolean existsByCodigo(String codigo);
     boolean existsByCodigoAndIdCie10Not(String codigo, Long idCie10);
+    boolean existsByCategoria_IdCategoria(Long idCategoria);
+    long countByCategoria_IdCategoria(Long idCategoria);
 }
 
