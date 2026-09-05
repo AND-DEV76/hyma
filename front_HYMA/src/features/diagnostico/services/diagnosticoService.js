@@ -43,4 +43,3 @@ export const actualizarCategoriaDiagnostico = async (id, data) => {
 export const eliminarCategoriaDiagnostico = async (id) => {
   await api.delete(`/diagnosticos/categorias/${id}`);
 };
-

@@ -72,6 +72,7 @@ ALTER TABLE diagnostico
     REFERENCES categoria_diagnostico(id_categoria);
 
 -- 3. Creamos el índice para que las búsquedas por categoría sean rápidas
+CREATE INDEX idx_diagnostico_categoria 
 CREATE INDEX IF NOT EXISTS idx_diagnostico_categoria 
     ON diagnostico(id_categoria);
 

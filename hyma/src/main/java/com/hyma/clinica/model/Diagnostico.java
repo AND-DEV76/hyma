@@ -32,4 +32,3 @@ public class Diagnostico {
     @JoinColumn(name = "id_categoria")
     private CategoriaDiagnostico categoria;
 }
-

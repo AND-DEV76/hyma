@@ -39,3 +39,12 @@ export const obtenerHistorialSignosVitales = async (idPaciente) => {
   const response = await api.get(`/preconsulta/pacientes/${idPaciente}/signos-vitales`);
   return response.data;
 };
+
+/**
+ * Cancela el turno en cola de preconsulta (cambia estado a CANCELADO).
+ * @param {number} idCola 
+ */
+export const cancelarTurnoPreconsulta = async (idCola) => {
+  const response = await api.patch(`/recepcion/cola/${idCola}/estado`, { estado: 'CANCELADO' });
+  return response.data;
+};

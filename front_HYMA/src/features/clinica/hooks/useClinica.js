@@ -35,8 +35,24 @@ export const useClinica = () => {
     }
   };
 
+  const cancelarAtencion = async (idCola) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await clinicaService.cancelarCola(idCola);
+      await cargarCola();
+      return { success: true };
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Error al cancelar la atención del paciente';
+      setError(msg);
+      return { success: false, error: msg };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     cola, loading, guardando, error,
-    cargarCola, finalizarAtencion
+    cargarCola, finalizarAtencion, cancelarAtencion
   };
 };

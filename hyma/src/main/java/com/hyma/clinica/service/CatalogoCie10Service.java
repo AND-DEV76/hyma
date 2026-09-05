@@ -30,8 +30,13 @@ public class CatalogoCie10Service {
     @Transactional(readOnly = true)
     public Page<CatalogoCie10Response> buscar(String query, Long idCategoria, Pageable pageable) {
         String safeQuery = (query == null) ? "" : query.trim();
-        return catalogoCie10Repository.buscar(safeQuery, idCategoria, pageable)
-                .map(clinicaMapper::toCie10Response);
+        if (idCategoria != null) {
+            return catalogoCie10Repository.buscarPorCategoria(safeQuery, idCategoria, pageable)
+                    .map(clinicaMapper::toCie10Response);
+        } else {
+            return catalogoCie10Repository.buscar(safeQuery, pageable)
+                    .map(clinicaMapper::toCie10Response);
+        }
     }
 
     @Transactional

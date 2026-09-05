@@ -7,6 +7,7 @@ import LoginPage from './features/auth/pages/LoginPage';
 import InicioPage from './features/inicio/pages/InicioPage';
 import RecepcionPage from './features/recepcion/pages/RecepcionPage';
 import PreconsultaPage from './features/preconsulta/pages/PreconsultaPage';
+import SignosVitalesPage from './features/preconsulta/pages/SignosVitalesPage';
 import FarmaciaPage from './features/farmacia/pages/FarmaciaPage';
 import MedicosPage from './features/doctor/pages/MedicosPage';
 import UsuariosPage from './features/usuario/pages/UsuariosPage';
@@ -28,6 +29,7 @@ function App() {
             <Route path="/inicio" element={<InicioPage />} />
             <Route path="/recepcion" element={<RecepcionPage />} />
             <Route path="/preconsulta" element={<PreconsultaPage />} />
+            <Route path="/preconsulta/signos" element={<SignosVitalesPage />} />
             <Route path="/farmacia/*" element={<FarmaciaPage />} />
             <Route path="/medicos" element={<MedicosPage />} />
             <Route path="/usuarios" element={<UsuariosPage />} />

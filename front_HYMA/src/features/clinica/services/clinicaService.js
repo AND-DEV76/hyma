@@ -25,3 +25,8 @@ export const buscarDiagnosticosCie10 = async (buscar) => {
   const response = await api.get('/diagnosticos/catalogo', { params: { buscar, size: 20 } });
   return response.data.content || response.data;
 };
+
+export const cancelarCola = async (idCola) => {
+  const response = await api.patch(`/recepcion/cola/${idCola}/estado`, { estado: 'CANCELADO' });
+  return response.data;
+};

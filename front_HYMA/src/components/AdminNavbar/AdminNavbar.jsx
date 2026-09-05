@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard,
   UserCheck,
   HeartPulse,
   Stethoscope,
@@ -78,12 +77,6 @@ export default function AdminNavbar() {
 
   // Grupos de navegación
   const navItems = [
-    {
-      label: 'Inicio',
-      path: '/inicio',
-      icon: LayoutDashboard,
-      show: !isEnfermera,
-    },
     {
       label: 'Recepción',
       path: '/recepcion',
@@ -164,7 +157,7 @@ export default function AdminNavbar() {
         <div className="sidebar-header">
           <button
             className="sidebar-brand"
-            onClick={() => navigate(isEnfermera ? '/recepcion' : '/inicio')}
+            onClick={() => navigate(isEnfermera ? '/recepcion' : (isMedico ? '/clinica' : '/recepcion'))}
             title="Programa de Salud - Obras Sociales San Martín"
           >
             <div className="brand-logo-wrapper">

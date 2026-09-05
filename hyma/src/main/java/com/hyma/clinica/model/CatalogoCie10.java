@@ -27,4 +27,3 @@ public class CatalogoCie10 {
     @JoinColumn(name = "id_categoria")
     private CategoriaDiagnostico categoria;
 }
-

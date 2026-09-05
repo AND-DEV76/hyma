@@ -103,6 +103,25 @@ export const usePreconsulta = () => {
     return { imc: imcValor, texto: 'Obesidad Grado III', color: '#991b1b' };
   };
 
+  /**
+   * Cancela un turno de la cola de preconsulta pasando el estado a CANCELADO.
+   */
+  const cancelarTurno = async (idCola) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await preconsultaService.cancelarTurnoPreconsulta(idCola);
+      await cargarColas();
+      return { success: true };
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Error al cancelar el turno de preconsulta';
+      setError(msg);
+      return { success: false, error: msg };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     colaPreconsulta,
     colaPendiente,
@@ -112,6 +131,7 @@ export const usePreconsulta = () => {
     error,
     cargarColas,
     atenderTurno,
+    cancelarTurno,
     guardarSignos,
     cargarUltimoSigno,
     calcularIMC,
