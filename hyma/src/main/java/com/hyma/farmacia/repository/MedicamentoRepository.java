@@ -8,6 +8,10 @@ import java.util.List;
 
 public interface MedicamentoRepository extends JpaRepository<Medicamento, Long> {
 
+    boolean existsByCategoria_IdCategoriaMedicamento(Long idCategoriaMedicamento);
+
+    boolean existsByCasaFarmaceutica_IdCasaFarmaceutica(Long idCasaFarmaceutica);
+
     @Query("""
         select m from Medicamento m
         left join fetch m.categoria

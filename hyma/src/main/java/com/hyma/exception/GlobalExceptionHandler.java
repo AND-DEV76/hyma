@@ -5,6 +5,7 @@ import com.hyma.recepcion.service.ColaAtencionNotFoundException;
 import com.hyma.recepcion.service.PacienteNotFoundException;
 import com.hyma.recepcion.service.PacienteYaEnColaException;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -66,6 +67,23 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Map<String, Object>> handleConstraintViolation(ConstraintViolationException ex) {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        String message = "No se puede eliminar o modificar el registro porque está relacionado con otros datos en el sistema.";
+        String rootMsg = ex.getRootCause() != null ? ex.getRootCause().getMessage() : ex.getMessage();
+        if (rootMsg != null) {
+            String lower = rootMsg.toLowerCase();
+            if (lower.contains("categoria_medicamento") || lower.contains("categoria")) {
+                message = "No se puede eliminar la categoría porque ya está asociada a uno o más medicamentos registrados.";
+            } else if (lower.contains("casa_farmaceutica")) {
+                message = "No se puede eliminar la casa farmacéutica porque ya está asociada a uno o más medicamentos registrados.";
+            } else if (lower.contains("medicamento")) {
+                message = "No se puede eliminar el medicamento porque ya cuenta con registros relacionados en el inventario o recetas.";
+            }
+        }
+        return buildErrorResponse(HttpStatus.CONFLICT, message);
     }
 
     @ExceptionHandler(RuntimeException.class)

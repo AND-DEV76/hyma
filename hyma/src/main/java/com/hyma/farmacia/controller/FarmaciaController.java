@@ -35,13 +35,13 @@ public class FarmaciaController {
 
     @PutMapping("/categorias/{id}")
     public ResponseEntity<CatalogoFarmaciaResponse> actualizarCategoria(
-            @PathVariable Long id,
+            @PathVariable(name = "id") Long id,
             @Valid @RequestBody CatalogoFarmaciaRequest request) {
         return ResponseEntity.ok(farmaciaService.actualizarCategoria(id, request));
     }
 
     @DeleteMapping("/categorias/{id}")
-    public ResponseEntity<Void> eliminarCategoria(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminarCategoria(@PathVariable(name = "id") Long id) {
         farmaciaService.eliminarCategoria(id);
         return ResponseEntity.noContent().build();
     }
@@ -59,13 +59,13 @@ public class FarmaciaController {
 
     @PutMapping("/casas-farmaceuticas/{id}")
     public ResponseEntity<CatalogoFarmaciaResponse> actualizarCasa(
-            @PathVariable Long id,
+            @PathVariable(name = "id") Long id,
             @Valid @RequestBody CatalogoFarmaciaRequest request) {
         return ResponseEntity.ok(farmaciaService.actualizarCasa(id, request));
     }
 
     @DeleteMapping("/casas-farmaceuticas/{id}")
-    public ResponseEntity<Void> eliminarCasa(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminarCasa(@PathVariable(name = "id") Long id) {
         farmaciaService.eliminarCasa(id);
         return ResponseEntity.noContent().build();
     }
@@ -90,6 +90,12 @@ public class FarmaciaController {
             @PathVariable(name = "id") Long id,
             @Valid @RequestBody MedicamentoRequest request) {
         return ResponseEntity.ok(farmaciaService.actualizarMedicamento(id, request));
+    }
+
+    @DeleteMapping("/medicamentos/{id}")
+    public ResponseEntity<Void> eliminarMedicamento(@PathVariable(name = "id") Long id) {
+        farmaciaService.eliminarMedicamento(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/lotes")
@@ -127,7 +133,7 @@ public class FarmaciaController {
 
     @PutMapping("/parametros/{clave}")
     public ResponseEntity<ParametroFarmaciaResponse> actualizarParametro(
-            @PathVariable String clave,
+            @PathVariable(name = "clave") String clave,
             @Valid @RequestBody ParametroFarmaciaRequest request) {
         return ResponseEntity.ok(farmaciaService.actualizarParametro(clave, request));
     }

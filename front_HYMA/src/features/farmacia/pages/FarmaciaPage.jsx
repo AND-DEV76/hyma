@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import { useFarmacia } from '../hooks/useFarmacia';
+import MedicamentosList from '../components/MedicamentosList';
 import CatalogosFarmacia from '../components/CatalogosFarmacia';
 import EntradaMedicamentoForm from '../components/EntradaMedicamentoForm';
 import FarmaciaDashboard from '../components/FarmaciaDashboard';
@@ -11,6 +12,7 @@ import '../styles/farmacia.css';
 
 const tabs = [
   { key: 'dashboard', label: 'Resumen' },
+  { key: 'medicamentos', label: 'Medicamentos' },
   { key: 'catalogos', label: 'Catálogos' },
   { key: 'entradas', label: 'Entradas' },
   { key: 'lotes', label: 'Lotes activos' },
@@ -43,46 +45,89 @@ function FarmaciaPage() {
   const currentTab = tabs.some((tab) => tab.key === section) ? section : 'dashboard';
   const goTo = (nextSection) => navigate(nextSection === 'dashboard' ? '/farmacia' : '/farmacia/' + nextSection);
 
-  const deleteWithConfirmation = (type, id) => {
+  const deleteWithConfirmation = async (type, id) => {
     const label = type === 'categoria' ? 'la categoría' : 'la casa farmacéutica';
     if (window.confirm('¿Deseas eliminar ' + label + '?')) {
-      return type === 'categoria' ? borrarCategoria(id) : borrarCasa(id);
+      const result = type === 'categoria' ? await borrarCategoria(id) : await borrarCasa(id);
+      if (result && !result.success && result.error) {
+        alert(result.error);
+      }
+      return result;
     }
-    return Promise.resolve({ success: false });
+    return { success: false };
   };
 
   return (
     <div className="farmacia-page">
       <AdminNavbar />
       <main className="farmacia-container">
+        {/* Cabecera Principal */}
         <div className="farmacia-heading">
           <div>
-            <p className="eyebrow">GESTIÓN ADMINISTRATIVA</p>
-            <h1>Farmacia e inventario</h1>
-            <p>Control de medicamentos, lotes y movimientos de entrada.</p>
+            <span className="farmacia-eyebrow">GESTIÓN ADMINISTRATIVA</span>
+            <h1 className="farmacia-title">Farmacia e Inventario</h1>
+            <p className="farmacia-subtitle">
+              Administración de medicamentos, control de lotes y movimientos de stock.
+            </p>
           </div>
         </div>
 
-        <nav className="farmacia-tabs" aria-label="Módulo de farmacia">
-          {tabs.map((tab) => (
-            <button key={tab.key} className={'farmacia-tab ' + (currentTab === tab.key ? 'active' : '')} onClick={() => goTo(tab.key)}>
-              {tab.label}
-            </button>
-          ))}
+        {/* Barra de Pestañas Odoo */}
+        <nav className="farmacia-tabs-bar" aria-label="Navegación de farmacia">
+          {tabs.map((tab) => {
+            const isActive = currentTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                className={`farmacia-nav-tab ${isActive ? 'active' : ''}`}
+                onClick={() => goTo(tab.key)}
+              >
+                <span>{tab.label}</span>
+                {tab.key === 'medicamentos' && medicamentos.length > 0 && (
+                  <span className="farmacia-tab-badge">{medicamentos.length}</span>
+                )}
+                {tab.key === 'lotes' && lotes.length > 0 && (
+                  <span className="farmacia-tab-badge">{lotes.length}</span>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
-        {error && <div className="farmacia-alert" role="alert">{error}</div>}
+        {error && (
+          <div className="farmacia-alert error" role="alert">
+            {error}
+          </div>
+        )}
 
         {loading ? (
-          <div className="farmacia-loading">Cargando información de farmacia...</div>
+          <div className="farmacia-loading-container">
+            <div className="farmacia-spinner" />
+            <p>Cargando información del módulo de farmacia...</p>
+          </div>
         ) : (
-          <>
-            {currentTab === 'dashboard' && <FarmaciaDashboard dashboard={dashboard} onNavigate={goTo} />}
+          <div className="farmacia-content-area">
+            {/* 1. Resumen / Dashboard */}
+            {currentTab === 'dashboard' && (
+              <FarmaciaDashboard dashboard={dashboard} onNavigate={goTo} />
+            )}
+
+            {/* 2. Vista Exclusiva: Medicamentos Registrados */}
+            {currentTab === 'medicamentos' && (
+              <MedicamentosList
+                medicamentos={medicamentos}
+                categorias={categorias}
+                casas={casas}
+                onSaveMedicamento={guardarMedicamento}
+              />
+            )}
+
+            {/* 3. Vista Exclusiva: Nuevo Medicamento, Categorías y Casas Farmacéuticas */}
             {currentTab === 'catalogos' && (
               <CatalogosFarmacia
                 categorias={categorias}
                 casas={casas}
-                medicamentos={medicamentos}
                 onSaveCategoria={guardarCategoria}
                 onDeleteCategoria={(id) => deleteWithConfirmation('categoria', id)}
                 onSaveCasa={guardarCasa}
@@ -90,15 +135,25 @@ function FarmaciaPage() {
                 onSaveMedicamento={guardarMedicamento}
               />
             )}
+
+            {/* 4. Entradas de inventario */}
             {currentTab === 'entradas' && (
               <div className="farmacia-layout-2">
                 <EntradaMedicamentoForm medicamentos={medicamentos} onSave={guardarEntrada} />
                 <HistorialEntradas entradas={entradas} />
               </div>
             )}
-            {currentTab === 'lotes' && <LotesFarmacia lotes={lotes} medicamentos={medicamentos} />}
-            {currentTab === 'parametros' && <ParametrosFarmacia parametros={parametros} onSave={actualizarParametro} />}
-          </>
+
+            {/* 5. Lotes Activos */}
+            {currentTab === 'lotes' && (
+              <LotesFarmacia lotes={lotes} medicamentos={medicamentos} />
+            )}
+
+            {/* 6. Parámetros del sistema */}
+            {currentTab === 'parametros' && (
+              <ParametrosFarmacia parametros={parametros} onSave={actualizarParametro} />
+            )}
+          </div>
         )}
       </main>
     </div>

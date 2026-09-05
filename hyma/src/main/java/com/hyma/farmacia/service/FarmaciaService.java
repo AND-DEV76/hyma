@@ -57,6 +57,9 @@ public class FarmaciaService {
         if (!categoriaRepository.existsById(id)) {
             throw new FarmaciaNotFoundException("Categoría no encontrada");
         }
+        if (medicamentoRepository.existsByCategoria_IdCategoriaMedicamento(id)) {
+            throw new IllegalArgumentException("No se puede eliminar la categoría porque ya está asociada a uno o más medicamentos registrados.");
+        }
         categoriaRepository.deleteById(id);
     }
 
@@ -91,7 +94,21 @@ public class FarmaciaService {
         if (!casaRepository.existsById(id)) {
             throw new FarmaciaNotFoundException("Casa farmacéutica no encontrada");
         }
+        if (medicamentoRepository.existsByCasaFarmaceutica_IdCasaFarmaceutica(id)) {
+            throw new IllegalArgumentException("No se puede eliminar la casa farmacéutica porque ya está asociada a uno o más medicamentos registrados.");
+        }
         casaRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void eliminarMedicamento(Long id) {
+        if (!medicamentoRepository.existsById(id)) {
+            throw new FarmaciaNotFoundException("Medicamento no encontrado");
+        }
+        if (loteRepository.existsByMedicamento_IdMedicamento(id)) {
+            throw new IllegalArgumentException("No se puede eliminar el medicamento porque ya cuenta con lotes o movimientos en el inventario. Puedes desactivarlo en su lugar.");
+        }
+        medicamentoRepository.deleteById(id);
     }
 
     @Transactional(readOnly = true)
