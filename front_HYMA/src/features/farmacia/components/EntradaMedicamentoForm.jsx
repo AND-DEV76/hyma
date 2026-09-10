@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ArrowDownToLine, Plus, Trash2, CheckCircle2, AlertCircle, PackagePlus, FileText } from 'lucide-react';
 import MedicamentoSearchInput from './MedicamentoSearchInput';
+import { listarLotes } from '../services/loteService';
 
 const newDetail = {
   idMedicamento: '',
@@ -10,7 +11,7 @@ const newDetail = {
   precioUnitario: '',
 };
 
-function EntradaMedicamentoForm({ medicamentos, onSave, onNavigateHistorial }) {
+function EntradaMedicamentoForm({ medicamentos, lotes = [], onSave, onNavigateHistorial }) {
   const [tipoEntrada, setTipoEntrada] = useState('COMPRA');
   const [observaciones, setObservaciones] = useState('');
   const [detalles, setDetalles] = useState([{ ...newDetail }]);
@@ -22,8 +23,54 @@ function EntradaMedicamentoForm({ medicamentos, onSave, onNavigateHistorial }) {
     setDetalles((prev) => prev.map((item, idx) => (idx === index ? { ...item, [field]: value } : item)));
   };
 
-  const handleSelectMed = (index, med) => {
-    updateDetail(index, 'idMedicamento', med.idMedicamento);
+  const handleSelectMed = async (index, med) => {
+    // 1. Buscar último lote en las props cargadas previamente
+    let ultimoLote = null;
+    if (lotes && lotes.length > 0) {
+      const lotesMed = lotes.filter((l) => Number(l.idMedicamento) === Number(med.idMedicamento));
+      if (lotesMed.length > 0) {
+        ultimoLote = lotesMed.reduce((prev, curr) => (curr.idLote > prev.idLote ? curr : prev), lotesMed[0]);
+      }
+    }
+
+    // Actualizar fila con el idMedicamento y autocompletar si ya se encontró lote
+    setDetalles((prev) =>
+      prev.map((item, idx) => {
+        if (idx !== index) return item;
+        return {
+          ...item,
+          idMedicamento: med.idMedicamento,
+          numeroLote: ultimoLote?.numeroLote || item.numeroLote || '',
+          precioUnitario:
+            ultimoLote?.precioUnitario != null ? String(ultimoLote.precioUnitario) : item.precioUnitario || '',
+          fechaExpiracion: ultimoLote?.fechaExpiracion || item.fechaExpiracion || '',
+        };
+      })
+    );
+
+    // 2. Si no se encontró en props o para garantizar los datos más recientes de la base de datos:
+    try {
+      const res = await listarLotes({ medicamentoId: med.idMedicamento });
+      if (res && res.length > 0) {
+        const masReciente = res.reduce((prev, curr) => (curr.idLote > prev.idLote ? curr : prev), res[0]);
+        setDetalles((prev) =>
+          prev.map((item, idx) => {
+            if (idx !== index) return item;
+            return {
+              ...item,
+              numeroLote: masReciente.numeroLote || item.numeroLote,
+              precioUnitario:
+                masReciente.precioUnitario != null
+                  ? String(masReciente.precioUnitario)
+                  : item.precioUnitario,
+              fechaExpiracion: masReciente.fechaExpiracion || item.fechaExpiracion,
+            };
+          })
+        );
+      }
+    } catch (e) {
+      console.warn('No se pudo obtener el último lote del medicamento:', e);
+    }
   };
 
   const handleClearMed = (index) => {
@@ -176,7 +223,7 @@ function EntradaMedicamentoForm({ medicamentos, onSave, onNavigateHistorial }) {
               </div>
               <div>
                 <h3>Detalle de Medicamentos</h3>
-                <p>Indica el lote, vencimiento, cantidad y costo unitario.</p>
+                <p>Indica el lote, vencimiento, unidades y costo unitario.</p>
               </div>
             </div>
             <span className="farmacia-count-pill sm">
@@ -191,7 +238,7 @@ function EntradaMedicamentoForm({ medicamentos, onSave, onNavigateHistorial }) {
                   <th style={{ width: '38%' }}>Medicamento *</th>
                   <th style={{ width: '16%' }}>Número de Lote</th>
                   <th style={{ width: '15%' }}>Vencimiento *</th>
-                  <th style={{ width: '12%' }}>Cantidad *</th>
+                  <th style={{ width: '12%' }}>Unidad *</th>
                   <th style={{ width: '13%' }}>Costo Unitario (Q)</th>
                   <th style={{ width: '6%', textAlign: 'center' }}></th>
                 </tr>
@@ -232,7 +279,7 @@ function EntradaMedicamentoForm({ medicamentos, onSave, onNavigateHistorial }) {
                       />
                     </td>
 
-                    {/* Cantidad */}
+                    {/* Unidad */}
                     <td>
                       <input
                         className="farmacia-input"

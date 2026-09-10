@@ -123,6 +123,7 @@ function FarmaciaPage() {
             {currentTab === 'medicamentos' && (
               <MedicamentosList
                 medicamentos={medicamentos}
+                lotes={lotes}
                 categorias={categorias}
                 casas={casas}
                 onSaveMedicamento={guardarMedicamento}
@@ -172,6 +173,7 @@ function FarmaciaPage() {
                 {vistaEntrada === 'registro' ? (
                   <EntradaMedicamentoForm
                     medicamentos={medicamentos}
+                    lotes={lotes}
                     onSave={guardarEntrada}
                     onNavigateHistorial={() => setVistaEntrada('historial')}
                   />

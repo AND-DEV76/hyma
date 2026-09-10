@@ -183,8 +183,8 @@ export default function SignosVitalesPage() {
           <section style={styles.patientSummaryCard}>
             <div style={styles.summaryGrid}>
               <div style={styles.summaryItem}>
-                <span style={styles.summaryLabel}>Documento / DNI</span>
-                <span style={styles.summaryVal}>{paciente.numeroIdentificacion || 'Sin documento'}</span>
+                <span style={styles.summaryLabel}>Comunidad</span>
+                <span style={styles.summaryVal}>{paciente.comunidad || 'No especificada'}</span>
               </div>
               <div style={styles.summaryItem}>
                 <span style={styles.summaryLabel}>Edad</span>

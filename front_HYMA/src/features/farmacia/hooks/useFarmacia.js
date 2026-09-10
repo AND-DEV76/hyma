@@ -48,7 +48,7 @@ export const useFarmacia = () => {
   const cargarInventario = useCallback(async () => {
     const [dashboardData, lotesData, entradasData, parametrosData] = await Promise.all([
       obtenerDashboardFarmacia(),
-      listarLotes({ estado: 'ACTIVO' }),
+      listarLotes(),
       listarEntradas(),
       listarParametros(),
     ]);

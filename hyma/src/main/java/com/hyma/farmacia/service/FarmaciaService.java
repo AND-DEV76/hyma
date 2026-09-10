@@ -114,15 +114,45 @@ public class FarmaciaService {
     @Transactional(readOnly = true)
     public List<MedicamentoResponse> listarMedicamentos(Long categoriaId, Long casaId, Boolean estado, String buscar) {
         String filtro = buscar == null || buscar.isBlank() ? "" : buscar.trim();
-        return medicamentoRepository.buscar(categoriaId, casaId, estado, filtro).stream()
-                .map(mapper::toMedicamentoResponse)
+        List<Medicamento> medicamentos = medicamentoRepository.buscar(categoriaId, casaId, estado, filtro);
+        List<LoteMedicamento> todosLotes = loteRepository.findAll();
+        java.util.Map<Long, List<LoteMedicamento>> lotesPorMed = todosLotes.stream()
+                .filter(l -> l.getMedicamento() != null && l.getMedicamento().getIdMedicamento() != null)
+                .collect(java.util.stream.Collectors.groupingBy(l -> l.getMedicamento().getIdMedicamento()));
+
+        return medicamentos.stream()
+                .map(med -> {
+                    MedicamentoResponse resp = mapper.toMedicamentoResponse(med);
+                    List<LoteMedicamento> lotes = lotesPorMed.getOrDefault(med.getIdMedicamento(), List.of());
+                    int totalUnidades = lotes.stream()
+                            .filter(l -> l.getEstado() == EstadoLote.ACTIVO)
+                            .mapToInt(l -> l.getCantidadInicial() != null ? l.getCantidadInicial() : 0)
+                            .sum();
+                    java.math.BigDecimal ultimoPrecio = lotes.stream()
+                            .filter(l -> l.getPrecioUnitario() != null)
+                            .reduce((first, second) -> second)
+                            .map(LoteMedicamento::getPrecioUnitario)
+                            .orElse(null);
+                    LocalDate proximoVenc = lotes.stream()
+                            .filter(l -> l.getEstado() == EstadoLote.ACTIVO && l.getFechaExpiracion() != null)
+                            .map(LoteMedicamento::getFechaExpiracion)
+                            .min(LocalDate::compareTo)
+                            .orElse(null);
+
+                    resp.setUnidades(totalUnidades);
+                    resp.setPrecio(ultimoPrecio);
+                    resp.setProximoVencimiento(proximoVenc);
+                    return resp;
+                })
                 .toList();
     }
 
     @Transactional
     public MedicamentoResponse crearMedicamento(MedicamentoRequest request) {
         Medicamento entity = construirMedicamento(request);
-        return mapper.toMedicamentoResponse(medicamentoRepository.save(entity));
+        MedicamentoResponse resp = mapper.toMedicamentoResponse(medicamentoRepository.save(entity));
+        resp.setUnidades(0);
+        return resp;
     }
 
     @Transactional
