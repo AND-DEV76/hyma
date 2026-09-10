@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowDownToLine, History } from 'lucide-react';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
@@ -34,6 +34,7 @@ function FarmaciaPage() {
     parametros,
     loading,
     error,
+    refresh,
     guardarCategoria,
     borrarCategoria,
     guardarCasa,
@@ -45,6 +46,13 @@ function FarmaciaPage() {
 
   const section = location.pathname.split('/')[2] || 'dashboard';
   const currentTab = tabs.some((tab) => tab.key === section) ? section : 'dashboard';
+
+  // Refrescar automáticamente al cambiar de pestaña para garantizar datos en tiempo real
+  useEffect(() => {
+    if (currentTab === 'medicamentos' || currentTab === 'lotes' || currentTab === 'dashboard') {
+      refresh();
+    }
+  }, [currentTab, refresh]);
   const [vistaEntrada, setVistaEntrada] = useState('registro');
   const goTo = (nextSection) => navigate(nextSection === 'dashboard' ? '/farmacia' : '/farmacia/' + nextSection);
 

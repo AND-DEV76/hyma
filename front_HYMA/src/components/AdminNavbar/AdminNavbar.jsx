@@ -6,6 +6,7 @@ import {
   Stethoscope,
   BookOpen,
   Pill,
+  Package,
   Users,
   Shield,
   FlaskConical,
@@ -69,7 +70,19 @@ export default function AdminNavbar() {
 
   const isActive = (path) => {
     if (path === '/inicio') return location.pathname === '/inicio';
-    if (path === '/farmacia') return location.pathname.startsWith('/farmacia');
+    if (path === '/farmacia/dispensacion') {
+      return (
+        location.pathname.startsWith('/farmacia/dispensacion') ||
+        location.pathname.startsWith('/farmacia/dispensar')
+      );
+    }
+    if (path === '/farmacia') {
+      return (
+        location.pathname.startsWith('/farmacia') &&
+        !location.pathname.startsWith('/farmacia/dispensacion') &&
+        !location.pathname.startsWith('/farmacia/dispensar')
+      );
+    }
     if (path === '/preconsulta') return location.pathname.startsWith('/preconsulta');
     if (path === '/clinica') return location.pathname.startsWith('/clinica');
     return location.pathname === path;
@@ -102,9 +115,15 @@ export default function AdminNavbar() {
       show: isAdmin || isMedico,
     },
     {
-      label: 'Farmacia',
-      path: '/farmacia',
+      label: 'Dispensación',
+      path: '/farmacia/dispensacion',
       icon: Pill,
+      show: isAdmin || isFarmacia,
+    },
+    {
+      label: 'Inventario',
+      path: '/farmacia',
+      icon: Package,
       show: isAdmin || isFarmacia,
     },
     {

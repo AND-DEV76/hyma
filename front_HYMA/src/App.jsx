@@ -9,6 +9,8 @@ import RecepcionPage from './features/recepcion/pages/RecepcionPage';
 import PreconsultaPage from './features/preconsulta/pages/PreconsultaPage';
 import SignosVitalesPage from './features/preconsulta/pages/SignosVitalesPage';
 import FarmaciaPage from './features/farmacia/pages/FarmaciaPage';
+import DispensacionColaPage from './features/farmacia/pages/DispensacionColaPage';
+import DispensarMedicamentosPage from './features/farmacia/pages/DispensarMedicamentosPage';
 import MedicosPage from './features/doctor/pages/MedicosPage';
 import UsuariosPage from './features/usuario/pages/UsuariosPage';
 import AlergiaPage from './features/alergia/pages/AlergiaPage';
@@ -30,7 +32,10 @@ function App() {
             <Route path="/recepcion" element={<RecepcionPage />} />
             <Route path="/preconsulta" element={<PreconsultaPage />} />
             <Route path="/preconsulta/signos" element={<SignosVitalesPage />} />
+            <Route path="/farmacia/dispensacion" element={<DispensacionColaPage />} />
+            <Route path="/farmacia/dispensar" element={<DispensarMedicamentosPage />} />
             <Route path="/farmacia/*" element={<FarmaciaPage />} />
+            <Route path="/farmacia" element={<FarmaciaPage />} />
             <Route path="/medicos" element={<MedicosPage />} />
             <Route path="/usuarios" element={<UsuariosPage />} />
             <Route path="/alergias" element={<AlergiaPage />} />

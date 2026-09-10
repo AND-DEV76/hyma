@@ -122,7 +122,7 @@ export const useFarmacia = () => {
     ),
     guardarEntrada: (data) => ejecutar(
       () => registrarEntrada(data),
-      cargarInventario
+      cargarTodo
     ),
     actualizarParametro: (clave, data) => ejecutar(
       () => actualizarParametro(clave, data),

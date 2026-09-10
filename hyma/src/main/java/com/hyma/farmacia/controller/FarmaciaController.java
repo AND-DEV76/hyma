@@ -137,4 +137,32 @@ public class FarmaciaController {
             @Valid @RequestBody ParametroFarmaciaRequest request) {
         return ResponseEntity.ok(farmaciaService.actualizarParametro(clave, request));
     }
+
+    // ==========================================
+    // DISPENSACIÓN DE MEDICAMENTOS
+    // ==========================================
+
+    @GetMapping("/dispensacion/cola")
+    public ResponseEntity<List<com.hyma.recepcion.dto.ColaAtencionResponse>> obtenerColaDispensacion() {
+        return ResponseEntity.ok(farmaciaService.obtenerColaDispensacion());
+    }
+
+    @GetMapping("/dispensacion/receta")
+    public ResponseEntity<RecetaDispensacionResponse> obtenerRecetaDispensacion(
+            @RequestParam(name = "idCola", required = false) Long idCola,
+            @RequestParam(name = "idPaciente", required = false) Long idPaciente) {
+        return ResponseEntity.ok(farmaciaService.obtenerRecetaDispensacion(idCola, idPaciente));
+    }
+
+    @PostMapping("/dispensacion/entregar/{idCola}")
+    public ResponseEntity<com.hyma.recepcion.dto.ColaAtencionResponse> entregarMedicamentos(
+            @PathVariable(name = "idCola") Long idCola) {
+        return ResponseEntity.ok(farmaciaService.entregarMedicamentos(idCola));
+    }
+
+    @PostMapping("/dispensacion/cancelar/{idCola}")
+    public ResponseEntity<com.hyma.recepcion.dto.ColaAtencionResponse> cancelarTurnoDispensacion(
+            @PathVariable(name = "idCola") Long idCola) {
+        return ResponseEntity.ok(farmaciaService.cancelarTurnoDispensacion(idCola));
+    }
 }

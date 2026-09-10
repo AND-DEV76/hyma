@@ -48,19 +48,22 @@ function MedicamentosList({
     const medLotes = lotesPorMedicamento[item.idMedicamento] || [];
 
     // 1. Unidades (stock disponible)
-    let unidades = item.unidades;
-    if (unidades == null) {
+    let unidades = 0;
+    if (medLotes.length > 0) {
       unidades = medLotes
         .filter((l) => l.estado == null || l.estado === 'ACTIVO')
         .reduce((acc, l) => acc + (Number(l.stockDisponible ?? l.cantidadInicial) || 0), 0);
+    } else {
+      unidades = item.unidades ?? 0;
     }
 
     // 2. Precio unitario
     let precio = item.precio;
-    if (precio == null) {
+    if (medLotes.length > 0) {
       const conPrecio = medLotes.filter((l) => l.precioUnitario != null);
       if (conPrecio.length > 0) {
-        precio = conPrecio[conPrecio.length - 1].precioUnitario;
+        const masReciente = conPrecio.reduce((prev, curr) => (curr.idLote > prev.idLote ? curr : prev), conPrecio[0]);
+        precio = masReciente.precioUnitario;
       }
     }
 

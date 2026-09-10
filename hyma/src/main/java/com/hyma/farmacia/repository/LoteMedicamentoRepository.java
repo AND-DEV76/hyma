@@ -30,6 +30,8 @@ public interface LoteMedicamentoRepository extends JpaRepository<LoteMedicamento
             String numeroLote
     );
 
+    List<LoteMedicamento> findByMedicamento_IdMedicamento(Long idMedicamento);
+
     long countByEstadoAndFechaExpiracionBetween(EstadoLote estado, LocalDate desde, LocalDate hasta);
 
     boolean existsByMedicamento_IdMedicamento(Long idMedicamento);

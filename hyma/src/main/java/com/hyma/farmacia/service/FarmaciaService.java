@@ -10,8 +10,22 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hyma.recepcion.model.ColaAtencion;
+import com.hyma.recepcion.model.EstadoCola;
+import com.hyma.recepcion.model.Paciente;
+import com.hyma.recepcion.repository.ColaAtencionRepository;
+import com.hyma.recepcion.repository.PacienteRepository;
+import com.hyma.recepcion.mapper.ColaAtencionMapper;
+import com.hyma.recepcion.dto.ColaAtencionResponse;
+import com.hyma.consulta.model.Consulta;
+import com.hyma.consulta.repository.ConsultaRepository;
+import com.hyma.clinica.model.Tratamiento;
+import com.hyma.clinica.model.DetalleTratamiento;
+import com.hyma.clinica.repository.TratamientoRepository;
+
+import java.math.BigDecimal;
 import java.time.*;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +39,12 @@ public class FarmaciaService {
     private final ParametroFarmaciaRepository parametroRepository;
     private final UsuarioRepository usuarioRepository;
     private final FarmaciaMapper mapper;
+
+    private final ColaAtencionRepository colaAtencionRepository;
+    private final ColaAtencionMapper colaAtencionMapper;
+    private final ConsultaRepository consultaRepository;
+    private final TratamientoRepository tratamientoRepository;
+    private final PacienteRepository pacienteRepository;
 
     @Transactional(readOnly = true)
     public List<CatalogoFarmaciaResponse> listarCategorias() {
@@ -115,7 +135,10 @@ public class FarmaciaService {
     public List<MedicamentoResponse> listarMedicamentos(Long categoriaId, Long casaId, Boolean estado, String buscar) {
         String filtro = buscar == null || buscar.isBlank() ? "" : buscar.trim();
         List<Medicamento> medicamentos = medicamentoRepository.buscar(categoriaId, casaId, estado, filtro);
-        List<LoteMedicamento> todosLotes = loteRepository.findAll();
+        List<LoteMedicamento> todosLotes = loteRepository.findAll().stream()
+                .filter(l -> l.getIdLote() != null)
+                .sorted(Comparator.comparing(LoteMedicamento::getIdLote))
+                .toList();
         java.util.Map<Long, List<LoteMedicamento>> lotesPorMed = todosLotes.stream()
                 .filter(l -> l.getMedicamento() != null && l.getMedicamento().getIdMedicamento() != null)
                 .collect(java.util.stream.Collectors.groupingBy(l -> l.getMedicamento().getIdMedicamento()));
@@ -201,6 +224,9 @@ public class FarmaciaService {
                 .observaciones(limpiar(request.getObservaciones()))
                 .build();
 
+        // Mapa en memoria para reutilizar o crear lotes dentro de la misma transacción/entrada
+        Map<String, LoteMedicamento> lotesEnProceso = new HashMap<>();
+
         for (EntradaDetalleRequest detalleRequest : request.getDetalles()) {
             if (detalleRequest.getCantidad() == null || detalleRequest.getCantidad() < 1) {
                 throw new IllegalArgumentException("La cantidad de cada detalle debe ser mayor que cero");
@@ -210,28 +236,37 @@ public class FarmaciaService {
                     .orElseThrow(() -> new FarmaciaNotFoundException("Medicamento no encontrado"));
 
             String numeroLote = limpiar(detalleRequest.getNumeroLote());
-            LoteMedicamento lote = buscarLoteExistente(medicamento.getIdMedicamento(), numeroLote);
+            LocalDate fechaExpiracion = detalleRequest.getFechaExpiracion();
+            BigDecimal precioUnitario = detalleRequest.getPrecioUnitario();
+
+            // Clave única basada en medicamento, número de lote, fecha de vencimiento y costo unitario
+            String claveLote = generarClaveLote(medicamento.getIdMedicamento(), numeroLote, fechaExpiracion, precioUnitario);
+            LoteMedicamento lote = lotesEnProceso.get(claveLote);
 
             if (lote == null) {
+                lote = buscarLoteCoincidente(medicamento.getIdMedicamento(), numeroLote, fechaExpiracion, precioUnitario);
+            }
+
+            if (lote == null) {
+                // Casos 2, 3 y 4 (o lote nuevo): Cualquier diferencia en lote, vencimiento o precio genera un NUEVO lote (id_lote nuevo)
                 lote = LoteMedicamento.builder()
                         .medicamento(medicamento)
                         .numeroLote(numeroLote)
-                        .fechaExpiracion(detalleRequest.getFechaExpiracion())
-                        .precioUnitario(detalleRequest.getPrecioUnitario())
+                        .fechaExpiracion(fechaExpiracion)
+                        .precioUnitario(precioUnitario)
                         .cantidadInicial(detalleRequest.getCantidad())
                         .estado(EstadoLote.ACTIVO)
                         .build();
             } else {
-                lote.setFechaExpiracion(detalleRequest.getFechaExpiracion());
-                if (detalleRequest.getPrecioUnitario() != null) {
-                    lote.setPrecioUnitario(detalleRequest.getPrecioUnitario());
-                }
-                lote.setCantidadInicial((lote.getCantidadInicial() == null ? 0 : lote.getCantidadInicial())
-                        + detalleRequest.getCantidad());
+                // Caso 1: Mismo medicamento, mismo número de lote, mismo vencimiento y mismo costo unitario -> acumular cantidad en el mismo id_lote
+                int cantidadActual = lote.getCantidadInicial() == null ? 0 : lote.getCantidadInicial();
+                lote.setCantidadInicial(cantidadActual + detalleRequest.getCantidad());
                 lote.setEstado(EstadoLote.ACTIVO);
             }
 
             LoteMedicamento loteGuardado = loteRepository.save(lote);
+            lotesEnProceso.put(claveLote, loteGuardado);
+
             DetalleEntradaMedicamento detalle = DetalleEntradaMedicamento.builder()
                     .entrada(entrada)
                     .lote(loteGuardado)
@@ -246,12 +281,56 @@ public class FarmaciaService {
         return mapper.toEntradaResponse(entradaRepository.save(entrada));
     }
 
-    private LoteMedicamento buscarLoteExistente(Long idMedicamento, String numeroLote) {
-        if (numeroLote == null) {
+    private String generarClaveLote(Long idMedicamento, String numeroLote, LocalDate fechaExpiracion, BigDecimal precioUnitario) {
+        String idMed = String.valueOf(idMedicamento);
+        String loteStr = numeroLote == null ? "" : numeroLote.trim().toUpperCase();
+        String fechaStr = fechaExpiracion == null ? "" : fechaExpiracion.toString();
+        String precioStr = precioUnitario == null ? "NULL" : precioUnitario.stripTrailingZeros().toPlainString();
+        return idMed + "#" + loteStr + "#" + fechaStr + "#" + precioStr;
+    }
+
+    private LoteMedicamento buscarLoteCoincidente(
+            Long idMedicamento,
+            String numeroLote,
+            LocalDate fechaExpiracion,
+            BigDecimal precioUnitario
+    ) {
+        if (idMedicamento == null || fechaExpiracion == null) {
             return null;
         }
-        return loteRepository.findByMedicamento_IdMedicamentoAndNumeroLote(idMedicamento, numeroLote)
-                .orElse(null);
+        List<LoteMedicamento> lotes = loteRepository.findByMedicamento_IdMedicamento(idMedicamento);
+        for (LoteMedicamento lote : lotes) {
+            boolean mismoLote = sonTextosIguales(lote.getNumeroLote(), numeroLote);
+            boolean mismaFecha = fechaExpiracion.equals(lote.getFechaExpiracion());
+            boolean mismoPrecio = sonPreciosIguales(lote.getPrecioUnitario(), precioUnitario);
+
+            if (mismoLote && mismaFecha && mismoPrecio) {
+                return lote;
+            }
+        }
+        return null;
+    }
+
+    private boolean sonTextosIguales(String t1, String t2) {
+        String s1 = limpiar(t1);
+        String s2 = limpiar(t2);
+        if (s1 == null && s2 == null) {
+            return true;
+        }
+        if (s1 == null || s2 == null) {
+            return false;
+        }
+        return s1.equalsIgnoreCase(s2);
+    }
+
+    private boolean sonPreciosIguales(BigDecimal p1, BigDecimal p2) {
+        if (p1 == null && p2 == null) {
+            return true;
+        }
+        if (p1 == null || p2 == null) {
+            return false;
+        }
+        return p1.compareTo(p2) == 0;
     }
 
     @Transactional(readOnly = true)
@@ -342,5 +421,188 @@ public class FarmaciaService {
     private String limpiar(String value) {
         String result = value == null ? null : value.trim();
         return result == null || result.isBlank() ? null : result;
+    }
+
+    // ==========================================
+    // DISPENSACIÓN DE MEDICAMENTOS
+    // ==========================================
+
+    @Transactional(readOnly = true)
+    public List<ColaAtencionResponse> obtenerColaDispensacion() {
+        return colaAtencionRepository.findByEstadoOrdenadoPorSalida(EstadoCola.EN_FARMACIA).stream()
+                .map(colaAtencionMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public RecetaDispensacionResponse obtenerRecetaDispensacion(Long idCola, Long idPaciente) {
+        ColaAtencion cola = null;
+        Paciente paciente = null;
+
+        if (idCola != null) {
+            cola = colaAtencionRepository.findById(idCola).orElse(null);
+            if (cola != null) {
+                paciente = cola.getPaciente();
+            }
+        }
+
+        if (paciente == null && idPaciente != null) {
+            paciente = pacienteRepository.findById(idPaciente)
+                    .orElseThrow(() -> new IllegalArgumentException("Paciente no encontrado con id: " + idPaciente));
+        }
+
+        if (paciente == null) {
+            throw new IllegalArgumentException("Debe proporcionar un idCola o idPaciente válido");
+        }
+
+        Consulta consulta = consultaRepository.findTopByPacienteOrderByFechaConsultaDesc(paciente).orElse(null);
+
+        Integer edad = null;
+        if (paciente.getFechaNacimiento() != null) {
+            edad = Period.between(paciente.getFechaNacimiento(), LocalDate.now()).getYears();
+        }
+
+        String nombreCompleto = (paciente.getNombres() != null ? paciente.getNombres() : "") + " " +
+                (paciente.getApellidos() != null ? paciente.getApellidos() : "");
+
+        RecetaDispensacionResponse response = RecetaDispensacionResponse.builder()
+                .idCola(cola != null ? cola.getIdCola() : null)
+                .idPaciente(paciente.getIdPaciente())
+                .nombreCompletoPaciente(nombreCompleto.trim())
+                .edad(edad)
+                .sexo(paciente.getSexo() != null ? paciente.getSexo().name() : null)
+                .comunidad(paciente.getComunidad())
+                .build();
+
+        if (consulta != null) {
+            response.setIdConsulta(consulta.getIdConsulta());
+            response.setFechaConsulta(consulta.getFechaConsulta());
+            if (consulta.getMedico() != null) {
+                response.setNombreMedico(consulta.getMedico().getNombres() + " " + consulta.getMedico().getApellidos());
+            }
+
+            Tratamiento tratamiento = tratamientoRepository.findByConsultaIdWithDetalles(consulta.getIdConsulta()).orElse(null);
+            if (tratamiento != null) {
+                response.setObservacionesTratamiento(tratamiento.getObservaciones());
+
+                List<DetalleDispensacionResponse> medList = new ArrayList<>();
+                List<LoteSugeridoResponse> lotesSugeridosList = new ArrayList<>();
+
+                if (tratamiento.getDetalles() != null) {
+                    for (DetalleTratamiento d : tratamiento.getDetalles()) {
+                        Medicamento m = d.getMedicamento();
+                        int cantidadPedida = d.getCantidad() != null ? d.getCantidad() : 1;
+
+                        List<LoteMedicamento> lotesActivos = loteRepository.buscar(EstadoLote.ACTIVO, m.getIdMedicamento(), null).stream()
+                                .filter(l -> l.getCantidadInicial() != null && l.getCantidadInicial() > 0)
+                                .sorted(Comparator.comparing(LoteMedicamento::getFechaExpiracion))
+                                .toList();
+
+                        int stock = lotesActivos.stream()
+                                .mapToInt(LoteMedicamento::getCantidadInicial)
+                                .sum();
+
+                        medList.add(DetalleDispensacionResponse.builder()
+                                .idMedicamento(m.getIdMedicamento())
+                                .nombre(m.getNombre())
+                                .presentacion(m.getPresentacion())
+                                .concentracion(m.getConcentracion())
+                                .dosis(d.getDosis())
+                                .frecuencia(d.getFrecuencia())
+                                .duracion(d.getDuracion())
+                                .cantidad(cantidadPedida)
+                                .stockDisponible(stock)
+                                .build());
+
+                        if (!lotesActivos.isEmpty()) {
+                            LoteMedicamento loteSugerido = lotesActivos.get(0);
+                            long dias = loteSugerido.getFechaExpiracion() != null
+                                    ? java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), loteSugerido.getFechaExpiracion())
+                                    : 0L;
+
+                            lotesSugeridosList.add(LoteSugeridoResponse.builder()
+                                    .idMedicamento(m.getIdMedicamento())
+                                    .medicamentoNombre(m.getNombre())
+                                    .idLote(loteSugerido.getIdLote())
+                                    .numeroLote(loteSugerido.getNumeroLote() != null && !loteSugerido.getNumeroLote().isBlank()
+                                            ? loteSugerido.getNumeroLote()
+                                            : "S/L")
+                                    .fechaVencimiento(loteSugerido.getFechaExpiracion())
+                                    .stockDisponible(loteSugerido.getCantidadInicial())
+                                    .cantidadADescontar(Math.min(cantidadPedida, loteSugerido.getCantidadInicial()))
+                                    .diasParaVencer(dias)
+                                    .tieneStock(true)
+                                    .build());
+                        } else {
+                            lotesSugeridosList.add(LoteSugeridoResponse.builder()
+                                    .idMedicamento(m.getIdMedicamento())
+                                    .medicamentoNombre(m.getNombre())
+                                    .numeroLote("SIN STOCK")
+                                    .stockDisponible(0)
+                                    .cantidadADescontar(0)
+                                    .tieneStock(false)
+                                    .build());
+                        }
+                    }
+                }
+                response.setMedicamentos(medList);
+                response.setLotesSugeridos(lotesSugeridosList);
+            }
+        }
+
+        return response;
+    }
+
+    @Transactional
+    public ColaAtencionResponse entregarMedicamentos(Long idCola) {
+        ColaAtencion cola = colaAtencionRepository.findById(idCola)
+                .orElseThrow(() -> new IllegalArgumentException("Cola de atención no encontrada con id: " + idCola));
+
+        Paciente paciente = cola.getPaciente();
+        if (paciente != null) {
+            Consulta consulta = consultaRepository.findTopByPacienteOrderByFechaConsultaDesc(paciente).orElse(null);
+            if (consulta != null) {
+                Tratamiento tratamiento = tratamientoRepository.findByConsultaIdWithDetalles(consulta.getIdConsulta()).orElse(null);
+                if (tratamiento != null && tratamiento.getDetalles() != null) {
+                    for (DetalleTratamiento d : tratamiento.getDetalles()) {
+                        int cantidadRestante = d.getCantidad() != null ? d.getCantidad() : 1;
+                        Medicamento m = d.getMedicamento();
+                        if (m != null && cantidadRestante > 0) {
+                            // Buscar lotes activos con stock ordenados por fecha de expiración ascendente (FEFO)
+                            List<LoteMedicamento> lotesActivos = loteRepository.buscar(EstadoLote.ACTIVO, m.getIdMedicamento(), null).stream()
+                                    .filter(l -> l.getCantidadInicial() != null && l.getCantidadInicial() > 0)
+                                    .sorted(Comparator.comparing(LoteMedicamento::getFechaExpiracion))
+                                    .toList();
+
+                            for (LoteMedicamento lote : lotesActivos) {
+                                if (cantidadRestante <= 0) break;
+                                int stockActual = lote.getCantidadInicial();
+                                int aDescontar = Math.min(stockActual, cantidadRestante);
+                                int nuevoStock = stockActual - aDescontar;
+                                lote.setCantidadInicial(nuevoStock);
+                                if (nuevoStock == 0) {
+                                    lote.setEstado(EstadoLote.INACTIVO);
+                                }
+                                loteRepository.save(lote);
+                                cantidadRestante -= aDescontar;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        cola.setEstado(EstadoCola.FINALIZADO);
+        cola.setFechaAtencion(LocalDateTime.now());
+        return colaAtencionMapper.toResponse(colaAtencionRepository.save(cola));
+    }
+
+    @Transactional
+    public ColaAtencionResponse cancelarTurnoDispensacion(Long idCola) {
+        ColaAtencion cola = colaAtencionRepository.findById(idCola)
+                .orElseThrow(() -> new IllegalArgumentException("Cola de atención no encontrada con id: " + idCola));
+        cola.setEstado(EstadoCola.CANCELADO);
+        cola.setFechaAtencion(LocalDateTime.now());
+        return colaAtencionMapper.toResponse(colaAtencionRepository.save(cola));
     }
 }

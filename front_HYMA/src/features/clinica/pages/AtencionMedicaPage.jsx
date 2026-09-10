@@ -347,11 +347,19 @@ export default function AtencionMedicaPage() {
       tratamiento: {
         observaciones: observacionesTratamiento,
         detalles: detallesTratamiento.map((dt) => {
-          const dosisDesc =
-            [dt.presentacion, dt.concentracion].filter(Boolean).join(' - ') || 'Según indicación';
+          let tomaTexto = '';
+          if (dt.esLiquido) {
+            if (dt.tomaDosis === '5ml') tomaTexto = '1 cucharadita (5 ml)';
+            else if (dt.tomaDosis === '10ml') tomaTexto = '1 cucharada (10 ml)';
+            else if (dt.tomaDosis === '15ml') tomaTexto = '1 cucharada sopera (15 ml)';
+            else if (dt.tomaDosis) tomaTexto = `${dt.tomaDosis}`;
+          } else if (dt.tomaDosis) {
+            tomaTexto = `${dt.tomaDosis} ${Number(dt.tomaDosis) === 1 ? 'unidad/tableta' : 'unidades/tabletas'}`;
+          }
+
           return {
             idMedicamento: dt.idMedicamento,
-            dosis: dosisDesc,
+            dosis: tomaTexto || [dt.presentacion, dt.concentracion].filter(Boolean).join(' - ') || '1 toma',
             frecuencia: dt.frecuencia || 'Según indicación',
             duracion: dt.duracion || 'Según evolución',
             cantidad: Number(dt.cantidad) > 0 ? Number(dt.cantidad) : 1,
