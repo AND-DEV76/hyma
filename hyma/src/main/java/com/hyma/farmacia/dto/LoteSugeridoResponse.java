@@ -1,6 +1,7 @@
 package com.hyma.farmacia.dto;
 
 import lombok.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -18,4 +19,8 @@ public class LoteSugeridoResponse {
     private Integer cantidadADescontar;
     private Long diasParaVencer;
     private Boolean tieneStock;
+    @Builder.Default
+    private BigDecimal precioUnitario = BigDecimal.ZERO;
+    @Builder.Default
+    private BigDecimal subtotal = BigDecimal.ZERO;
 }

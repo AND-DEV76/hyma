@@ -1,13 +1,16 @@
 package com.hyma.reporte.service;
 
 import com.hyma.clinica.model.CatalogoCie10;
-import com.hyma.clinica.model.CategoriaDiagnostico;
 import com.hyma.clinica.model.Diagnostico;
 import com.hyma.clinica.repository.CatalogoCie10Repository;
-import com.hyma.clinica.repository.CategoriaDiagnosticoRepository;
+
 import com.hyma.clinica.repository.DiagnosticoRepository;
 import com.hyma.consulta.model.Consulta;
 import com.hyma.consulta.repository.ConsultaRepository;
+import com.hyma.farmacia.model.DetalleSalidaMedicamento;
+import com.hyma.farmacia.model.SalidaMedicamento;
+import com.hyma.farmacia.repository.DetalleSalidaMedicamentoRepository;
+import com.hyma.farmacia.repository.SalidaMedicamentoRepository;
 import com.hyma.recepcion.model.Paciente;
 import com.hyma.reporte.dto.*;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +45,9 @@ public class ReporteService {
     private final ConsultaRepository consultaRepository;
     private final DiagnosticoRepository diagnosticoRepository;
     private final CatalogoCie10Repository catalogoCie10Repository;
-    private final CategoriaDiagnosticoRepository categoriaDiagnosticoRepository;
+    private final SalidaMedicamentoRepository salidaMedicamentoRepository;
+    private final DetalleSalidaMedicamentoRepository detalleSalidaMedicamentoRepository;
+
 
     // Paleta base institucional de colores pastel para categorías
     private static final Map<String, String> COLORES_CATEGORIA_BASE = Map.of(
@@ -204,11 +209,34 @@ public class ReporteService {
                 .distinct()
                 .toList();
         Map<Long, List<Diagnostico>> diagPorConsulta = new HashMap<>();
+        Map<Long, SalidaMedicamento> salidaPorConsulta = new HashMap<>();
+        Map<Long, List<DetalleSalidaMedicamento>> detallesPorSalida = new HashMap<>();
+
         if (!idsConsultas.isEmpty()) {
             List<Diagnostico> todosDiag = diagnosticoRepository.findByConsulta_IdConsultaIn(idsConsultas);
             for (Diagnostico d : todosDiag) {
                 if (d != null && d.getConsulta() != null && d.getConsulta().getIdConsulta() != null) {
                     diagPorConsulta.computeIfAbsent(d.getConsulta().getIdConsulta(), k -> new ArrayList<>()).add(d);
+                }
+            }
+
+            // Cargar salidas y detalles de medicamentos del mes para la recaudación real
+            List<SalidaMedicamento> salidas = salidaMedicamentoRepository.findByConsulta_IdConsultaIn(idsConsultas);
+            List<Long> idsSalidas = new ArrayList<>();
+            for (SalidaMedicamento s : salidas) {
+                if (s != null && s.getConsulta() != null && s.getConsulta().getIdConsulta() != null) {
+                    salidaPorConsulta.put(s.getConsulta().getIdConsulta(), s);
+                    if (s.getIdSalida() != null) {
+                        idsSalidas.add(s.getIdSalida());
+                    }
+                }
+            }
+            if (!idsSalidas.isEmpty()) {
+                List<DetalleSalidaMedicamento> detalles = detalleSalidaMedicamentoRepository.findBySalida_IdSalidaIn(idsSalidas);
+                for (DetalleSalidaMedicamento det : detalles) {
+                    if (det != null && det.getSalida() != null && det.getSalida().getIdSalida() != null) {
+                        detallesPorSalida.computeIfAbsent(det.getSalida().getIdSalida(), k -> new ArrayList<>()).add(det);
+                    }
                 }
             }
         }
@@ -295,10 +323,28 @@ public class ReporteService {
                     masc++;
                 }
 
-                // Recaudado
-                if (c.getPrecioConsulta() != null) {
-                    recaudado = recaudado.add(c.getPrecioConsulta());
+                // Recaudado: Costo Consulta (o 0 si exonerada) + Total Medicamentos Dispensados
+                BigDecimal totalConsulta = BigDecimal.ZERO;
+                SalidaMedicamento salida = c.getIdConsulta() != null ? salidaPorConsulta.get(c.getIdConsulta()) : null;
+                if (salida != null) {
+                    BigDecimal costoConsulta = salida.getCostoConsulta() != null ? salida.getCostoConsulta() : BigDecimal.ZERO;
+                    totalConsulta = totalConsulta.add(costoConsulta);
+
+                    List<DetalleSalidaMedicamento> detalles = salida.getIdSalida() != null
+                            ? detallesPorSalida.getOrDefault(salida.getIdSalida(), Collections.emptyList())
+                            : Collections.emptyList();
+                    for (DetalleSalidaMedicamento det : detalles) {
+                        if (det != null && det.getCantidad() != null && det.getPrecioUnitario() != null) {
+                            BigDecimal precioDetalle = det.getPrecioUnitario().multiply(BigDecimal.valueOf(det.getCantidad()));
+                            totalConsulta = totalConsulta.add(precioDetalle);
+                        }
+                    }
+                } else {
+                    if (c.getPrecioConsulta() != null) {
+                        totalConsulta = totalConsulta.add(c.getPrecioConsulta());
+                    }
                 }
+                recaudado = recaudado.add(totalConsulta);
 
                 // Diagnósticos dinámicos
                 if (c.getIdConsulta() != null) {

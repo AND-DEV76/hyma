@@ -32,6 +32,18 @@ export default function DispensarMedicamentosPage() {
   } = useDispensacion();
 
   const [confirmandoEntrega, setConfirmandoEntrega] = useState(false);
+  const [noPagaConsulta, setNoPagaConsulta] = useState(false);
+
+  const precioConsultaOriginal = Number(receta?.precioConsulta || 0);
+  const costoConsultaCobrar = noPagaConsulta ? 0 : precioConsultaOriginal;
+
+  const totalMedicamentos = (receta?.lotesSugeridos || []).reduce((acc, l) => {
+    const cant = Number(l.cantidadADescontar || 0);
+    const precio = Number(l.precioUnitario || 0);
+    return acc + (cant * precio);
+  }, 0);
+
+  const totalAPagar = costoConsultaCobrar + totalMedicamentos;
 
   useEffect(() => {
     if (idCola || idPaciente) {
@@ -47,7 +59,10 @@ export default function DispensarMedicamentosPage() {
       return;
     }
 
-    const res = await entregarMedicamentos(Number(idCola));
+    const res = await entregarMedicamentos(Number(idCola), {
+      noPagaConsulta,
+      observaciones: noPagaConsulta ? 'Exonerado de consulta médica por caso especial' : null,
+    });
     if (res.success) {
       alert('Medicamentos entregados con éxito. El paciente ha finalizado su atención.');
       navigate('/farmacia/dispensacion');
@@ -95,7 +110,27 @@ export default function DispensarMedicamentosPage() {
     if (pres.includes('jarabe') || pres.includes('suspensi') || pres.includes('soluci')) {
       return '1 cucharadita (5 ml)';
     }
+    if (pres.includes('crema') || pres.includes('ung') || pres.includes('pomada') || pres.includes('gel') || pres.includes('vaginal')) {
+      return '1 aplicación tópica';
+    }
+    if (pres.includes('inhalad') || pres.includes('spray') || pres.includes('aerosol')) {
+      return '1-2 disparos';
+    }
     return '1 unidad por toma';
+  };
+
+  const getUnidadTexto = (m) => {
+    const pres = (m.presentacion || '').toLowerCase();
+    if (pres.includes('jarabe') || pres.includes('suspensi') || pres.includes('soluci')) {
+      return Number(m.cantidad) === 1 ? 'frasco' : 'frascos';
+    }
+    if (pres.includes('crema') || pres.includes('ung') || pres.includes('pomada') || pres.includes('gel') || pres.includes('vaginal')) {
+      return Number(m.cantidad) === 1 ? 'tubo' : 'tubos';
+    }
+    if (pres.includes('inhalad') || pres.includes('spray') || pres.includes('aerosol')) {
+      return Number(m.cantidad) === 1 ? 'inhalador' : 'inhaladores';
+    }
+    return Number(m.cantidad) === 1 ? 'unidad' : 'unidades';
   };
 
   return (
@@ -161,6 +196,65 @@ export default function DispensarMedicamentosPage() {
                   {receta?.nombreCompletoPaciente || 'Paciente'}
                 </h3>
                 <span style={styles.avatarSubtag}>Entrega de Prescripción</span>
+              </div>
+
+              {/* Tarjeta de Cobro / Resumen Financiero Dinámico */}
+              <div style={styles.billingCard}>
+                <div style={styles.billingHeader}>
+                  <span style={styles.billingEyebrow}>RESUMEN DE PAGO</span>
+                  <div style={styles.billingTotalAmount}>
+                    Q {totalAPagar.toFixed(2)}
+                  </div>
+                </div>
+
+                <div style={styles.billingDivider} />
+
+                <div style={styles.billingRow}>
+                  <span style={styles.billingLabel}>Tarifa Consulta:</span>
+                  <div style={{ textAlign: 'right' }}>
+                    {noPagaConsulta ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                        <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '12px' }}>
+                          Q {precioConsultaOriginal.toFixed(2)}
+                        </span>
+                        <span style={{ color: '#059669', fontWeight: '800', fontSize: '13px' }}>
+                          Q 0.00
+                        </span>
+                      </div>
+                    ) : (
+                      <span style={styles.billingVal}>
+                        Q {precioConsultaOriginal.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div style={styles.billingRow}>
+                  <span style={styles.billingLabel}>Medicamentos:</span>
+                  <span style={styles.billingVal}>
+                    Q {totalMedicamentos.toFixed(2)}
+                  </span>
+                </div>
+
+                {/* Checkbox No Paga Consulta */}
+                <div style={styles.checkboxContainer}>
+                  <label style={styles.checkboxLabelWrapper}>
+                    <input
+                      type="checkbox"
+                      checked={noPagaConsulta}
+                      onChange={(e) => setNoPagaConsulta(e.target.checked)}
+                      style={styles.checkboxInput}
+                    />
+                    <span style={styles.checkboxText}>
+                      No paga consulta (Caso Especial)
+                    </span>
+                  </label>
+                  {noPagaConsulta && (
+                    <span style={styles.exoneradoBadge}>
+                      ✓ Consulta exonerada (Q 0.00)
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Botones DAR y CANCELAR (diseño de imagen) */}
@@ -325,7 +419,7 @@ export default function DispensarMedicamentosPage() {
 
                               <td style={{ ...styles.td, textAlign: 'center' }}>
                                 <span style={styles.qtyBadge}>
-                                  {m.cantidad} {m.cantidad === 1 ? 'unidad' : 'unidades'}
+                                  {m.cantidad} {getUnidadTexto(m)}
                                 </span>
                               </td>
                             </tr>
@@ -365,11 +459,13 @@ export default function DispensarMedicamentosPage() {
                     <table style={styles.table}>
                       <thead>
                         <tr>
-                          <th style={{ ...styles.th, width: '28%' }}>Medicamento</th>
-                          <th style={{ ...styles.th, width: '18%' }}>Número de Lote</th>
-                          <th style={{ ...styles.th, width: '24%' }}>Fecha de Vencimiento</th>
-                          <th style={{ ...styles.th, width: '15%', textAlign: 'center' }}>Stock en Inventario</th>
-                          <th style={{ ...styles.th, width: '15%', textAlign: 'center' }}>A Descontar</th>
+                          <th style={{ ...styles.th, width: '22%' }}>Medicamento</th>
+                          <th style={{ ...styles.th, width: '14%' }}>Número de Lote</th>
+                          <th style={{ ...styles.th, width: '18%' }}>Fecha de Vencimiento</th>
+                          <th style={{ ...styles.th, width: '11%', textAlign: 'center' }}>Stock</th>
+                          <th style={{ ...styles.th, width: '11%', textAlign: 'center' }}>A Descontar</th>
+                          <th style={{ ...styles.th, width: '12%', textAlign: 'right' }}>Precio Unit.</th>
+                          <th style={{ ...styles.th, width: '12%', textAlign: 'right' }}>Subtotal</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -377,6 +473,9 @@ export default function DispensarMedicamentosPage() {
                           const dias = lote.diasParaVencer;
                           const esCritico = dias !== null && dias !== undefined && dias <= 30;
                           const esAlerta = dias !== null && dias !== undefined && dias > 30 && dias <= 90;
+                          const pUnit = Number(lote.precioUnitario || 0);
+                          const cant = Number(lote.cantidadADescontar || 0);
+                          const subtotal = pUnit * cant;
 
                           return (
                             <tr key={idx} style={styles.tr}>
@@ -427,9 +526,18 @@ export default function DispensarMedicamentosPage() {
                               </td>
                               <td style={{ ...styles.td, textAlign: 'center' }}>
                                 <span style={styles.descontarBadge}>
-                                  - {lote.cantidadADescontar}{' '}
-                                  {lote.cantidadADescontar === 1 ? 'unidad' : 'unidades'}
+                                  - {cant} {cant === 1 ? 'unidad' : 'unidades'}
                                 </span>
+                              </td>
+                              <td style={{ ...styles.td, textAlign: 'right' }}>
+                                <span style={{ color: '#475569', fontWeight: '600', fontSize: '13px' }}>
+                                  Q {pUnit.toFixed(2)}
+                                </span>
+                              </td>
+                              <td style={{ ...styles.td, textAlign: 'right' }}>
+                                <strong style={{ color: '#059669', fontSize: '13px' }}>
+                                  Q {subtotal.toFixed(2)}
+                                </strong>
                               </td>
                             </tr>
                           );
@@ -448,7 +556,7 @@ export default function DispensarMedicamentosPage() {
                 <div style={styles.suggestionFooterNote}>
                   <Info size={15} color="#0077b6" />
                   <span>
-                    El inventario se actualizará automáticamente descontando las unidades de los lotes recomendados al hacer clic en <strong>Dar</strong>.
+                    El inventario se actualizará automáticamente descontando de los lotes sugeridos y se guardará el registro formal en salida de medicamentos al hacer clic en <strong>Dar</strong>.
                   </span>
                 </div>
               </div>
@@ -465,19 +573,40 @@ export default function DispensarMedicamentosPage() {
                   <CheckCircle2 size={22} color="#059669" />
                 </div>
                 <div>
-                  <h3 style={styles.modalTitle}>Confirmar Entrega y Descuento de Inventario</h3>
+                  <h3 style={styles.modalTitle}>Confirmar Entrega y Salida de Medicamentos</h3>
                   <p style={styles.modalSub}>
-                    Esta acción descontará las unidades de los lotes sugeridos y finalizará la atención.
+                    Esta acción descontará el stock de inventario, registrará la salida y finalizará el turno.
                   </p>
                 </div>
               </div>
 
               <div style={styles.modalBody}>
-                <p style={{ margin: 0, color: '#334155', fontSize: '14px', lineHeight: '1.5' }}>
-                  ¿Confirmas que se han entregado físicamente los medicamentos a{' '}
-                  <strong>{receta?.nombreCompletoPaciente}</strong>? El sistema descontará automáticamente las unidades prescritas de los lotes más próximos a vencer y el turno pasará a{' '}
-                  <strong>FINALIZADO</strong>.
+                <p style={{ margin: '0 0 14px', color: '#334155', fontSize: '14px', lineHeight: '1.5' }}>
+                  ¿Confirmas la entrega de medicamentos para{' '}
+                  <strong>{receta?.nombreCompletoPaciente}</strong>?
                 </p>
+
+                {/* Desglose de cobro en modal */}
+                <div style={styles.modalSummaryBox}>
+                  <div style={styles.modalSummaryRow}>
+                    <span>Tarifa Consulta Médica:</span>
+                    <strong style={{ color: noPagaConsulta ? '#059669' : '#1e293b' }}>
+                      {noPagaConsulta ? 'Q 0.00 (Exonerada)' : `Q ${precioConsultaOriginal.toFixed(2)}`}
+                    </strong>
+                  </div>
+                  <div style={styles.modalSummaryRow}>
+                    <span>Total Medicamentos Prescritos:</span>
+                    <strong style={{ color: '#1e293b' }}>
+                      Q {totalMedicamentos.toFixed(2)}
+                    </strong>
+                  </div>
+                  <div style={{ ...styles.modalSummaryRow, borderTop: '1px solid #cbd5e1', paddingTop: '8px', marginTop: '6px' }}>
+                    <span style={{ fontWeight: '700', color: '#03045e' }}>Total a Cobrar al Paciente:</span>
+                    <span style={{ fontWeight: '800', color: '#0077b6', fontSize: '16px' }}>
+                      Q {totalAPagar.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <div style={styles.modalFooter}>
@@ -668,6 +797,90 @@ const styles = {
     fontSize: '12px',
     color: '#0077b6',
     fontWeight: '600',
+  },
+  billingCard: {
+    background: 'white',
+    borderRadius: '12px',
+    border: '1px solid #e2e8f0',
+    padding: '16px 18px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+  },
+  billingHeader: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+  },
+  billingEyebrow: {
+    fontSize: '11px',
+    fontWeight: '800',
+    color: '#0077b6',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+  },
+  billingTotalAmount: {
+    fontSize: '26px',
+    fontWeight: '900',
+    color: '#03045e',
+    lineHeight: '1.2',
+  },
+  billingDivider: {
+    height: '1px',
+    background: '#f1f5f9',
+    margin: '2px 0',
+  },
+  billingRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    fontSize: '13px',
+  },
+  billingLabel: {
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  billingVal: {
+    color: '#1e293b',
+    fontWeight: '700',
+  },
+  checkboxContainer: {
+    marginTop: '6px',
+    paddingTop: '10px',
+    borderTop: '1px dashed #cbd5e1',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+  },
+  checkboxLabelWrapper: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '8px',
+    cursor: 'pointer',
+  },
+  checkboxInput: {
+    marginTop: '2px',
+    cursor: 'pointer',
+    width: '16px',
+    height: '16px',
+    accentColor: '#0077b6',
+  },
+  checkboxText: {
+    fontSize: '12px',
+    fontWeight: '600',
+    color: '#334155',
+    lineHeight: '1.3',
+  },
+  exoneradoBadge: {
+    fontSize: '11px',
+    fontWeight: '700',
+    color: '#059669',
+    background: '#ecfdf5',
+    padding: '3px 8px',
+    borderRadius: '4px',
+    border: '1px solid #a7f3d0',
+    alignSelf: 'flex-start',
   },
   actionButtonsStack: {
     display: 'flex',
@@ -1036,6 +1249,22 @@ const styles = {
     borderRadius: '8px',
     marginBottom: '20px',
     border: '1px solid #e2e8f0',
+  },
+  modalSummaryBox: {
+    background: 'white',
+    border: '1px solid #cbd5e1',
+    borderRadius: '8px',
+    padding: '10px 14px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+  },
+  modalSummaryRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    fontSize: '13px',
+    color: '#334155',
   },
   modalFooter: {
     display: 'flex',

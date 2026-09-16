@@ -10,8 +10,8 @@ export const obtenerRecetaDispensacion = async (idCola, idPaciente) => (
   })
 ).data;
 
-export const entregarMedicamentos = async (idCola) => (
-  await api.post(`/farmacia/dispensacion/entregar/${idCola}`)
+export const entregarMedicamentos = async (idCola, data = {}) => (
+  await api.post(`/farmacia/dispensacion/entregar/${idCola}`, data)
 ).data;
 
 export const cancelarTurnoDispensacion = async (idCola) => (

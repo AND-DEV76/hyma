@@ -45,6 +45,8 @@ public class FarmaciaService {
     private final ConsultaRepository consultaRepository;
     private final TratamientoRepository tratamientoRepository;
     private final PacienteRepository pacienteRepository;
+    private final SalidaMedicamentoRepository salidaMedicamentoRepository;
+    private final DetalleSalidaMedicamentoRepository detalleSalidaMedicamentoRepository;
 
     @Transactional(readOnly = true)
     public List<CatalogoFarmaciaResponse> listarCategorias() {
@@ -481,12 +483,16 @@ public class FarmaciaService {
                 response.setNombreMedico(consulta.getMedico().getNombres() + " " + consulta.getMedico().getApellidos());
             }
 
+            BigDecimal precioConsulta = consulta.getPrecioConsulta() != null ? consulta.getPrecioConsulta() : BigDecimal.ZERO;
+            response.setPrecioConsulta(precioConsulta);
+
             Tratamiento tratamiento = tratamientoRepository.findByConsultaIdWithDetalles(consulta.getIdConsulta()).orElse(null);
             if (tratamiento != null) {
                 response.setObservacionesTratamiento(tratamiento.getObservaciones());
 
                 List<DetalleDispensacionResponse> medList = new ArrayList<>();
                 List<LoteSugeridoResponse> lotesSugeridosList = new ArrayList<>();
+                BigDecimal totalMedicamentos = BigDecimal.ZERO;
 
                 if (tratamiento.getDetalles() != null) {
                     for (DetalleTratamiento d : tratamiento.getDetalles()) {
@@ -502,6 +508,12 @@ public class FarmaciaService {
                                 .mapToInt(LoteMedicamento::getCantidadInicial)
                                 .sum();
 
+                        BigDecimal precioUnitario = BigDecimal.ZERO;
+                        if (!lotesActivos.isEmpty() && lotesActivos.get(0).getPrecioUnitario() != null) {
+                            precioUnitario = lotesActivos.get(0).getPrecioUnitario();
+                        }
+                        BigDecimal subtotalDetalle = precioUnitario.multiply(BigDecimal.valueOf(cantidadPedida));
+
                         medList.add(DetalleDispensacionResponse.builder()
                                 .idMedicamento(m.getIdMedicamento())
                                 .nombre(m.getNombre())
@@ -512,6 +524,8 @@ public class FarmaciaService {
                                 .duracion(d.getDuracion())
                                 .cantidad(cantidadPedida)
                                 .stockDisponible(stock)
+                                .precioUnitario(precioUnitario)
+                                .subtotal(subtotalDetalle)
                                 .build());
 
                         if (!lotesActivos.isEmpty()) {
@@ -519,6 +533,10 @@ public class FarmaciaService {
                             long dias = loteSugerido.getFechaExpiracion() != null
                                     ? java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), loteSugerido.getFechaExpiracion())
                                     : 0L;
+                            int aDescontar = Math.min(cantidadPedida, loteSugerido.getCantidadInicial());
+                            BigDecimal pUnitLote = loteSugerido.getPrecioUnitario() != null ? loteSugerido.getPrecioUnitario() : BigDecimal.ZERO;
+                            BigDecimal subtotalLote = pUnitLote.multiply(BigDecimal.valueOf(aDescontar));
+                            totalMedicamentos = totalMedicamentos.add(subtotalLote);
 
                             lotesSugeridosList.add(LoteSugeridoResponse.builder()
                                     .idMedicamento(m.getIdMedicamento())
@@ -529,9 +547,11 @@ public class FarmaciaService {
                                             : "S/L")
                                     .fechaVencimiento(loteSugerido.getFechaExpiracion())
                                     .stockDisponible(loteSugerido.getCantidadInicial())
-                                    .cantidadADescontar(Math.min(cantidadPedida, loteSugerido.getCantidadInicial()))
+                                    .cantidadADescontar(aDescontar)
                                     .diasParaVencer(dias)
                                     .tieneStock(true)
+                                    .precioUnitario(pUnitLote)
+                                    .subtotal(subtotalLote)
                                     .build());
                         } else {
                             lotesSugeridosList.add(LoteSugeridoResponse.builder()
@@ -541,12 +561,16 @@ public class FarmaciaService {
                                     .stockDisponible(0)
                                     .cantidadADescontar(0)
                                     .tieneStock(false)
+                                    .precioUnitario(BigDecimal.ZERO)
+                                    .subtotal(BigDecimal.ZERO)
                                     .build());
                         }
                     }
                 }
                 response.setMedicamentos(medList);
                 response.setLotesSugeridos(lotesSugeridosList);
+                response.setTotalMedicamentos(totalMedicamentos);
+                response.setTotalPagar(precioConsulta.add(totalMedicamentos));
             }
         }
 
@@ -555,6 +579,11 @@ public class FarmaciaService {
 
     @Transactional
     public ColaAtencionResponse entregarMedicamentos(Long idCola) {
+        return entregarMedicamentos(idCola, null, null);
+    }
+
+    @Transactional
+    public ColaAtencionResponse entregarMedicamentos(Long idCola, EntregaMedicamentosRequest request, String username) {
         ColaAtencion cola = colaAtencionRepository.findById(idCola)
                 .orElseThrow(() -> new IllegalArgumentException("Cola de atención no encontrada con id: " + idCola));
 
@@ -562,6 +591,38 @@ public class FarmaciaService {
         if (paciente != null) {
             Consulta consulta = consultaRepository.findTopByPacienteOrderByFechaConsultaDesc(paciente).orElse(null);
             if (consulta != null) {
+                Usuario usuario = null;
+                if (username != null && !username.isBlank()) {
+                    usuario = usuarioRepository.findByUsername(username).orElse(null);
+                }
+
+                boolean noPagaConsulta = request != null && request.isNoPagaConsulta();
+                BigDecimal costoConsulta = noPagaConsulta
+                        ? BigDecimal.ZERO
+                        : (consulta.getPrecioConsulta() != null ? consulta.getPrecioConsulta() : BigDecimal.ZERO);
+
+                if (noPagaConsulta) {
+                    consulta.setPrecioConsulta(BigDecimal.ZERO);
+                    consultaRepository.save(consulta);
+                }
+
+                String observaciones = request != null && request.getObservaciones() != null && !request.getObservaciones().isBlank()
+                        ? request.getObservaciones()
+                        : "Dispensación de medicamentos de consulta médica";
+                if (noPagaConsulta && !observaciones.contains("Exonerada")) {
+                    observaciones += " [Consulta Exonerada]";
+                }
+
+                SalidaMedicamento salida = SalidaMedicamento.builder()
+                        .consulta(consulta)
+                        .usuario(usuario)
+                        .fechaSalida(LocalDateTime.now())
+                        .tipoSalida("DISPENSACION")
+                        .observaciones(observaciones)
+                        .costoConsulta(costoConsulta)
+                        .build();
+                salida = salidaMedicamentoRepository.save(salida);
+
                 Tratamiento tratamiento = tratamientoRepository.findByConsultaIdWithDetalles(consulta.getIdConsulta()).orElse(null);
                 if (tratamiento != null && tratamiento.getDetalles() != null) {
                     for (DetalleTratamiento d : tratamiento.getDetalles()) {
@@ -584,6 +645,17 @@ public class FarmaciaService {
                                     lote.setEstado(EstadoLote.INACTIVO);
                                 }
                                 loteRepository.save(lote);
+
+                                // Registrar detalle de salida del lote
+                                BigDecimal precioUnit = lote.getPrecioUnitario() != null ? lote.getPrecioUnitario() : BigDecimal.ZERO;
+                                DetalleSalidaMedicamento detalleSalida = DetalleSalidaMedicamento.builder()
+                                        .salida(salida)
+                                        .lote(lote)
+                                        .cantidad(aDescontar)
+                                        .precioUnitario(precioUnit)
+                                        .build();
+                                detalleSalidaMedicamentoRepository.save(detalleSalida);
+
                                 cantidadRestante -= aDescontar;
                             }
                         }

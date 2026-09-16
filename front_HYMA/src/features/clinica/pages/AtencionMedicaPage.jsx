@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Trash2,
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useClinica } from '../hooks/useClinica';
 import * as clinicaService from '../services/clinicaService';
+import { calcularIMC } from '../../preconsulta/hooks/usePreconsulta';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import userImg from '../../../assets/images/user.png';
 
@@ -49,6 +50,45 @@ const calcularCantidadReceta = ({
   } else {
     const m = durStr.match(/(\d+(?:\.\d+)?)/);
     dias = m ? Math.round(parseFloat(m[1])) : 0;
+  }
+
+  // Duración por defecto si no se ingresó
+  if (dias <= 0) {
+    dias = 5;
+  }
+
+  const presNorm = (presentacion || '').toLowerCase();
+  const concNorm = (concentracion || '').toLowerCase();
+
+  // 2. Detectar si es crema / ungüento / pomada / gel tópico / vaginal
+  const esTopico =
+    /crema|ung[uü]ento|pomada|gel\b|t[oó]pic|d[eé]rmic|loci[oó]n|pasta\b|vaginal/i.test(presNorm) ||
+    /crema|ung[uü]ento|pomada|gel\b|t[oó]pic|d[eé]rmic/i.test(concNorm);
+
+  if (esTopico) {
+    // Un tubo estándar (ej. 15g - 30g) cubre normalmente hasta 15 días de tratamiento tópico regular
+    const tubos = Math.max(1, Math.ceil(dias / 15));
+    return {
+      cantidad: tubos,
+      explicacion: `Sugerido: ${tubos} ${tubos > 1 ? 'tubos' : 'tubo'} (${dias} días de aplicación tópica)`,
+      esTopico: true,
+      esLiquido: false,
+    };
+  }
+
+  // 3. Detectar si es inhalador / spray / aerosol
+  const esInhalador =
+    /inhalad|spray|aerosol|nebuliz|puff/i.test(presNorm) ||
+    /inhalad|spray|aerosol/i.test(concNorm);
+
+  if (esInhalador) {
+    const frascos = Math.max(1, Math.ceil(dias / 30));
+    return {
+      cantidad: frascos,
+      explicacion: `Sugerido: ${frascos} ${frascos > 1 ? 'inhaladores/frascos' : 'inhalador/frasco'} (${dias} días)`,
+      esInhalador: true,
+      esLiquido: false,
+    };
   }
 
   // 2. Extraer frecuencia (horas de intervalo o tomas al día)
@@ -106,9 +146,7 @@ const calcularCantidadReceta = ({
 
   const totalTomas = dias * tomasAlDia;
 
-  // 3. Detectar si es líquido (Jarabe / Suspensión / Solución / Gotas)
-  const presNorm = (presentacion || '').toLowerCase();
-  const concNorm = (concentracion || '').toLowerCase();
+  // 4. Detectar si es líquido (Jarabe / Suspensión / Solución / Gotas)
   const esLiquido =
     /jarabe|suspensi[oó]n|soluci[oó]n|elixir|gotas|frasco|l[ií]quid/i.test(presNorm) ||
     /jarabe|suspensi[oó]n|soluci[oó]n/i.test(concNorm);
@@ -194,6 +232,13 @@ export default function AtencionMedicaPage() {
   const [pacienteData, setPacienteData] = useState(null);
   const [loadingDatos, setLoadingDatos] = useState(true);
   const [pasoActual, setPasoActual] = useState(1);
+
+  // Cálculo en tiempo real de IMC para el médico
+  const imcInfoSignos = useMemo(() => {
+    if (!pacienteData?.ultimoSignoVital) return null;
+    const { peso, talla } = pacienteData.ultimoSignoVital;
+    return calcularIMC(peso, talla);
+  }, [pacienteData?.ultimoSignoVital]);
 
   // Section B
   const [motivoConsulta, setMotivoConsulta] = useState('');
@@ -281,6 +326,17 @@ export default function AtencionMedicaPage() {
       const esLiquido =
         /jarabe|suspensi[oó]n|soluci[oó]n|elixir|gotas|frasco|l[ií]quid/i.test(presNorm) ||
         /jarabe|suspensi[oó]n|soluci[oó]n/i.test(concNorm);
+      const esTopico =
+        /crema|ung[uü]ento|pomada|gel\b|t[oó]pic|d[eé]rmic|loci[oó]n|pasta\b|vaginal/i.test(presNorm) ||
+        /crema|ung[uü]ento|pomada|gel\b|t[oó]pic/i.test(concNorm);
+      const esInhalador =
+        /inhalad|spray|aerosol|nebuliz|puff/i.test(presNorm) ||
+        /inhalad|spray|aerosol/i.test(concNorm);
+
+      let defaultDosis = '1';
+      if (esLiquido) defaultDosis = '5ml';
+      else if (esTopico) defaultDosis = '1 aplicación';
+      else if (esInhalador) defaultDosis = '1 disparo';
 
       const nuevoDetalle = {
         idMedicamento: med.idMedicamento,
@@ -291,7 +347,9 @@ export default function AtencionMedicaPage() {
         frecuencia: 'Cada 8 hrs',
         duracion: '5 días',
         esLiquido,
-        tomaDosis: esLiquido ? '5ml' : '1',
+        esTopico,
+        esInhalador,
+        tomaDosis: defaultDosis,
         cantidad: 1,
         explicacion: '',
       };
@@ -529,31 +587,53 @@ export default function AtencionMedicaPage() {
                       <div style={styles.vitalItem}>
                         <span style={styles.vitalLabel}>Frec. Cardíaca</span>
                         <span style={styles.vitalVal}>
-                          {pacienteData.ultimoSignoVital.frecuenciaCardiaca || '--'} lpm
+                          {pacienteData.ultimoSignoVital.frecuenciaCardiaca ? `${pacienteData.ultimoSignoVital.frecuenciaCardiaca} lpm` : '--'}
                         </span>
                       </div>
                       <div style={styles.vitalItem}>
                         <span style={styles.vitalLabel}>Temperatura</span>
                         <span style={styles.vitalVal}>
-                          {pacienteData.ultimoSignoVital.temperatura || '--'} °C
+                          {pacienteData.ultimoSignoVital.temperatura ? `${pacienteData.ultimoSignoVital.temperatura} °C` : '--'}
                         </span>
                       </div>
                       <div style={styles.vitalItem}>
                         <span style={styles.vitalLabel}>Peso</span>
                         <span style={styles.vitalVal}>
-                          {pacienteData.ultimoSignoVital.peso || '--'} kg
+                          {pacienteData.ultimoSignoVital.peso ? `${pacienteData.ultimoSignoVital.peso} lbs` : '--'}
+                        </span>
+                      </div>
+                      <div style={styles.vitalItem}>
+                        <span style={styles.vitalLabel}>Talla</span>
+                        <span style={styles.vitalVal}>
+                          {pacienteData.ultimoSignoVital.talla ? `${pacienteData.ultimoSignoVital.talla} cm` : '--'}
                         </span>
                       </div>
                       <div style={styles.vitalItem}>
                         <span style={styles.vitalLabel}>Sat. O2</span>
                         <span style={styles.vitalVal}>
-                          {pacienteData.ultimoSignoVital.saturacionOxigeno || '--'} %
+                          {pacienteData.ultimoSignoVital.saturacionOxigeno ? `${pacienteData.ultimoSignoVital.saturacionOxigeno} %` : '--'}
                         </span>
                       </div>
                       <div style={styles.vitalItem}>
-                        <span style={styles.vitalLabel}>IMC</span>
-                        <span style={styles.vitalVal}>
-                          {pacienteData.ultimoSignoVital.imc || '--'}
+                        <span style={styles.vitalLabel}>IMC Estimado</span>
+                        <span style={{ ...styles.vitalVal, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          {imcInfoSignos?.imc ? (
+                            <>
+                              <span>{imcInfoSignos.imc}</span>
+                              <span style={{
+                                fontSize: '10px',
+                                fontWeight: '700',
+                                color: 'white',
+                                backgroundColor: imcInfoSignos.color,
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                              }}>
+                                {imcInfoSignos.texto}
+                              </span>
+                            </>
+                          ) : (
+                            pacienteData.ultimoSignoVital.imc || '--'
+                          )}
                         </span>
                       </div>
                     </div>
@@ -720,9 +800,9 @@ export default function AtencionMedicaPage() {
                   <Stethoscope size={20} color="#0077b6" />
                 </div>
                 <div>
-                  <h2 style={styles.stepHeading}>Diagnósticos Clínicos (CIE-10)</h2>
+                  <h2 style={styles.stepHeading}>Diagnósticos Clínicos</h2>
                   <p style={styles.stepSubheading}>
-                    Búsqueda y codificación internacional de diagnósticos.
+                    Búsqueda de diagnósticos.
                   </p>
                 </div>
               </div>
@@ -968,10 +1048,18 @@ export default function AtencionMedicaPage() {
                                     style={styles.quantityInput}
                                   />
                                   <span style={styles.unitLabel}>
-                                    {dt.esLiquido
+                                    {dt.esTopico
+                                      ? Number(dt.cantidad) === 1
+                                        ? 'tubo'
+                                        : 'tubos'
+                                      : dt.esLiquido
                                       ? Number(dt.cantidad) === 1
                                         ? 'frasco'
                                         : 'frascos'
+                                      : dt.esInhalador
+                                      ? Number(dt.cantidad) === 1
+                                        ? 'inhalador'
+                                        : 'inhaladores'
                                       : Number(dt.cantidad) === 1
                                       ? 'unidad'
                                       : 'unidades'}
@@ -1366,7 +1454,7 @@ const styles = {
   },
   vitalsGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
     gap: '10px',
   },
   vitalItem: {

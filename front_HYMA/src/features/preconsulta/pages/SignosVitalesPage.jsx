@@ -228,7 +228,7 @@ export default function SignosVitalesPage() {
               <div style={styles.fieldGroup}>
                 <label style={styles.label}>
                   <span>Peso</span>
-                  <span style={styles.unitTag}>kg</span>
+                  <span style={styles.unitTag}>lbs</span>
                 </label>
                 <input
                   type="number"

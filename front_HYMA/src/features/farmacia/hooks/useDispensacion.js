@@ -43,11 +43,11 @@ export const useDispensacion = () => {
     }
   }, []);
 
-  const entregarMedicamentos = async (idCola) => {
+  const entregarMedicamentos = async (idCola, data = {}) => {
     setEntregando(true);
     setError(null);
     try {
-      const res = await dispensacionService.entregarMedicamentos(idCola);
+      const res = await dispensacionService.entregarMedicamentos(idCola, data);
       return { success: true, data: res };
     } catch (err) {
       const msg = err.response?.data?.message || 'Error al entregar los medicamentos';

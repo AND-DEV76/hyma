@@ -156,8 +156,11 @@ public class FarmaciaController {
 
     @PostMapping("/dispensacion/entregar/{idCola}")
     public ResponseEntity<com.hyma.recepcion.dto.ColaAtencionResponse> entregarMedicamentos(
-            @PathVariable(name = "idCola") Long idCola) {
-        return ResponseEntity.ok(farmaciaService.entregarMedicamentos(idCola));
+            @PathVariable(name = "idCola") Long idCola,
+            @RequestBody(required = false) EntregaMedicamentosRequest request,
+            Authentication authentication) {
+        String username = authentication != null ? authentication.getName() : null;
+        return ResponseEntity.ok(farmaciaService.entregarMedicamentos(idCola, request, username));
     }
 
     @PostMapping("/dispensacion/cancelar/{idCola}")

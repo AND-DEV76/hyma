@@ -3,6 +3,32 @@ import * as preconsultaService from '../services/preconsultaService';
 import { obtenerCola } from '../../recepcion/services/recepcionService';
 
 /**
+ * Calcula el Índice de Masa Corporal e interpretación diagnóstica en tiempo real.
+ * El peso se ingresa en libras (lbs) y la talla en centímetros (cm) o metros.
+ * 1 kg = 2.20462 lbs -> pesoKg = pesoLbs / 2.20462
+ */
+export const calcularIMC = (pesoLbs, tallaCm) => {
+  const peso = parseFloat(pesoLbs);
+  const talla = parseFloat(tallaCm);
+
+  if (!peso || !talla || peso <= 0 || talla <= 0) {
+    return { imc: null, texto: '—', color: '#64748b' };
+  }
+
+  // Convertir peso en libras (lbs) a kilogramos (kg)
+  const pesoKg = peso / 2.20462;
+  const tallaM = talla > 3 ? talla / 100 : talla;
+  const imcValor = Number((pesoKg / (tallaM * tallaM)).toFixed(2));
+
+  if (imcValor < 18.5) return { imc: imcValor, texto: 'Bajo peso', color: '#0284c7' };
+  if (imcValor < 25.0) return { imc: imcValor, texto: 'Normal', color: '#16a34a' };
+  if (imcValor < 30.0) return { imc: imcValor, texto: 'Sobrepeso', color: '#d97706' };
+  if (imcValor < 35.0) return { imc: imcValor, texto: 'Obesidad Grado I', color: '#ea580c' };
+  if (imcValor < 40.0) return { imc: imcValor, texto: 'Obesidad Grado II', color: '#dc2626' };
+  return { imc: imcValor, texto: 'Obesidad Grado III', color: '#991b1b' };
+};
+
+/**
  * Hook para la gestión integral de la toma de Signos Vitales y flujo de Preconsulta.
  */
 export const usePreconsulta = () => {
@@ -86,28 +112,6 @@ export const usePreconsulta = () => {
       setUltimoSigno(null);
     }
   }, []);
-
-  /**
-   * Calcula el Índice de Masa Corporal e interpretación diagnóstica en tiempo real.
-   */
-  const calcularIMC = (pesoKg, tallaCm) => {
-    const peso = parseFloat(pesoKg);
-    const talla = parseFloat(tallaCm);
-
-    if (!peso || !talla || peso <= 0 || talla <= 0) {
-      return { imc: null, texto: '—', color: '#64748b' };
-    }
-
-    const tallaM = talla > 3 ? talla / 100 : talla;
-    const imcValor = Number((peso / (tallaM * tallaM)).toFixed(2));
-
-    if (imcValor < 18.5) return { imc: imcValor, texto: 'Bajo peso', color: '#0284c7' };
-    if (imcValor < 25.0) return { imc: imcValor, texto: 'Normal', color: '#16a34a' };
-    if (imcValor < 30.0) return { imc: imcValor, texto: 'Sobrepeso', color: '#d97706' };
-    if (imcValor < 35.0) return { imc: imcValor, texto: 'Obesidad Grado I', color: '#ea580c' };
-    if (imcValor < 40.0) return { imc: imcValor, texto: 'Obesidad Grado II', color: '#dc2626' };
-    return { imc: imcValor, texto: 'Obesidad Grado III', color: '#991b1b' };
-  };
 
   /**
    * Cancela un turno de la cola de preconsulta pasando el estado a CANCELADO.
