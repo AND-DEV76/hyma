@@ -11,6 +11,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class DiagnosticoColumnaInfo {
     private int indice;
+    private Long idCie10;
+    private String codigo;
     private String categoria;
     private String nombre;
+    private String colorFondo;
 }

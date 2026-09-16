@@ -155,21 +155,31 @@ export default function ReportesPage() {
     );
   }, [data, searchDiag]);
 
-  // Helpers de Categorías
-  const getCatHeaderClass = (categoria) => {
-    switch (categoria) {
-      case 'INFECCIOSOS':
-        return 'cat-header-infecciosos';
-      case 'CRONICOS':
-        return 'cat-header-cronicos';
-      case 'GINECOLOGICO':
-        return 'cat-header-ginecologico';
-      case 'NUTRICIONAL':
-        return 'cat-header-nutricional';
-      default:
-        return 'cat-header-otros';
+  // Agrupación dinámica de bloques de categorías contiguos
+  const bloquesCategorias = useMemo(() => {
+    if (!columnasDiagnosticosFiltradas || columnasDiagnosticosFiltradas.length === 0) return [];
+    const bloques = [];
+    let catActual = null;
+    let count = 0;
+    let colorActual = '#FCE4D6';
+
+    for (const col of columnasDiagnosticosFiltradas) {
+      if (col.categoria !== catActual) {
+        if (catActual !== null) {
+          bloques.push({ categoria: catActual, count, colorFondo: colorActual });
+        }
+        catActual = col.categoria;
+        count = 1;
+        colorActual = col.colorFondo || '#FCE4D6';
+      } else {
+        count++;
+      }
     }
-  };
+    if (catActual !== null) {
+      bloques.push({ categoria: catActual, count, colorFondo: colorActual });
+    }
+    return bloques;
+  }, [columnasDiagnosticosFiltradas]);
 
   const formatearMoneda = (val) => {
     const num = Number(val) || 0;
@@ -301,7 +311,7 @@ export default function ReportesPage() {
                     <div className="kpi-label">Días con Atención</div>
                     <div className="kpi-val">{data.totales.totalDiasAtencion} días</div>
                     <div className="kpi-sub">
-                      Promedio: {data.promedios.totalPacientes} pacientes / día
+                      Promedio diario: {data.totales.promedioDiarioAtencion != null ? data.totales.promedioDiarioAtencion.toFixed(1) : (data.totales.totalDiasAtencion > 0 ? (data.totales.totalPacientes / data.totales.totalDiasAtencion).toFixed(1) : 0)} pacientes
                     </div>
                   </div>
                 </div>
@@ -376,22 +386,23 @@ export default function ReportesPage() {
                       <th colSpan={3}>GÉNERO</th>
                       <th rowSpan={2}>TOTAL RECAUDADO</th>
 
-                      {/* Grupos de diagnósticos si no hay filtro de búsqueda */}
-                      {!searchDiag && (
-                        <>
-                          <th colSpan={11} className="cat-header-infecciosos">INFECCIOSOS</th>
-                          <th colSpan={6} className="cat-header-cronicos">CRÓNICOS</th>
-                          <th colSpan={4} className="cat-header-ginecologico">GINECOLÓGICO</th>
-                          <th colSpan={10} className="cat-header-nutricional">NUTRICIONAL</th>
-                          <th colSpan={21} className="cat-header-otros">OTROS</th>
-                        </>
-                      )}
-
-                      {searchDiag && (
-                        <th colSpan={columnasDiagnosticosFiltradas.length} className="bg-slate-800 text-white">
-                          DIAGNÓSTICOS FILTRADOS ({columnasDiagnosticosFiltradas.length})
+                      {/* Grupos de diagnósticos dinámicos con texto negro y colores pastel */}
+                      {bloquesCategorias.map((b, idx) => (
+                        <th
+                          key={idx}
+                          colSpan={b.count}
+                          style={{
+                            backgroundColor: b.colorFondo,
+                            color: '#000000',
+                            fontWeight: 700,
+                            borderRight: '1px solid #cbd5e1',
+                            letterSpacing: '0.02em',
+                            fontSize: '0.82rem'
+                          }}
+                        >
+                          {b.categoria}
                         </th>
-                      )}
+                      ))}
                     </tr>
 
                     {/* Fila superior 2: Sub-encabezados */}
@@ -415,7 +426,18 @@ export default function ReportesPage() {
                         <th
                           key={col.indice}
                           title={`${col.categoria}: ${col.nombre}`}
-                          className={getCatHeaderClass(col.categoria)}
+                          style={{
+                            backgroundColor: col.colorFondo || '#FCE4D6',
+                            color: '#000000',
+                            fontWeight: 600,
+                            fontSize: '0.78rem',
+                            maxWidth: '140px',
+                            minWidth: '95px',
+                            whiteSpace: 'normal',
+                            padding: '0.35rem 0.45rem',
+                            lineHeight: '1.2',
+                            borderRight: '1px solid #cbd5e1'
+                          }}
                         >
                           {col.nombre}
                         </th>
@@ -510,32 +532,37 @@ export default function ReportesPage() {
                     {/* Fila PROMEDIO */}
                     <tr className="row-promedio">
                       <td className="sticky-col font-bold">PROMEDIO</td>
-                      <td>{data.promedios.totalDiasAtencion}</td>
-                      <td>{data.promedios.nuevos}</td>
-                      <td>{data.promedios.reconsulta}</td>
-                      <td>{data.promedios.totalPacientes}</td>
+                      <td className="font-bold text-emerald-800">
+                        {data.totales.promedioDiarioAtencion != null
+                          ? data.totales.promedioDiarioAtencion.toFixed(1)
+                          : (data.totales.totalDiasAtencion > 0
+                              ? (data.totales.totalPacientes / data.totales.totalDiasAtencion).toFixed(1)
+                              : 0)}
+                      </td>
+                      <td className="text-slate-400">-</td>
+                      <td className="text-slate-400">-</td>
+                      <td className="text-slate-400">-</td>
 
-                      <td>{data.promedios.edad0a5}</td>
-                      <td>{data.promedios.edad6a12}</td>
-                      <td>{data.promedios.edad13a17}</td>
-                      <td>{data.promedios.edad18a59}</td>
-                      <td>{data.promedios.edad60mas}</td>
-                      <td>{data.promedios.totalEdades}</td>
+                      <td className="text-slate-400">-</td>
+                      <td className="text-slate-400">-</td>
+                      <td className="text-slate-400">-</td>
+                      <td className="text-slate-400">-</td>
+                      <td className="text-slate-400">-</td>
+                      <td className="text-slate-400">-</td>
 
-                      <td>{data.promedios.femenino}</td>
-                      <td>{data.promedios.masculino}</td>
-                      <td>{data.promedios.totalGenero}</td>
+                      <td className="text-slate-400">-</td>
+                      <td className="text-slate-400">-</td>
+                      <td className="text-slate-400">-</td>
 
-                      <td className="cell-currency">{formatearMoneda(data.promedios.totalRecaudado)}</td>
+                      <td className="cell-currency font-bold">
+                        {formatearMoneda(data.promedios?.totalRecaudado || 0)}
+                      </td>
 
-                      {columnasDiagnosticosFiltradas.map((col) => {
-                        const val = data.promedios.diagnosticos?.[col.indice] ?? 0;
-                        return (
-                          <td key={col.indice} className="font-semibold">
-                            {val}
-                          </td>
-                        );
-                      })}
+                      {columnasDiagnosticosFiltradas.map((col) => (
+                        <td key={col.indice} className="text-slate-400 font-normal">
+                          -
+                        </td>
+                      ))}
                     </tr>
                   </tfoot>
                 </table>

@@ -297,31 +297,6 @@
   letter-spacing: 0.02em;
 }
 
-.cat-header-infecciosos {
-  background: #2563eb !important;
-  color: #ffffff;
-}
-
-.cat-header-cronicos {
-  background: #475569 !important;
-  color: #ffffff;
-}
-
-.cat-header-ginecologico {
-  background: #db2777 !important;
-  color: #ffffff;
-}
-
-.cat-header-nutricional {
-  background: #059669 !important;
-  color: #ffffff;
-}
-
-.cat-header-otros {
-  background: #1e1b4b !important;
-  color: #ffffff;
-}
-
 .matrix-table thead tr:last-child th {
   background: #f1f5f9;
   color: #334155;

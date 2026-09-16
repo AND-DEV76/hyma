@@ -1,6 +1,10 @@
 package com.hyma.reporte.service;
 
+import com.hyma.clinica.model.CatalogoCie10;
+import com.hyma.clinica.model.CategoriaDiagnostico;
 import com.hyma.clinica.model.Diagnostico;
+import com.hyma.clinica.repository.CatalogoCie10Repository;
+import com.hyma.clinica.repository.CategoriaDiagnosticoRepository;
 import com.hyma.clinica.repository.DiagnosticoRepository;
 import com.hyma.consulta.model.Consulta;
 import com.hyma.consulta.repository.ConsultaRepository;
@@ -10,6 +14,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.DefaultIndexedColorMap;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,76 +41,121 @@ public class ReporteService {
 
     private final ConsultaRepository consultaRepository;
     private final DiagnosticoRepository diagnosticoRepository;
+    private final CatalogoCie10Repository catalogoCie10Repository;
+    private final CategoriaDiagnosticoRepository categoriaDiagnosticoRepository;
 
-    public static final List<DiagnosticoColumnaInfo> COLUMNAS_DIAGNOSTICOS = List.of(
-            // INFECCIOSOS (11)
-            new DiagnosticoColumnaInfo(0, "INFECCIOSOS", "Infección respiratoria"),
-            new DiagnosticoColumnaInfo(1, "INFECCIOSOS", "Asma"),
-            new DiagnosticoColumnaInfo(2, "INFECCIOSOS", "Infección intestinal"),
-            new DiagnosticoColumnaInfo(3, "INFECCIOSOS", "Infección en la piel"),
-            new DiagnosticoColumnaInfo(4, "INFECCIOSOS", "Infección de vías urinarias"),
-            new DiagnosticoColumnaInfo(5, "INFECCIOSOS", "Infección en el oído"),
-            new DiagnosticoColumnaInfo(6, "INFECCIOSOS", "Bronquitis"),
-            new DiagnosticoColumnaInfo(7, "INFECCIOSOS", "Hepatitis"),
-            new DiagnosticoColumnaInfo(8, "INFECCIOSOS", "Neumonía"),
-            new DiagnosticoColumnaInfo(9, "INFECCIOSOS", "Septicemia"),
-            new DiagnosticoColumnaInfo(10, "INFECCIOSOS", "Apendicitis aguda"),
-
-            // CRONICOS (6)
-            new DiagnosticoColumnaInfo(11, "CRONICOS", "Diabetes Mellitus"),
-            new DiagnosticoColumnaInfo(12, "CRONICOS", "Enfermedades pépticas"),
-            new DiagnosticoColumnaInfo(13, "CRONICOS", "Hipertensión arterial"),
-            new DiagnosticoColumnaInfo(14, "CRONICOS", "Síndrome del intestino irritable"),
-            new DiagnosticoColumnaInfo(15, "CRONICOS", "Artritis Reumatoide"),
-            new DiagnosticoColumnaInfo(16, "CRONICOS", "Enfermedad pulmonar obstructiva crónica"),
-
-            // GINECOLOGICO (4)
-            new DiagnosticoColumnaInfo(17, "GINECOLOGICO", "Cuidado prenatal"),
-            new DiagnosticoColumnaInfo(18, "GINECOLOGICO", "Ginecología"),
-            new DiagnosticoColumnaInfo(19, "GINECOLOGICO", "Planificación familiar"),
-            new DiagnosticoColumnaInfo(20, "GINECOLOGICO", "Papanicolau"),
-
-            // NUTRICIONAL (10)
-            new DiagnosticoColumnaInfo(21, "NUTRICIONAL", "Anemia"),
-            new DiagnosticoColumnaInfo(22, "NUTRICIONAL", "Niño sano"),
-            new DiagnosticoColumnaInfo(23, "NUTRICIONAL", "Bajo peso para la edad del niño"),
-            new DiagnosticoColumnaInfo(24, "NUTRICIONAL", "Desnutrición aguda moderada"),
-            new DiagnosticoColumnaInfo(25, "NUTRICIONAL", "Desnutrición aguda severa"),
-            new DiagnosticoColumnaInfo(26, "NUTRICIONAL", "Desnutrición crónica"),
-            new DiagnosticoColumnaInfo(27, "NUTRICIONAL", "Retraso en el desarrollo"),
-            new DiagnosticoColumnaInfo(28, "NUTRICIONAL", "Sobrepeso y obesidad"),
-            new DiagnosticoColumnaInfo(29, "NUTRICIONAL", "Carencia de Vitamina A"),
-            new DiagnosticoColumnaInfo(30, "NUTRICIONAL", "Otras deficiencias nutricionales"),
-
-            // OTROS (21)
-            new DiagnosticoColumnaInfo(31, "OTROS", "Amigdalitis aguda"),
-            new DiagnosticoColumnaInfo(32, "OTROS", "Faringitis aguda"),
-            new DiagnosticoColumnaInfo(33, "OTROS", "Otitis media"),
-            new DiagnosticoColumnaInfo(34, "OTROS", "Resfriado común"),
-            new DiagnosticoColumnaInfo(35, "OTROS", "Sinusitis aguda"),
-            new DiagnosticoColumnaInfo(36, "OTROS", "COVID-19"),
-            new DiagnosticoColumnaInfo(37, "OTROS", "Celulitis"),
-            new DiagnosticoColumnaInfo(38, "OTROS", "Dermatitis"),
-            new DiagnosticoColumnaInfo(39, "OTROS", "Escabiosis"),
-            new DiagnosticoColumnaInfo(40, "OTROS", "Micosis superficial"),
-            new DiagnosticoColumnaInfo(41, "OTROS", "Colecistitis aguda"),
-            new DiagnosticoColumnaInfo(42, "OTROS", "Gastritis aguda"),
-            new DiagnosticoColumnaInfo(43, "OTROS", "Gastroenteritis infecciosa"),
-            new DiagnosticoColumnaInfo(44, "OTROS", "Infección urinaria recurrente"),
-            new DiagnosticoColumnaInfo(45, "OTROS", "Cistitis aguda"),
-            new DiagnosticoColumnaInfo(46, "OTROS", "Insuficiencia cardíaca"),
-            new DiagnosticoColumnaInfo(47, "OTROS", "Dislipidemia"),
-            new DiagnosticoColumnaInfo(48, "OTROS", "Lumbalgia"),
-            new DiagnosticoColumnaInfo(49, "OTROS", "Cefalea tensional"),
-            new DiagnosticoColumnaInfo(50, "OTROS", "Migraña"),
-            new DiagnosticoColumnaInfo(51, "OTROS", "Ansiedad / Depresión")
+    // Paleta base institucional de colores pastel para categorías
+    private static final Map<String, String> COLORES_CATEGORIA_BASE = Map.of(
+            "INFECCIOSOS", "#FED7AA",    // Anaranjado pálido
+            "CRONICOS", "#BAE6FD",       // Celeste pálido
+            "GINECOLOGICO", "#FBCFE8",   // Rosado pálido
+            "NUTRICIONAL", "#D1FAE5",    // Verde pálido
+            "OTROS", "#FCE4D6"           // Tono pálido especificado
     );
+
+    // Paleta rotativa para nuevas categorías dinámicas
+    private static final List<String> PALETA_PASTEL_EXTRA = List.of(
+            "#EDE9FE", // Violeta / lavanda pálido
+            "#FEF9C3", // Amarillo pálido
+            "#CCFBF1", // Turquesa / menta pálido
+            "#F3E8FF", // Lila pálido
+            "#FEE2E2", // Rojo pálido
+            "#E2E8F0"  // Gris pálido
+    );
+
+    /**
+     * Construye dinámicamente las columnas de diagnóstico a partir de la BD (catalogo_cie10 y categoria_diagnostico).
+     */
+    @Transactional(readOnly = true)
+    public List<DiagnosticoColumnaInfo> obtenerColumnasDiagnosticosDinamicas() {
+        List<CatalogoCie10> catalogo = catalogoCie10Repository.findAllWithCategoria();
+
+        if (catalogo.isEmpty()) {
+            return List.of(
+                    new DiagnosticoColumnaInfo(0, 1L, "GEN-01", "OTROS", "Consulta General", "#FCE4D6")
+            );
+        }
+
+        // Agrupar por nombre de categoría
+        Map<String, List<CatalogoCie10>> porCategoria = catalogo.stream()
+                .collect(Collectors.groupingBy(c -> {
+                    if (c.getCategoria() != null && c.getCategoria().getNombre() != null && !c.getCategoria().getNombre().isBlank()) {
+                        return c.getCategoria().getNombre().trim().toUpperCase();
+                    }
+                    return "OTROS";
+                }));
+
+        // Orden de categorías: estándar primero, luego nuevas dinámicas, y OTROS al final
+        List<String> categoriasOrdenadas = new ArrayList<>();
+        List<String> ordenEstandar = List.of("INFECCIOSOS", "CRONICOS", "GINECOLOGICO", "NUTRICIONAL");
+        for (String std : ordenEstandar) {
+            if (porCategoria.containsKey(std)) {
+                categoriasOrdenadas.add(std);
+            }
+        }
+
+        // Categorías adicionales (ej. CANCERIGENO, etc.)
+        List<String> extras = porCategoria.keySet().stream()
+                .filter(k -> !ordenEstandar.contains(k) && !"OTROS".equals(k))
+                .sorted()
+                .toList();
+        categoriasOrdenadas.addAll(extras);
+
+        // OTROS al final si existe
+        if (porCategoria.containsKey("OTROS")) {
+            categoriasOrdenadas.add("OTROS");
+        }
+
+        // Asignación de colores pastel
+        Map<String, String> colorPorCategoria = new HashMap<>();
+        int extraIdx = 0;
+        for (String cat : categoriasOrdenadas) {
+            if (COLORES_CATEGORIA_BASE.containsKey(cat)) {
+                colorPorCategoria.put(cat, COLORES_CATEGORIA_BASE.get(cat));
+            } else {
+                String color = PALETA_PASTEL_EXTRA.get(extraIdx % PALETA_PASTEL_EXTRA.size());
+                colorPorCategoria.put(cat, color);
+                extraIdx++;
+            }
+        }
+
+        // Generar lista final de columnas
+        List<DiagnosticoColumnaInfo> resultado = new ArrayList<>();
+        int colIndex = 0;
+
+        for (String cat : categoriasOrdenadas) {
+            List<CatalogoCie10> items = porCategoria.get(cat);
+            if (items == null) continue;
+
+            // Ordenar diagnósticos por descripción (no por código)
+            items.sort(Comparator.comparing(CatalogoCie10::getDescripcion, String.CASE_INSENSITIVE_ORDER));
+
+            String color = colorPorCategoria.getOrDefault(cat, "#FCE4D6");
+
+            for (CatalogoCie10 item : items) {
+                resultado.add(DiagnosticoColumnaInfo.builder()
+                        .indice(colIndex++)
+                        .idCie10(item.getIdCie10())
+                        .codigo(item.getCodigo())
+                        .categoria(cat)
+                        .nombre(item.getDescripcion()) // Se muestra la descripción
+                        .colorFondo(color)
+                        .build());
+            }
+        }
+
+        return resultado;
+    }
 
     @Transactional(readOnly = true)
     public ReporteEstadisticaResponse generarReporteEstadistica(int anio, int mes) {
         YearMonth ym = YearMonth.of(anio, mes);
         LocalDateTime inicioMes = ym.atDay(1).atStartOfDay();
         LocalDateTime finMes = ym.atEndOfMonth().atTime(23, 59, 59, 999999999);
+
+        // Obtener columnas diagnósticas dinámicas desde BD
+        List<DiagnosticoColumnaInfo> columnasDiag = obtenerColumnasDiagnosticosDinamicas();
+        int totalDiagCols = columnasDiag.size();
 
         // Consultas del mes
         List<Consulta> consultasMes = consultaRepository.findByFechaConsultaBetweenOrderByFechaConsultaAsc(inicioMes, finMes);
@@ -168,7 +220,6 @@ public class ReporteService {
 
         int diasEnMes = ym.lengthOfMonth();
         List<FilaReporteEstadistica> filas = new ArrayList<>();
-
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
         for (int dia = 1; dia <= diasEnMes; dia++) {
@@ -176,8 +227,7 @@ public class ReporteService {
             List<Consulta> consultasDia = consultasPorDia.getOrDefault(dia, Collections.emptyList());
 
             if (consultasDia.isEmpty()) {
-                // Fila vacía para ese día
-                List<Integer> diagsCero = new ArrayList<>(Collections.nCopies(52, 0));
+                List<Integer> diagsCero = new ArrayList<>(Collections.nCopies(totalDiagCols, 0));
                 filas.add(FilaReporteEstadistica.builder()
                         .fecha(fechaDia.format(dtf))
                         .numeroDia(dia)
@@ -210,7 +260,7 @@ public class ReporteService {
             int fem = 0;
             int masc = 0;
             BigDecimal recaudado = BigDecimal.ZERO;
-            int[] conteoDiag = new int[52];
+            int[] conteoDiag = new int[totalDiagCols];
 
             for (Consulta c : consultasDia) {
                 if (c == null) continue;
@@ -234,7 +284,7 @@ public class ReporteService {
                     else if (edad <= 59) e18a59++;
                     else e60mas++;
                 } else {
-                    e18a59++; // default si no tuviese fecha
+                    e18a59++;
                 }
 
                 // Género
@@ -250,13 +300,13 @@ public class ReporteService {
                     recaudado = recaudado.add(c.getPrecioConsulta());
                 }
 
-                // Diagnósticos
+                // Diagnósticos dinámicos
                 if (c.getIdConsulta() != null) {
                     List<Diagnostico> diags = diagPorConsulta.getOrDefault(c.getIdConsulta(), Collections.emptyList());
                     for (Diagnostico d : diags) {
                         if (d == null) continue;
-                        int idx = clasificarDiagnostico(d.getDescripcion());
-                        if (idx >= 0 && idx < 52) {
+                        int idx = clasificarDiagnosticoDinamico(d, columnasDiag);
+                        if (idx >= 0 && idx < totalDiagCols) {
                             conteoDiag[idx]++;
                         }
                     }
@@ -312,17 +362,25 @@ public class ReporteService {
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        int[] sumDiags = new int[52];
+        int[] sumDiags = new int[totalDiagCols];
         for (FilaReporteEstadistica f : filas) {
-            for (int i = 0; i < 52; i++) {
-                sumDiags[i] += f.getDiagnosticos().get(i);
+            for (int i = 0; i < totalDiagCols; i++) {
+                if (f.getDiagnosticos() != null && f.getDiagnosticos().size() > i) {
+                    sumDiags[i] += f.getDiagnosticos().get(i);
+                }
             }
         }
         List<Integer> listTotDiags = new ArrayList<>();
         for (int v : sumDiags) listTotDiags.add(v);
 
+        // Promedio diario de atención (Total Pacientes / Total Días de Atención)
+        double promDiarioPacientes = totDiasAtencion > 0
+                ? Math.round(((double) sumTotalPac / totDiasAtencion) * 10.0) / 10.0
+                : 0.0;
+
         TotalesReporteEstadistica totales = TotalesReporteEstadistica.builder()
                 .totalDiasAtencion(totDiasAtencion)
+                .promedioDiarioAtencion(promDiarioPacientes)
                 .nuevos(sumNuevos)
                 .reconsulta(sumReconsulta)
                 .totalPacientes(sumTotalPac)
@@ -339,24 +397,28 @@ public class ReporteService {
                 .diagnosticos(listTotDiags)
                 .build();
 
-        // Calcular Promedios (dividir entre totDiasAtencion)
-        int divisor = totDiasAtencion > 0 ? totDiasAtencion : 1;
+        // En la fila PROMEDIO solo se promedian los DÍAS de atención y la recaudación diaria
+        BigDecimal promRecaudado = totDiasAtencion > 0
+                ? sumRecaudado.divide(BigDecimal.valueOf(totDiasAtencion), 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
         TotalesReporteEstadistica promedios = TotalesReporteEstadistica.builder()
-                .totalDiasAtencion(totDiasAtencion)
-                .nuevos(Math.round((float) sumNuevos / divisor))
-                .reconsulta(Math.round((float) sumReconsulta / divisor))
-                .totalPacientes(Math.round((float) sumTotalPac / divisor))
-                .edad0a5(Math.round((float) sum0a5 / divisor))
-                .edad6a12(Math.round((float) sum6a12 / divisor))
-                .edad13a17(Math.round((float) sum13a17 / divisor))
-                .edad18a59(Math.round((float) sum18a59 / divisor))
-                .edad60mas(Math.round((float) sum60mas / divisor))
-                .totalEdades(Math.round((float) sumTotalEdades / divisor))
-                .femenino(Math.round((float) sumFem / divisor))
-                .masculino(Math.round((float) sumMasc / divisor))
-                .totalGenero(Math.round((float) sumTotalGen / divisor))
-                .totalRecaudado(sumRecaudado.divide(BigDecimal.valueOf(divisor), 2, RoundingMode.HALF_UP))
-                .diagnosticos(listTotDiags.stream().map(v -> Math.round((float) v / divisor)).toList())
+                .totalDiasAtencion((int) Math.round(promDiarioPacientes))
+                .promedioDiarioAtencion(promDiarioPacientes)
+                .nuevos(0)
+                .reconsulta(0)
+                .totalPacientes((int) Math.round(promDiarioPacientes))
+                .edad0a5(0)
+                .edad6a12(0)
+                .edad13a17(0)
+                .edad18a59(0)
+                .edad60mas(0)
+                .totalEdades(0)
+                .femenino(0)
+                .masculino(0)
+                .totalGenero(0)
+                .totalRecaudado(promRecaudado)
+                .diagnosticos(new ArrayList<>(Collections.nCopies(totalDiagCols, 0)))
                 .build();
 
         String periodoNombre = ym.getMonth().name().substring(0, 3).toLowerCase() + "-" + (anio % 100);
@@ -366,7 +428,7 @@ public class ReporteService {
                 .anio(anio)
                 .periodoNombre(periodoNombre)
                 .titulo("ESTADISTICA MENSUAL OBRAS SOCIALES SAN MARTIN")
-                .columnasDiagnosticos(COLUMNAS_DIAGNOSTICOS)
+                .columnasDiagnosticos(columnasDiag)
                 .filas(filas)
                 .totales(totales)
                 .promedios(promedios)
@@ -374,108 +436,103 @@ public class ReporteService {
     }
 
     /**
-     * Clasifica una descripción de diagnóstico en uno de los 52 índices.
+     * Clasifica un diagnóstico dinámicamente comparando código CIE-10 y descripción contra el catálogo.
      */
-    public int clasificarDiagnostico(String descripcion) {
-        if (descripcion == null || descripcion.isBlank()) {
-            return 33; // Resfriado o similar como fallback seguro
+    public int clasificarDiagnosticoDinamico(Diagnostico d, List<DiagnosticoColumnaInfo> columnas) {
+        if (d == null || columnas.isEmpty()) return 0;
+
+        String cod = d.getCodigoCie10() != null ? d.getCodigoCie10().trim().toUpperCase() : "";
+        String desc = d.getDescripcion() != null ? d.getDescripcion().trim() : "";
+
+        // 1. Coincidencia exacta por código
+        if (!cod.isEmpty()) {
+            for (int i = 0; i < columnas.size(); i++) {
+                DiagnosticoColumnaInfo col = columnas.get(i);
+                if (col.getCodigo() != null && col.getCodigo().equalsIgnoreCase(cod)) {
+                    return i;
+                }
+            }
         }
-        String clean = Normalizer.normalize(descripcion.toLowerCase(), Normalizer.Form.NFD)
+
+        // 2. Coincidencia normalizada por descripción
+        String cleanDesc = normalizarTexto(desc);
+        if (!cleanDesc.isEmpty()) {
+            for (int i = 0; i < columnas.size(); i++) {
+                DiagnosticoColumnaInfo col = columnas.get(i);
+                String cleanCol = normalizarTexto(col.getNombre());
+                if (cleanDesc.equalsIgnoreCase(cleanCol)) {
+                    return i;
+                }
+            }
+
+            // 3. Contención de palabras clave
+            for (int i = 0; i < columnas.size(); i++) {
+                DiagnosticoColumnaInfo col = columnas.get(i);
+                String cleanCol = normalizarTexto(col.getNombre());
+                if (cleanDesc.contains(cleanCol) || cleanCol.contains(cleanDesc)) {
+                    return i;
+                }
+            }
+        }
+
+        // 4. Si no coincide, buscar primera columna de "OTROS" o fallback al último índice
+        for (int i = 0; i < columnas.size(); i++) {
+            if ("OTROS".equalsIgnoreCase(columnas.get(i).getCategoria())) {
+                return i;
+            }
+        }
+
+        return columnas.size() - 1;
+    }
+
+    private String normalizarTexto(String texto) {
+        if (texto == null || texto.isBlank()) return "";
+        return Normalizer.normalize(texto.toLowerCase(), Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "").trim();
-
-        // 1. INFECCIOSOS (0..10)
-        if (clean.contains("respirator") || clean.contains("iras") || clean.contains("ira ") || clean.equals("ira")) return 0;
-        if (clean.contains("asma") || clean.contains("broncoespasmo")) return 1;
-        if (clean.contains("intestin") || clean.contains("diarrea") || clean.contains("gastroenteritis bacteriana")) return 2;
-        if (clean.contains("piel") || clean.contains("cutane") || clean.contains("pioderm")) return 3;
-        if (clean.contains("urinari") || clean.contains("itu") || clean.contains("vias urinarias")) {
-            if (clean.contains("recurrente")) return 44; // Infección urinaria recurrente
-            return 4; // Infección de vías urinarias
-        }
-        if (clean.contains("oido")) return 5;
-        if (clean.contains("bronqui")) return 6;
-        if (clean.contains("hepatit")) return 7;
-        if (clean.contains("neumon") || clean.contains("pulmonia")) return 8;
-        if (clean.contains("septic") || clean.contains("sepsis")) return 9;
-        if (clean.contains("apendic")) return 10;
-
-        // 2. CRONICOS (11..16)
-        if (clean.contains("diabet") || clean.contains("dm2") || clean.contains("dm1")) return 11;
-        if (clean.contains("peptic") || clean.contains("reflujo") || clean.contains("dispepsia")) return 12;
-        if (clean.contains("hipertens") || clean.contains("hta") || clean.contains("presion alta")) return 13;
-        if (clean.contains("intestino irritable") || clean.contains("colon irritable") || clean.contains("sii")) return 14;
-        if (clean.contains("artrit") || clean.contains("reumato")) return 15;
-        if (clean.contains("epoc") || clean.contains("obstructiva cronica")) return 16;
-
-        // 3. GINECOLOGICO (17..20)
-        if (clean.contains("prenatal") || clean.contains("embaraz") || clean.contains("gestac")) return 17;
-        if (clean.contains("ginecolog") || clean.contains("vagin") || clean.contains("flujo")) return 18;
-        if (clean.contains("planific") || clean.contains("anticoncept")) return 19;
-        if (clean.contains("papanicol") || clean.contains("pap") || clean.contains("citolog")) return 20;
-
-        // 4. NUTRICIONAL (21..30)
-        if (clean.contains("anemia")) return 21;
-        if (clean.contains("sano") || clean.contains("control de nino")) return 22;
-        if (clean.contains("bajo peso")) return 23;
-        if (clean.contains("desnutricion aguda moderada")) return 24;
-        if (clean.contains("desnutricion aguda severa") || clean.contains("desnutricion severa")) return 25;
-        if (clean.contains("desnutricion cronica") || clean.contains("desnutri")) return 26;
-        if (clean.contains("retraso en el desarrollo") || clean.contains("retraso psicomotor")) return 27;
-        if (clean.contains("sobrepeso") || clean.contains("obesid")) return 28;
-        if (clean.contains("vitamina a")) return 29;
-        if (clean.contains("nutricion") || clean.contains("carencia") || clean.contains("deficit")) return 30;
-
-        // 5. OTROS (31..51)
-        if (clean.contains("amigdal")) return 31;
-        if (clean.contains("faring")) return 32;
-        if (clean.contains("otitis")) return 33;
-        if (clean.contains("resfriad") || clean.contains("gripe") || clean.contains("catarro") || clean.contains("rinofaring")) return 34;
-        if (clean.contains("sinusit")) return 35;
-        if (clean.contains("covid") || clean.contains("sars")) return 36;
-        if (clean.contains("celulit")) return 37;
-        if (clean.contains("dermat") || clean.contains("eccema")) return 38;
-        if (clean.contains("escabio") || clean.contains("sarna")) return 39;
-        if (clean.contains("micos") || clean.contains("tinea") || clean.contains("hongo") || clean.contains("pie de atleta")) return 40;
-        if (clean.contains("colecist")) return 41;
-        if (clean.contains("gastrit")) return 42;
-        if (clean.contains("gastroenter")) return 43;
-        if (clean.contains("cistit")) return 45;
-        if (clean.contains("cardiaca") || clean.contains("corazon")) return 46;
-        if (clean.contains("dislipid") || clean.contains("colesterol") || clean.contains("triglic")) return 47;
-        if (clean.contains("lumb") || clean.contains("espalda")) return 48;
-        if (clean.contains("cefalea")) return 49;
-        if (clean.contains("migran") || clean.contains("jaqueca")) return 50;
-        if (clean.contains("ansied") || clean.contains("depres") || clean.contains("estres")) return 51;
-
-        // Default al primer grupo infeccioso o a "Otros"
-        return 34; // Resfriado común por defecto en atención primaria
     }
 
     /**
-     * Genera el libro Excel (.xlsx) exactamente con el formato institucional solicitado.
+     * Genera el libro Excel (.xlsx) dinámico, con colores pastel, nombres en negro,
+     * y EXCLUSIVAMENTE los días con atención registrados.
      */
     public byte[] generarExcel(int anio, int mes) throws IOException {
         ReporteEstadisticaResponse data = generarReporteEstadistica(anio, mes);
+        List<DiagnosticoColumnaInfo> columnasDiag = data.getColumnasDiagnosticos();
+        int totalDiagCols = columnasDiag.size();
+
+        // Filtrar SOLO días con atención
+        List<FilaReporteEstadistica> filasAtendidas = data.getFilas().stream()
+                .filter(f -> f.getDiasAtencion() != null && f.getDiasAtencion() > 0)
+                .toList();
 
         try (Workbook wb = new XSSFWorkbook()) {
             Sheet sheet = wb.createSheet("Estadística Mensual");
             sheet.setDisplayGridlines(true);
 
-            // Estilos
+            DefaultIndexedColorMap colorMap = new DefaultIndexedColorMap();
+
+            // Fuente Negrita común
             Font fontBold = wb.createFont();
             fontBold.setBold(true);
 
+            // Fuente Títulos Principales
             Font fontHeaderTitle = wb.createFont();
             fontHeaderTitle.setBold(true);
-            fontHeaderTitle.setFontHeightInPoints((short) 12);
+            fontHeaderTitle.setFontHeightInPoints((short) 11);
             fontHeaderTitle.setColor(IndexedColors.WHITE.getIndex());
 
-            Font fontCategory = wb.createFont();
-            fontCategory.setBold(true);
-            fontCategory.setFontHeightInPoints((short) 10);
-            fontCategory.setColor(IndexedColors.WHITE.getIndex());
+            // Fuente Negro para Categorías y Diagnósticos (solicitud explícita del usuario)
+            Font fontNegroBold = wb.createFont();
+            fontNegroBold.setBold(true);
+            fontNegroBold.setColor(IndexedColors.BLACK.getIndex());
+            fontNegroBold.setFontHeightInPoints((short) 9);
 
-            // Estilo Titulo Principal (Azul oscuro / Navy)
+            Font fontNegroSub = wb.createFont();
+            fontNegroSub.setBold(true);
+            fontNegroSub.setColor(IndexedColors.BLACK.getIndex());
+            fontNegroSub.setFontHeightInPoints((short) 8);
+
+            // Estilos Títulos Generales
             CellStyle styleTitleMain = wb.createCellStyle();
             styleTitleMain.setFont(fontHeaderTitle);
             styleTitleMain.setAlignment(HorizontalAlignment.CENTER);
@@ -484,7 +541,6 @@ public class ReporteService {
             styleTitleMain.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             setBorders(styleTitleMain);
 
-            // Estilo Titulo Diagnosticos (Gris / Azul petróleo)
             CellStyle styleTitleDiag = wb.createCellStyle();
             styleTitleDiag.setFont(fontHeaderTitle);
             styleTitleDiag.setAlignment(HorizontalAlignment.CENTER);
@@ -493,19 +549,9 @@ public class ReporteService {
             styleTitleDiag.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             setBorders(styleTitleDiag);
 
-            // Estilos de Categorias
-            CellStyle styleCatInfecciosos = crearEstiloCategoria(wb, IndexedColors.CORNFLOWER_BLUE.getIndex());
-            CellStyle styleCatCronicos = crearEstiloCategoria(wb, IndexedColors.GREY_50_PERCENT.getIndex());
-            CellStyle styleCatGinecologico = crearEstiloCategoria(wb, IndexedColors.ROSE.getIndex());
-            CellStyle styleCatNutricional = crearEstiloCategoria(wb, IndexedColors.SEA_GREEN.getIndex());
-            CellStyle styleCatOtros = crearEstiloCategoria(wb, IndexedColors.DARK_BLUE.getIndex());
-
-            // Estilo Subencabezados
+            // Estilo Subencabezados estándar
             CellStyle styleSubHeader = wb.createCellStyle();
-            Font fontSub = wb.createFont();
-            fontSub.setBold(true);
-            fontSub.setFontHeightInPoints((short) 9);
-            styleSubHeader.setFont(fontSub);
+            styleSubHeader.setFont(fontNegroSub);
             styleSubHeader.setAlignment(HorizontalAlignment.CENTER);
             styleSubHeader.setVerticalAlignment(VerticalAlignment.CENTER);
             styleSubHeader.setWrapText(true);
@@ -513,19 +559,18 @@ public class ReporteService {
             styleSubHeader.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             setBorders(styleSubHeader);
 
-            // Estilo Datos Numéricos
+            // Estilos Numéricos y Moneda
             CellStyle styleDataNum = wb.createCellStyle();
             styleDataNum.setAlignment(HorizontalAlignment.CENTER);
             setBorders(styleDataNum);
 
-            // Estilo Moneda
             CellStyle styleCurrency = wb.createCellStyle();
             styleCurrency.setAlignment(HorizontalAlignment.RIGHT);
             DataFormat df = wb.createDataFormat();
             styleCurrency.setDataFormat(df.getFormat("Q#,##0.00"));
             setBorders(styleCurrency);
 
-            // Estilo Totales / Promedios
+            // Estilos Totales
             CellStyle styleTotal = wb.createCellStyle();
             styleTotal.setFont(fontBold);
             styleTotal.setAlignment(HorizontalAlignment.CENTER);
@@ -541,6 +586,43 @@ public class ReporteService {
             styleTotalCurrency.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             setBorders(styleTotalCurrency);
 
+            // Cache de estilos para cada categoría con su color pastel y texto negro
+            Map<String, CellStyle> estilosCategoriaHeader = new HashMap<>();
+            Map<String, CellStyle> estilosDiagnosticoSubheader = new HashMap<>();
+
+            for (DiagnosticoColumnaInfo col : columnasDiag) {
+                String cat = col.getCategoria();
+                String colorHex = col.getColorFondo() != null ? col.getColorFondo() : "#FCE4D6";
+
+                if (!estilosCategoriaHeader.containsKey(cat)) {
+                    XSSFCellStyle styleCat = (XSSFCellStyle) wb.createCellStyle();
+                    styleCat.setFont(fontNegroBold);
+                    styleCat.setAlignment(HorizontalAlignment.CENTER);
+                    styleCat.setVerticalAlignment(VerticalAlignment.CENTER);
+                    styleCat.setWrapText(true);
+                    byte[] rgb = hexToRgb(colorHex);
+                    styleCat.setFillForegroundColor(new XSSFColor(rgb, colorMap));
+                    styleCat.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                    setBorders(styleCat);
+                    estilosCategoriaHeader.put(cat, styleCat);
+                }
+
+                if (!estilosDiagnosticoSubheader.containsKey(col.getNombre())) {
+                    XSSFCellStyle styleDiag = (XSSFCellStyle) wb.createCellStyle();
+                    styleDiag.setFont(fontNegroSub);
+                    styleDiag.setAlignment(HorizontalAlignment.CENTER);
+                    styleDiag.setVerticalAlignment(VerticalAlignment.CENTER);
+                    styleDiag.setWrapText(true);
+                    byte[] rgb = hexToRgb(colorHex);
+                    styleDiag.setFillForegroundColor(new XSSFColor(rgb, colorMap));
+                    styleDiag.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                    setBorders(styleDiag);
+                    estilosDiagnosticoSubheader.put(col.getNombre(), styleDiag);
+                }
+            }
+
+            int lastColIdx = 14 + totalDiagCols;
+
             // -------------------------------------------------------------
             // FILA 0: Título principal
             // -------------------------------------------------------------
@@ -555,85 +637,78 @@ public class ReporteService {
             cTitulo.setCellValue(data.getTitulo());
             cTitulo.setCellStyle(styleTitleMain);
 
-            // Rellenar celdas intermedias para el merge de título principal (cols 1..14)
             for (int col = 2; col <= 14; col++) {
                 Cell c = row0.createCell(col);
                 c.setCellStyle(styleTitleMain);
             }
             sheet.addMergedRegion(new CellRangeAddress(0, 0, 1, 14));
 
-            // Merge de clasificación de diagnósticos (cols 15..66)
+            // Merge de clasificación de diagnósticos
             Cell cDiagTitle = row0.createCell(15);
             cDiagTitle.setCellValue("CLASIFICACIÓN DE DIAGNÓSTICOS");
             cDiagTitle.setCellStyle(styleTitleDiag);
-            for (int col = 16; col <= 66; col++) {
+            for (int col = 16; col <= lastColIdx; col++) {
                 Cell c = row0.createCell(col);
                 c.setCellStyle(styleTitleDiag);
             }
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 15, 66));
+            if (lastColIdx >= 15) {
+                sheet.addMergedRegion(new CellRangeAddress(0, 0, 15, lastColIdx));
+            }
 
             // -------------------------------------------------------------
-            // FILA 1: Grupos mayores de encabezados
+            // FILA 1: Encabezados mayores de bloques
             // -------------------------------------------------------------
             Row row1 = sheet.createRow(1);
-            row1.setHeightInPoints(22);
+            row1.setHeightInPoints(24);
 
-            // Col 0: FECHA (merge con fila 2)
             crearCeldaConBorde(row1, 0, "FECHA", styleSubHeader);
-
-            // Col 1: TOTAL DIAS DE ATENCION (merge con fila 2)
             crearCeldaConBorde(row1, 1, "TOTAL DIAS DE ATENCION", styleSubHeader);
 
-            // Col 2..4: No DE PACIENTES
             crearCeldaConBorde(row1, 2, "No DE PACIENTES", styleSubHeader);
             crearCeldaConBorde(row1, 3, "", styleSubHeader);
             crearCeldaConBorde(row1, 4, "", styleSubHeader);
             sheet.addMergedRegion(new CellRangeAddress(1, 1, 2, 4));
 
-            // Col 5..10: GRUPO DE EDADES
             crearCeldaConBorde(row1, 5, "GRUPO DE EDADES", styleSubHeader);
             for (int c = 6; c <= 10; c++) crearCeldaConBorde(row1, c, "", styleSubHeader);
             sheet.addMergedRegion(new CellRangeAddress(1, 1, 5, 10));
 
-            // Col 11..13: GENERO
             crearCeldaConBorde(row1, 11, "GENERO", styleSubHeader);
             crearCeldaConBorde(row1, 12, "", styleSubHeader);
             crearCeldaConBorde(row1, 13, "", styleSubHeader);
             sheet.addMergedRegion(new CellRangeAddress(1, 1, 11, 13));
 
-            // Col 14: TOTAL RECAUDADO
             crearCeldaConBorde(row1, 14, "TOTAL RECAUDADO", styleSubHeader);
 
-            // Col 15..25: INFECCIOSOS (11)
-            crearCeldaConBorde(row1, 15, "INFECCIOSOS", styleCatInfecciosos);
-            for (int c = 16; c <= 25; c++) crearCeldaConBorde(row1, c, "", styleCatInfecciosos);
-            sheet.addMergedRegion(new CellRangeAddress(1, 1, 15, 25));
+            // Generar bloques de categorías dinámicamente con texto negro y fondo pastel
+            int startCatCol = 15;
+            while (startCatCol <= lastColIdx) {
+                int colIdx = startCatCol - 15;
+                String catName = columnasDiag.get(colIdx).getCategoria();
+                CellStyle styleCat = estilosCategoriaHeader.get(catName);
 
-            // Col 26..31: CRONICOS (6)
-            crearCeldaConBorde(row1, 26, "CRONICOS", styleCatCronicos);
-            for (int c = 27; c <= 31; c++) crearCeldaConBorde(row1, c, "", styleCatCronicos);
-            sheet.addMergedRegion(new CellRangeAddress(1, 1, 26, 31));
+                int endCatCol = startCatCol;
+                while (endCatCol + 1 <= lastColIdx &&
+                        columnasDiag.get(endCatCol + 1 - 15).getCategoria().equalsIgnoreCase(catName)) {
+                    endCatCol++;
+                }
 
-            // Col 32..35: GINECOLOGICO (4)
-            crearCeldaConBorde(row1, 32, "GINECOLOGICO", styleCatGinecologico);
-            for (int c = 33; c <= 35; c++) crearCeldaConBorde(row1, c, "", styleCatGinecologico);
-            sheet.addMergedRegion(new CellRangeAddress(1, 1, 32, 35));
+                for (int c = startCatCol; c <= endCatCol; c++) {
+                    crearCeldaConBorde(row1, c, c == startCatCol ? catName : "", styleCat);
+                }
 
-            // Col 36..45: NUTRICIONAL (10)
-            crearCeldaConBorde(row1, 36, "NUTRICIONAL", styleCatNutricional);
-            for (int c = 37; c <= 45; c++) crearCeldaConBorde(row1, c, "", styleCatNutricional);
-            sheet.addMergedRegion(new CellRangeAddress(1, 1, 36, 45));
+                if (endCatCol > startCatCol) {
+                    sheet.addMergedRegion(new CellRangeAddress(1, 1, startCatCol, endCatCol));
+                }
 
-            // Col 46..66: OTROS (21)
-            crearCeldaConBorde(row1, 46, "OTROS", styleCatOtros);
-            for (int c = 47; c <= 66; c++) crearCeldaConBorde(row1, c, "", styleCatOtros);
-            sheet.addMergedRegion(new CellRangeAddress(1, 1, 46, 66));
+                startCatCol = endCatCol + 1;
+            }
 
             // -------------------------------------------------------------
             // FILA 2: Sub-encabezados específicos de columnas
             // -------------------------------------------------------------
             Row row2 = sheet.createRow(2);
-            row2.setHeightInPoints(45);
+            row2.setHeightInPoints(48);
 
             crearCeldaConBorde(row2, 0, "FECHA", styleSubHeader);
             crearCeldaConBorde(row2, 1, "DÍAS", styleSubHeader);
@@ -654,22 +729,23 @@ public class ReporteService {
 
             crearCeldaConBorde(row2, 14, "Q", styleSubHeader);
 
-            // 52 Nombres de diagnósticos
-            for (int i = 0; i < 52; i++) {
-                DiagnosticoColumnaInfo colInfo = COLUMNAS_DIAGNOSTICOS.get(i);
-                crearCeldaConBorde(row2, 15 + i, colInfo.getNombre(), styleSubHeader);
+            // Nombres de diagnósticos (descripción, texto negro y fondo pastel)
+            for (int i = 0; i < totalDiagCols; i++) {
+                DiagnosticoColumnaInfo colInfo = columnasDiag.get(i);
+                CellStyle styleDiag = estilosDiagnosticoSubheader.get(colInfo.getNombre());
+                crearCeldaConBorde(row2, 15 + i, colInfo.getNombre(), styleDiag != null ? styleDiag : styleSubHeader);
             }
 
             // -------------------------------------------------------------
-            // FILAS DE DATOS (Días del mes)
+            // FILAS DE DATOS (EXCLUSIVAMENTE DÍAS CON ATENCIÓN)
             // -------------------------------------------------------------
             int rowIdx = 3;
-            for (FilaReporteEstadistica f : data.getFilas()) {
+            for (FilaReporteEstadistica f : filasAtendidas) {
                 Row r = sheet.createRow(rowIdx++);
                 r.setHeightInPoints(18);
 
                 crearCeldaConBorde(r, 0, f.getFecha(), styleDataNum);
-                crearCeldaNumerica(r, 1, f.getDiasAtencion() != null && f.getDiasAtencion() > 0 ? 1 : 0, styleDataNum);
+                crearCeldaNumerica(r, 1, 1, styleDataNum);
                 crearCeldaNumerica(r, 2, f.getNuevos(), styleDataNum);
                 crearCeldaNumerica(r, 3, f.getReconsulta(), styleDataNum);
                 crearCeldaNumerica(r, 4, f.getTotalPacientes(), styleDataNum);
@@ -689,7 +765,7 @@ public class ReporteService {
                 cRec.setCellValue(f.getTotalRecaudado() != null ? f.getTotalRecaudado().doubleValue() : 0.0);
                 cRec.setCellStyle(styleCurrency);
 
-                for (int i = 0; i < 52; i++) {
+                for (int i = 0; i < totalDiagCols; i++) {
                     int val = (f.getDiagnosticos() != null && f.getDiagnosticos().size() > i)
                             ? f.getDiagnosticos().get(i) : 0;
                     crearCeldaNumerica(r, 15 + i, val, styleDataNum);
@@ -703,7 +779,7 @@ public class ReporteService {
             rTot.setHeightInPoints(22);
             TotalesReporteEstadistica tot = data.getTotales();
 
-            crearCeldaConBorde(rTot, 0, "TOTAL", styleTotal);
+            crearCeldaConBorde(rTot, 0, "TOTALES", styleTotal);
             crearCeldaNumerica(rTot, 1, tot.getTotalDiasAtencion(), styleTotal);
             crearCeldaNumerica(rTot, 2, tot.getNuevos(), styleTotal);
             crearCeldaNumerica(rTot, 3, tot.getReconsulta(), styleTotal);
@@ -724,55 +800,67 @@ public class ReporteService {
             cTotRec.setCellValue(tot.getTotalRecaudado() != null ? tot.getTotalRecaudado().doubleValue() : 0.0);
             cTotRec.setCellStyle(styleTotalCurrency);
 
-            for (int i = 0; i < 52; i++) {
+            for (int i = 0; i < totalDiagCols; i++) {
                 int val = (tot.getDiagnosticos() != null && tot.getDiagnosticos().size() > i)
                         ? tot.getDiagnosticos().get(i) : 0;
                 crearCeldaNumerica(rTot, 15 + i, val, styleTotal);
             }
 
             // -------------------------------------------------------------
-            // FILA PROMEDIO
+            // FILA PROMEDIO (PROMEDIO EN DÍAS DE ATENCIÓN Y RECAUDACIÓN DIARIA)
             // -------------------------------------------------------------
             Row rProm = sheet.createRow(rowIdx);
             rProm.setHeightInPoints(22);
-            TotalesReporteEstadistica prom = data.getPromedios();
 
-            crearCeldaConBorde(rProm, 0, "PROMEDIO", styleTotal);
-            crearCeldaNumerica(rProm, 1, prom.getTotalDiasAtencion(), styleTotal);
-            crearCeldaNumerica(rProm, 2, prom.getNuevos(), styleTotal);
-            crearCeldaNumerica(rProm, 3, prom.getReconsulta(), styleTotal);
-            crearCeldaNumerica(rProm, 4, prom.getTotalPacientes(), styleTotal);
+            CellStyle stylePromNum = wb.createCellStyle();
+            stylePromNum.setFont(fontBold);
+            stylePromNum.setAlignment(HorizontalAlignment.CENTER);
+            stylePromNum.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+            stylePromNum.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            setBorders(stylePromNum);
 
-            crearCeldaNumerica(rProm, 5, prom.getEdad0a5(), styleTotal);
-            crearCeldaNumerica(rProm, 6, prom.getEdad6a12(), styleTotal);
-            crearCeldaNumerica(rProm, 7, prom.getEdad13a17(), styleTotal);
-            crearCeldaNumerica(rProm, 8, prom.getEdad18a59(), styleTotal);
-            crearCeldaNumerica(rProm, 9, prom.getEdad60mas(), styleTotal);
-            crearCeldaNumerica(rProm, 10, prom.getTotalEdades(), styleTotal);
+            CellStyle stylePromCurrency = wb.createCellStyle();
+            stylePromCurrency.setFont(fontBold);
+            stylePromCurrency.setAlignment(HorizontalAlignment.RIGHT);
+            stylePromCurrency.setDataFormat(df.getFormat("Q#,##0.00"));
+            stylePromCurrency.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+            stylePromCurrency.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            setBorders(stylePromCurrency);
 
-            crearCeldaNumerica(rProm, 11, prom.getFemenino(), styleTotal);
-            crearCeldaNumerica(rProm, 12, prom.getMasculino(), styleTotal);
-            crearCeldaNumerica(rProm, 13, prom.getTotalGenero(), styleTotal);
+            crearCeldaConBorde(rProm, 0, "PROMEDIO", stylePromNum);
 
-            Cell cPromRec = rProm.createCell(14);
-            cPromRec.setCellValue(prom.getTotalRecaudado() != null ? prom.getTotalRecaudado().doubleValue() : 0.0);
-            cPromRec.setCellStyle(styleTotalCurrency);
+            // Col 1 DÍAS: Promedio diario de pacientes atendidos
+            Cell cPromDias = rProm.createCell(1);
+            cPromDias.setCellValue(tot.getPromedioDiarioAtencion() != null ? tot.getPromedioDiarioAtencion() : 0.0);
+            cPromDias.setCellStyle(stylePromNum);
 
-            for (int i = 0; i < 52; i++) {
-                int val = (prom.getDiagnosticos() != null && prom.getDiagnosticos().size() > i)
-                        ? prom.getDiagnosticos().get(i) : 0;
-                crearCeldaNumerica(rProm, 15 + i, val, styleTotal);
+            // Columnas intermedias vacías / limpias
+            for (int c = 2; c <= 13; c++) {
+                crearCeldaConBorde(rProm, c, "", stylePromNum);
             }
 
-            // Anchos de columna adecuados
+            // Col 14: Promedio de recaudación diaria
+            Cell cPromRec = rProm.createCell(14);
+            double promRecValue = data.getPromedios().getTotalRecaudado() != null
+                    ? data.getPromedios().getTotalRecaudado().doubleValue()
+                    : 0.0;
+            cPromRec.setCellValue(promRecValue);
+            cPromRec.setCellStyle(stylePromCurrency);
+
+            // Diagnósticos vacíos en fila de promedio
+            for (int i = 0; i < totalDiagCols; i++) {
+                crearCeldaConBorde(rProm, 15 + i, "", stylePromNum);
+            }
+
+            // Anchos de columnas
             sheet.setColumnWidth(0, 3200);  // FECHA
-            sheet.setColumnWidth(1, 2400);  // DÍAS
+            sheet.setColumnWidth(1, 2800);  // DÍAS
             for (int c = 2; c <= 13; c++) {
                 sheet.setColumnWidth(c, 2400);
             }
             sheet.setColumnWidth(14, 3800); // RECAUDADO
-            for (int c = 15; c <= 66; c++) {
-                sheet.setColumnWidth(c, 3600); // Nombres de diagnósticos
+            for (int c = 15; c <= lastColIdx; c++) {
+                sheet.setColumnWidth(c, 4200); // Diagnósticos legibles
             }
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -781,19 +869,18 @@ public class ReporteService {
         }
     }
 
-    private CellStyle crearEstiloCategoria(Workbook wb, short colorIndex) {
-        CellStyle style = wb.createCellStyle();
-        Font font = wb.createFont();
-        font.setBold(true);
-        font.setColor(IndexedColors.WHITE.getIndex());
-        font.setFontHeightInPoints((short) 10);
-        style.setFont(font);
-        style.setAlignment(HorizontalAlignment.CENTER);
-        style.setVerticalAlignment(VerticalAlignment.CENTER);
-        style.setFillForegroundColor(colorIndex);
-        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        setBorders(style);
-        return style;
+    private byte[] hexToRgb(String hex) {
+        if (hex == null || !hex.startsWith("#") || hex.length() < 7) {
+            return new byte[]{(byte) 252, (byte) 228, (byte) 214};
+        }
+        try {
+            int r = Integer.parseInt(hex.substring(1, 3), 16);
+            int g = Integer.parseInt(hex.substring(3, 5), 16);
+            int b = Integer.parseInt(hex.substring(5, 7), 16);
+            return new byte[]{(byte) r, (byte) g, (byte) b};
+        } catch (Exception e) {
+            return new byte[]{(byte) 252, (byte) 228, (byte) 214};
+        }
     }
 
     private void crearCeldaConBorde(Row row, int col, String value, CellStyle style) {

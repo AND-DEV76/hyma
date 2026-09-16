@@ -14,6 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 public class TotalesReporteEstadistica {
     private int totalDiasAtencion;
+    private Double promedioDiarioAtencion;
     private int nuevos;
     private int reconsulta;
     private int totalPacientes;
