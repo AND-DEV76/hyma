@@ -22,8 +22,31 @@ export default function DispensacionColaPage() {
   const [pacienteAEliminar, setPacienteAEliminar] = useState(null);
   const [eliminando, setEliminando] = useState(false);
 
+  // Cargar cola al montar y sincronizar en tiempo real
   useEffect(() => {
-    cargarCola();
+    cargarCola(false);
+
+    // Polling ligero cada 5s para evitar pacientes fantasmas en farmacia
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        cargarCola(true);
+      }
+    }, 5000);
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        cargarCola(true);
+      }
+    };
+
+    window.addEventListener('focus', onVisible);
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onVisible);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [cargarCola]);
 
   const handleAtender = (item) => {

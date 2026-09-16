@@ -7,16 +7,22 @@ export const useClinica = () => {
   const [error, setError] = useState(null);
   const [cola, setCola] = useState([]);
 
-  const cargarCola = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const cargarCola = useCallback(async (silencioso = false) => {
+    if (!silencioso) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const data = await clinicaService.obtenerColaConsulta();
       setCola(data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al cargar la cola de consulta');
+      if (!silencioso) {
+        setError(err.response?.data?.message || 'Error al cargar la cola de consulta');
+      }
     } finally {
-      setLoading(false);
+      if (!silencioso) {
+        setLoading(false);
+      }
     }
   }, []);
 

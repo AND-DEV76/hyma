@@ -70,7 +70,6 @@ CREATE TABLE paciente (
     sexo CHAR(1) NOT NULL,
     telefono VARCHAR(20),
     comunidad VARCHAR(150),
-    ocupacion VARCHAR(100),
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

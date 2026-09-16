@@ -58,22 +58,48 @@ export const useFarmacia = () => {
     setParametros(parametrosData);
   }, []);
 
-  const cargarTodo = useCallback(async () => {
-    setLoading(true);
-    setError('');
+  const cargarTodo = useCallback(async (silencioso = false) => {
+    if (!silencioso) {
+      setLoading(true);
+      setError('');
+    }
     try {
       await Promise.all([cargarCatalogos(), cargarInventario()]);
     } catch (err) {
-      setError(messageFromError(err));
+      if (!silencioso) {
+        setError(messageFromError(err));
+      }
     } finally {
-      setLoading(false);
+      if (!silencioso) {
+        setLoading(false);
+      }
     }
   }, [cargarCatalogos, cargarInventario]);
 
   useEffect(() => {
-    // La carga inicial sincroniza el estado con las APIs del módulo.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    cargarTodo();
+    cargarTodo(false);
+
+    // Polling silencioso para sincronizar entradas, lotes y stock en tiempo real
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        cargarTodo(true);
+      }
+    }, 8000);
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        cargarTodo(true);
+      }
+    };
+
+    window.addEventListener('focus', onVisible);
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onVisible);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [cargarTodo]);
 
   const ejecutar = async (operation, refresh = cargarTodo) => {

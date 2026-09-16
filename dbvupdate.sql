@@ -96,3 +96,37 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS idx_catalogo_cie10_categoria 
     ON catalogo_cie10(id_categoria);
+
+
+
+
+    -- ==========================================================
+-- 1. PRECIOS Y COBROS EN CONSULTA Y FARMACIA
+-- ==========================================================
+
+-- A) Agregar el precio/costo de la consulta médica
+ALTER TABLE consulta 
+    ADD COLUMN IF NOT EXISTS precio_consulta DECIMAL(12,2) DEFAULT 0.00;
+
+-- B) Agregar el precio al detalle de salida de farmacia
+-- (Para saber a cuánto se entregó/vendió cada medicamento al paciente)
+ALTER TABLE detalle_salida_medicamento 
+    ADD COLUMN IF NOT EXISTS precio_unitario DECIMAL(12,2) DEFAULT 0.00;
+
+
+-- ==========================================================
+-- 2. VALIDACIONES DE PACIENTE (GÉNERO Y EDADES)
+-- ==========================================================
+
+-- Asegurar que el sexo acepte valores estandarizados para el conteo M / F
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'chk_paciente_sexo'
+    ) THEN
+        ALTER TABLE paciente 
+            ADD CONSTRAINT chk_paciente_sexo CHECK (sexo IN ('M', 'F'));
+    END IF;
+END $$;
+
+

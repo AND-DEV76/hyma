@@ -18,6 +18,7 @@ import AlergiaPage from './features/alergia/pages/AlergiaPage';
 import ClinicaPage from './features/clinica/pages/ClinicaPage';
 import AtencionMedicaPage from './features/clinica/pages/AtencionMedicaPage';
 import DiagnosticosPage from './features/diagnostico/pages/DiagnosticosPage';
+import ReportesPage from './features/reportes/pages/ReportesPage';
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
             <Route path="/clinica" element={<ClinicaPage />} />
             <Route path="/clinica/atencion" element={<AtencionMedicaPage />} />
             <Route path="/diagnosticos" element={<DiagnosticosPage />} />
+            <Route path="/reportes" element={<ReportesPage />} />
           </AppRoutes>
         } />
       </Routes>

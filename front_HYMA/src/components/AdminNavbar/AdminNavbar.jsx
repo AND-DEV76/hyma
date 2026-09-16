@@ -10,6 +10,7 @@ import {
   Users,
   Shield,
   FlaskConical,
+  FileSpreadsheet,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -85,6 +86,7 @@ export default function AdminNavbar() {
     }
     if (path === '/preconsulta') return location.pathname.startsWith('/preconsulta');
     if (path === '/clinica') return location.pathname.startsWith('/clinica');
+    if (path === '/reportes') return location.pathname.startsWith('/reportes');
     return location.pathname === path;
   };
 
@@ -125,6 +127,12 @@ export default function AdminNavbar() {
       path: '/farmacia',
       icon: Package,
       show: isAdmin || isFarmacia,
+    },
+    {
+      label: 'Estadísticas y Reportes',
+      path: '/reportes',
+      icon: FileSpreadsheet,
+      show: isAdmin || isMedico || isFarmacia || isEnfermera,
     },
     {
       label: 'Médicos',

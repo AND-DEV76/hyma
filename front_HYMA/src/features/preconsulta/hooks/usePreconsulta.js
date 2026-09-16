@@ -16,9 +16,11 @@ export const usePreconsulta = () => {
   /**
    * Carga las colas de atención relevantes para la enfermera (EN_PRECONSULTA y PENDIENTE).
    */
-  const cargarColas = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const cargarColas = useCallback(async (silencioso = false) => {
+    if (!silencioso) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const [preconsultaData, pendienteData] = await Promise.all([
         obtenerCola('EN_PRECONSULTA'),
@@ -27,9 +29,13 @@ export const usePreconsulta = () => {
       setColaPreconsulta(preconsultaData);
       setColaPendiente(pendienteData);
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al cargar la cola de preconsulta');
+      if (!silencioso) {
+        setError(err.response?.data?.message || 'Error al cargar la cola de preconsulta');
+      }
     } finally {
-      setLoading(false);
+      if (!silencioso) {
+        setLoading(false);
+      }
     }
   }, []);
 

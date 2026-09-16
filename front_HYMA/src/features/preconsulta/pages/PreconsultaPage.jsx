@@ -32,9 +32,31 @@ export default function PreconsultaPage() {
   const [pacienteAEliminar, setPacienteAEliminar] = useState(null);
   const [eliminando, setEliminando] = useState(false);
 
-  // Cargar colas al montar
+  // Cargar colas al montar y sincronizar en tiempo real
   useEffect(() => {
-    cargarColas();
+    cargarColas(false);
+
+    // Polling cada 5s para evitar datos fantasmas
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        cargarColas(true);
+      }
+    }, 5000);
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        cargarColas(true);
+      }
+    };
+
+    window.addEventListener('focus', onVisible);
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onVisible);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [cargarColas]);
 
   // Lista unificada de pacientes en cola de preconsulta

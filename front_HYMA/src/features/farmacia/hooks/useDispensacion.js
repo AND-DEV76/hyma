@@ -8,16 +8,22 @@ export const useDispensacion = () => {
   const [cola, setCola] = useState([]);
   const [receta, setReceta] = useState(null);
 
-  const cargarCola = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const cargarCola = useCallback(async (silencioso = false) => {
+    if (!silencioso) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const data = await dispensacionService.obtenerColaDispensacion();
       setCola(data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al cargar la cola de farmacia');
+      if (!silencioso) {
+        setError(err.response?.data?.message || 'Error al cargar la cola de farmacia');
+      }
     } finally {
-      setLoading(false);
+      if (!silencioso) {
+        setLoading(false);
+      }
     }
   }, []);
 

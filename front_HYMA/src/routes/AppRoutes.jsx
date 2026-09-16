@@ -15,6 +15,7 @@ export default function AppRoutes({ children }) {
         else if (path === '/recepcion' || path.startsWith('/preconsulta')) allowedRoles = ['ADMIN', 'ENFERMERA'];
         else if (path.startsWith('/farmacia') || path === '/medicos') allowedRoles = ['ADMIN', 'FARMACIA'];
         else if (path.startsWith('/clinica') || path.startsWith('/diagnosticos')) allowedRoles = ['ADMIN', 'MEDICO'];
+        else if (path.startsWith('/reportes')) allowedRoles = ['ADMIN', 'MEDICO', 'FARMACIA', 'ENFERMERA'];
         
         return (
           <Route

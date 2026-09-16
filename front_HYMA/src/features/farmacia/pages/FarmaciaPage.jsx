@@ -50,7 +50,7 @@ function FarmaciaPage() {
   // Refrescar automáticamente al cambiar de pestaña para garantizar datos en tiempo real
   useEffect(() => {
     if (currentTab === 'medicamentos' || currentTab === 'lotes' || currentTab === 'dashboard') {
-      refresh();
+      refresh(true);
     }
   }, [currentTab, refresh]);
   const [vistaEntrada, setVistaEntrada] = useState('registro');

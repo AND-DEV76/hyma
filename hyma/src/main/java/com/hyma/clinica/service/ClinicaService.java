@@ -23,11 +23,13 @@ import com.hyma.recepcion.repository.ColaAtencionRepository;
 import com.hyma.recepcion.repository.PacienteRepository;
 import com.hyma.recepcion.service.ColaAtencionNotFoundException;
 import com.hyma.recepcion.service.PacienteNotFoundException;
+import com.hyma.tarifa.service.TarifaServicioService;
 import com.hyma.usuario.model.Usuario;
 import com.hyma.usuario.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Service
@@ -47,6 +49,7 @@ public class ClinicaService {
     private final UsuarioRepository usuarioRepository;
     private final SignoVitalMapper signoVitalMapper;
     private final PacienteMapper pacienteMapper;
+    private final TarifaServicioService tarifaServicioService;
 
     @Transactional(readOnly = true)
     public PacienteConsultaResponse obtenerDatosPacienteParaConsulta(Long idPaciente, Long idCola) {
@@ -112,6 +115,10 @@ public class ClinicaService {
                 .orElseThrow(() -> new ColaAtencionNotFoundException(request.getIdCola()));
 
         // 1. Crear Consulta
+        BigDecimal precio = request.getPrecioConsulta() != null && request.getPrecioConsulta().compareTo(BigDecimal.ZERO) > 0
+                ? request.getPrecioConsulta()
+                : tarifaServicioService.obtenerPrecioConsultaGeneral();
+
         Consulta consulta = Consulta.builder()
                 .paciente(paciente)
                 .medico(medico)
@@ -119,6 +126,7 @@ public class ClinicaService {
                 .historiaEnfermedadActual(request.getHistoriaEnfermedadActual())
                 .impresionClinica(request.getImpresionClinica())
                 .planMedico(request.getPlanMedico())
+                .precioConsulta(precio)
                 .fechaConsulta(LocalDateTime.now())
                 .build();
         consulta = consultaRepository.save(consulta);

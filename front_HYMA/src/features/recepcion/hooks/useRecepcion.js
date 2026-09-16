@@ -23,23 +23,28 @@ export const useRecepcion = () => {
   // CARGAR SOLAMENTE PACIENTES PENDIENTES
   // ==========================================================
 
-  const cargarCola = useCallback(async () => {
+  const cargarCola = useCallback(async (silencioso = false) => {
     try {
-      setCargandoCola(true);
-      setError('');
+      if (!silencioso) {
+        setCargandoCola(true);
+        setError('');
+      }
 
-      // IMPORTANTE:
       // Solo pedimos pacientes con estado PENDIENTE
       const data = await obtenerCola('PENDIENTE');
 
       setCola(data);
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-        'No se pudo cargar la cola de atención.'
-      );
+      if (!silencioso) {
+        setError(
+          err.response?.data?.message ||
+          'No se pudo cargar la cola de atención.'
+        );
+      }
     } finally {
-      setCargandoCola(false);
+      if (!silencioso) {
+        setCargandoCola(false);
+      }
     }
   }, []);
 
@@ -159,11 +164,34 @@ export const useRecepcion = () => {
   };
 
   // ==========================================================
-  // CARGAR COLA AL ENTRAR A RECEPCIÓN
+  // CARGAR COLA AL ENTRAR Y POLLING SILENCIOSO EN TIEMPO REAL
   // ==========================================================
 
   useEffect(() => {
-    cargarCola();
+    cargarCola(false);
+
+    // Polling ligero cada 5 segundos para mantener la cola en tiempo real
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        cargarCola(true);
+      }
+    }, 5000);
+
+    // Sincronización instantánea al volver a la pestaña o ventana
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        cargarCola(true);
+      }
+    };
+
+    window.addEventListener('focus', onVisible);
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onVisible);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [cargarCola]);
 
   return {

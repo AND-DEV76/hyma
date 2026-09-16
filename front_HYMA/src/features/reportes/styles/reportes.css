@@ -1,0 +1,500 @@
+/* Estilos para el Módulo de Reportes y Estadísticas */
+
+.reportes-container {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+}
+
+.reportes-content {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  max-width: 100%;
+}
+
+/* Header principal */
+.reportes-header {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.reportes-header-info h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reportes-header-info p {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* Acciones y Selectores */
+.reportes-header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.selector-mes-anio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f1f5f9;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+}
+
+.selector-mes-anio select {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.875rem;
+  color: #334155;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.selector-mes-anio select:hover {
+  border-color: #94a3b8;
+}
+
+.btn-excel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #16a34a;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.55rem 1.15rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(22, 163, 74, 0.2);
+  transition: all 0.2s ease;
+}
+
+.btn-excel:hover:not(:disabled) {
+  background-color: #15803d;
+  box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-excel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-refresh:hover {
+  background-color: #f1f5f9;
+  color: #1e293b;
+  border-color: #94a3b8;
+}
+
+/* Pestañas de Navegación */
+.reportes-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.25rem;
+}
+
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  padding: 0.65rem 1.25rem;
+  font-size: 0.925rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+  color: #1e293b;
+  background: rgba(241, 245, 249, 0.6);
+}
+
+.tab-btn.active {
+  color: #2563eb;
+  background: #ffffff;
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #2563eb;
+  border-radius: 3px 3px 0 0;
+}
+
+/* KPI Cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.kpi-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.kpi-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.kpi-info .kpi-label {
+  font-size: 0.775rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.kpi-info .kpi-val {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.kpi-info .kpi-sub {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 0.15rem;
+}
+
+/* Barra de control de la tabla */
+.table-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  background: #ffffff;
+  padding: 0.75rem 1rem;
+  border-radius: 10px 10px 0 0;
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+}
+
+.table-control-bar .search-diag {
+  position: relative;
+  min-width: 260px;
+}
+
+.table-control-bar .search-diag input {
+  width: 100%;
+  padding: 0.45rem 0.75rem 0.45rem 2.25rem;
+  font-size: 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+}
+
+.table-control-bar .search-diag svg {
+  position: absolute;
+  left: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+/* Tabla Matricial */
+.table-wrapper {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0 0 10px 10px;
+  overflow: auto;
+  max-height: 72vh;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.matrix-table th,
+.matrix-table td {
+  border: 1px solid #e2e8f0;
+  padding: 0.45rem 0.6rem;
+  text-align: center;
+}
+
+/* Encabezados sticky */
+.matrix-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.matrix-table thead tr:first-child th {
+  background: #1e3a8a;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.825rem;
+  letter-spacing: 0.02em;
+}
+
+.cat-header-infecciosos {
+  background: #2563eb !important;
+  color: #ffffff;
+}
+
+.cat-header-cronicos {
+  background: #475569 !important;
+  color: #ffffff;
+}
+
+.cat-header-ginecologico {
+  background: #db2777 !important;
+  color: #ffffff;
+}
+
+.cat-header-nutricional {
+  background: #059669 !important;
+  color: #ffffff;
+}
+
+.cat-header-otros {
+  background: #1e1b4b !important;
+  color: #ffffff;
+}
+
+.matrix-table thead tr:last-child th {
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 600;
+  font-size: 0.775rem;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Columna Fecha sticky a la izquierda */
+.sticky-col {
+  position: sticky;
+  left: 0;
+  background: #ffffff;
+  z-index: 5;
+}
+
+thead .sticky-col {
+  z-index: 15;
+  background: #1e3a8a;
+  color: #ffffff;
+}
+
+/* Filas de datos */
+.matrix-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.matrix-table tbody tr.row-empty {
+  color: #cbd5e1;
+}
+
+.matrix-table tbody tr.row-empty td {
+  background-color: #fafafa;
+}
+
+.cell-zero {
+  color: #cbd5e1;
+}
+
+.cell-active {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.cell-highlight {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.cell-currency {
+  text-align: right !important;
+  font-family: monospace, sans-serif;
+  font-weight: 600;
+  color: #047857;
+}
+
+/* Filas de Totales y Promedio (sticky bottom) */
+.matrix-table tfoot {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.row-totales td {
+  background-color: #e0f2fe !important;
+  color: #0369a1;
+  font-weight: 700;
+  border-top: 2px solid #0284c7;
+}
+
+.row-promedio td {
+  background-color: #f0fdf4 !important;
+  color: #15803d;
+  font-weight: 700;
+  border-bottom: 2px solid #16a34a;
+}
+
+/* Vista Configuración de Tarifas */
+.tarifa-view-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.75rem;
+  max-width: 800px;
+  margin: 0 auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.tarifa-hero-price {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.tarifa-hero-price .price-badge {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #0284c7;
+}
+
+.tarifa-input-group {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.tarifa-input-group input {
+  padding: 0.65rem 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  width: 160px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.tarifa-input-group input:focus {
+  border-color: #2563eb;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.65rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #1d4ed8;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.alert-toast {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.alert-toast.success {
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.alert-toast.error {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
