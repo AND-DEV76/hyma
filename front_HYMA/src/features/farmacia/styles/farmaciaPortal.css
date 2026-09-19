@@ -1,0 +1,221 @@
+/* Estilos para el Portal de Farmacia (Paleta Clara y Limpia HYMA) */
+
+.farmacia-portal-page {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+}
+
+.farmacia-portal-container {
+  flex: 1;
+  padding: 1.75rem 2.25rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Encabezado del portal */
+.portal-header {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.25rem 1.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  margin-bottom: 2rem;
+}
+
+.portal-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0284c7;
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.portal-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+}
+
+.portal-subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0.35rem 0 0 0;
+}
+
+/* Grilla principal: Tarjeta Izquierda Logo + 3 Botones Derecha */
+.portal-grid {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 2rem;
+  align-items: stretch;
+}
+
+@media (max-width: 920px) {
+  .portal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Tarjeta Izquierda: LOGO */
+.portal-logo-card {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 2.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+  position: relative;
+  overflow: hidden;
+  min-height: 400px;
+  transition: all 0.25s ease;
+}
+
+.portal-logo-card:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.12);
+  transform: translateY(-2px);
+}
+
+.portal-logo-glow {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, rgba(14, 165, 233, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.portal-logo-img {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  z-index: 1;
+  filter: drop-shadow(0 8px 16px rgba(0, 119, 182, 0.15));
+  transition: transform 0.3s ease;
+}
+
+.portal-logo-card:hover .portal-logo-img {
+  transform: scale(1.04);
+}
+
+.portal-logo-caption {
+  margin-top: 1.5rem;
+  z-index: 1;
+}
+
+.portal-logo-caption h3 {
+  color: #1e293b;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.portal-logo-caption p {
+  color: #64748b;
+  font-size: 0.85rem;
+  margin: 0.35rem 0 0 0;
+}
+
+/* Columna Derecha: Las 3 opciones horizontales */
+.portal-options-list {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+/* Tarjeta / Botón de Opción estilo Wireframe */
+.portal-option-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem 1.75rem;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  flex: 1;
+}
+
+.portal-option-card:hover {
+  transform: translateY(-2px);
+  border-color: #0284c7;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  box-shadow: 0 8px 20px -3px rgba(2, 132, 199, 0.12), 0 3px 6px -2px rgba(0, 0, 0, 0.04);
+}
+
+/* Círculo del icono como en el wireframe */
+.portal-circle-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 2px solid #bae6fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f9ff;
+  color: #0284c7;
+  flex-shrink: 0;
+  transition: all 0.22s ease;
+}
+
+.portal-option-card:hover .portal-circle-icon {
+  border-color: #0284c7;
+  background: #0284c7;
+  color: #ffffff;
+  transform: scale(1.06);
+}
+
+/* Textos de la opción */
+.portal-option-content {
+  flex: 1;
+}
+
+.portal-option-title {
+  color: #1e293b;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.portal-option-desc {
+  color: #64748b;
+  font-size: 0.85rem;
+  margin: 0.35rem 0 0 0;
+  line-height: 1.4;
+}
+
+/* Flecha al extremo derecho */
+.portal-option-arrow {
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.22s ease;
+}
+
+.portal-option-card:hover .portal-option-arrow {
+  color: #0284c7;
+  transform: translateX(4px);
+}

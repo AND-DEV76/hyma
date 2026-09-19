@@ -8,17 +8,14 @@ import {
   Users,
   Calendar,
   TrendingUp,
-  CheckCircle2,
-  AlertCircle,
   Filter,
   Layers,
-  Settings,
   Activity,
   ArrowRight
 } from 'lucide-react';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
+import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
 import reporteService from '../services/reporteService';
-import tarifaService from '../services/tarifaService';
 import '../styles/reportes.css';
 
 const MESES = [
@@ -41,8 +38,6 @@ export default function ReportesPage() {
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
 
-  const [activeTab, setActiveTab] = useState('estadistica');
-
   // Estados reporte
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -50,14 +45,6 @@ export default function ReportesPage() {
   const [downloading, setDownloading] = useState(false);
   const [filtroSoloAtendidos, setFiltroSoloAtendidos] = useState(false);
   const [searchDiag, setSearchDiag] = useState('');
-
-  // Estados tarifas
-  const [precioConsulta, setPrecioConsulta] = useState('');
-  const [tarifas, setTarifas] = useState([]);
-  const [loadingTarifas, setLoadingTarifas] = useState(false);
-  const [savingTarifa, setSavingTarifa] = useState(false);
-  const [tarifaSuccess, setTarifaSuccess] = useState('');
-  const [tarifaError, setTarifaError] = useState('');
 
   const cargarReporte = async () => {
     setLoading(true);
@@ -74,33 +61,9 @@ export default function ReportesPage() {
     }
   };
 
-  const cargarTarifas = async () => {
-    setLoadingTarifas(true);
-    setTarifaError('');
-    try {
-      const [precioRes, todasRes] = await Promise.all([
-        tarifaService.obtenerPrecioConsultaGeneral(),
-        tarifaService.listarTodas()
-      ]);
-      setPrecioConsulta(precioRes?.precio ?? 50.0);
-      setTarifas(todasRes || []);
-    } catch (err) {
-      console.error('Error al cargar tarifas:', err);
-      setTarifaError('No se pudieron cargar las tarifas de consulta.');
-    } finally {
-      setLoadingTarifas(false);
-    }
-  };
-
   useEffect(() => {
     cargarReporte();
   }, [selectedYear, selectedMonth]);
-
-  useEffect(() => {
-    if (activeTab === 'tarifas') {
-      cargarTarifas();
-    }
-  }, [activeTab]);
 
   const handleDescargarExcel = async () => {
     setDownloading(true);
@@ -111,28 +74,6 @@ export default function ReportesPage() {
       alert('Error al descargar el archivo Excel.');
     } finally {
       setDownloading(false);
-    }
-  };
-
-  const handleGuardarPrecioConsulta = async (e) => {
-    e.preventDefault();
-    setSavingTarifa(true);
-    setTarifaSuccess('');
-    setTarifaError('');
-    try {
-      const num = parseFloat(precioConsulta);
-      if (isNaN(num) || num < 0) {
-        throw new Error('Ingrese un precio válido mayor o igual a 0');
-      }
-      await tarifaService.actualizarPrecioConsultaGeneral(num);
-      setTarifaSuccess(`¡Tarifa de Consulta General actualizada a Q ${num.toFixed(2)} exitosamente!`);
-      await cargarTarifas();
-      // Recargar reporte para reflejar si corresponde
-      cargarReporte();
-    } catch (err) {
-      setTarifaError(err.message || 'Error al actualizar la tarifa.');
-    } finally {
-      setSavingTarifa(false);
     }
   };
 
@@ -191,6 +132,14 @@ export default function ReportesPage() {
       <AdminNavbar />
 
       <main className="reportes-content">
+        {/* Breadcrumb de navegación */}
+        <Breadcrumb
+          items={[
+            { label: 'Farmacia', to: '/farmacia' },
+            { label: 'Informes y Estadísticas' }
+          ]}
+        />
+
         {/* Header principal */}
         <div className="reportes-header">
           <div className="reportes-header-info">
@@ -253,28 +202,7 @@ export default function ReportesPage() {
           </div>
         </div>
 
-        {/* Pestañas */}
-        <div className="reportes-tabs">
-          <button
-            className={`tab-btn ${activeTab === 'estadistica' ? 'active' : ''}`}
-            onClick={() => setActiveTab('estadistica')}
-          >
-            <Layers size={18} />
-            Estadística Mensual (Matriz 52 Diagnósticos)
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'tarifas' ? 'active' : ''}`}
-            onClick={() => setActiveTab('tarifas')}
-          >
-            <Settings size={18} />
-            Tarifas de Consulta (Precio Q)
-          </button>
-        </div>
-
-        {/* TAB 1: ESTADÍSTICA MENSUAL */}
-        {activeTab === 'estadistica' && (
-          <>
-            {/* KPI Cards */}
+        {/* KPI Cards */}
             {data && data.totales && (
               <div className="kpi-grid">
                 <div className="kpi-card">
@@ -568,112 +496,6 @@ export default function ReportesPage() {
                 </table>
               )}
             </div>
-          </>
-        )}
-
-        {/* TAB 2: CONFIGURACIÓN DE TARIFAS */}
-        {activeTab === 'tarifas' && (
-          <div className="tarifa-view-card">
-            <h2 className="text-xl font-bold text-slate-800 mb-1 flex items-center gap-2">
-              <DollarSign className="text-emerald-600" size={24} />
-              Configuración de Precio de Consulta Médica
-            </h2>
-            <p className="text-sm text-slate-500 mb-6">
-              Este valor corresponde a la tarifa que se registra automáticamente en cada consulta médica finalizada y suma al reporte de recaudación mensual.
-            </p>
-
-            <div className="tarifa-hero-price">
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-sky-700">
-                  Tarifa Vigente Actual
-                </span>
-                <h3 className="text-lg font-bold text-slate-800">Consulta Médica General</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Aplicada a todas las atenciones médicas finalizadas en el sistema
-                </p>
-              </div>
-
-              <div className="price-badge">
-                Q {Number(precioConsulta || 50).toFixed(2)}
-              </div>
-            </div>
-
-            <form onSubmit={handleGuardarPrecioConsulta}>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
-                Modificar Tarifa de Consulta General (Quetzales)
-              </label>
-              <div className="tarifa-input-group">
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">
-                    Q
-                  </span>
-                  <input
-                    type="number"
-                    step="0.50"
-                    min="0"
-                    value={precioConsulta}
-                    onChange={(e) => setPrecioConsulta(e.target.value)}
-                    className="pl-8"
-                    required
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="btn-primary"
-                  disabled={savingTarifa || loadingTarifas}
-                >
-                  {savingTarifa ? 'Guardando...' : 'Guardar Nueva Tarifa'}
-                </button>
-              </div>
-            </form>
-
-            {tarifaSuccess && (
-              <div className="alert-toast success">
-                <CheckCircle2 size={18} />
-                <span>{tarifaSuccess}</span>
-              </div>
-            )}
-
-            {tarifaError && (
-              <div className="alert-toast error">
-                <AlertCircle size={18} />
-                <span>{tarifaError}</span>
-              </div>
-            )}
-
-            {/* Listado de tarifas activas */}
-            {tarifas && tarifas.length > 0 && (
-              <div className="mt-8 border-t border-slate-200 pt-6">
-                <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3">
-                  Registro de Tarifas en Base de Datos (tarifa_servicio)
-                </h4>
-                <div className="space-y-2">
-                  {tarifas.map((t) => (
-                    <div
-                      key={t.idTarifa || t.nombre}
-                      className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm"
-                    >
-                      <div className="font-semibold text-slate-800">{t.nombre}</div>
-                      <div className="flex items-center gap-4">
-                        <span className="font-bold text-emerald-700">
-                          Q {Number(t.precio).toFixed(2)}
-                        </span>
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                            t.activo ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600'
-                          }`}
-                        >
-                          {t.activo ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </main>
     </div>
   );

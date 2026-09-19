@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, X, AlertTriangle, Stethoscope, Phone, Mail, Pencil, Trash2, Plus } from 'lucide-react';
 import { useMedicos } from '../hooks/useMedicos';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
+import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
 
 const initialFormState = {
   nombres: '',
@@ -31,6 +32,16 @@ export default function MedicosPage() {
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Filtrado de usuarios con rol MÉDICO que NO tengan un médico asignado
+  const usuariosMedicosDisponibles = useMemo(() => {
+    const idsAsignados = new Set(
+      medicos
+        .filter((m) => m.idUsuario && m.idMedico !== editingId)
+        .map((m) => Number(m.idUsuario))
+    );
+    return usuariosMedicos.filter((u) => !idsAsignados.has(Number(u.idUsuario)));
+  }, [usuariosMedicos, medicos, editingId]);
 
   // Filtrado reactivo de médicos
   const filteredMedicos = useMemo(() => {
@@ -84,11 +95,17 @@ export default function MedicosPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
+
+    if (!formData.idUsuario) {
+      setFormError('La Cuenta de Usuario del Sistema es obligatoria.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     const payload = {
       ...formData,
-      idUsuario: formData.idUsuario ? Number(formData.idUsuario) : null,
+      idUsuario: Number(formData.idUsuario),
     };
 
     try {
@@ -120,15 +137,17 @@ export default function MedicosPage() {
       <AdminNavbar />
 
       <main style={styles.container}>
+        {/* Breadcrumb de navegación */}
+        <Breadcrumb
+          items={[
+            { label: 'Usuarios y Personal', to: '/usuarios' },
+            { label: 'Médicos' }
+          ]}
+        />
+
         {/* Encabezado */}
         <div style={styles.header}>
           <div>
-            <div style={styles.breadcrumb}>
-              <span onClick={() => navigate('/inicio')} style={styles.breadcrumbLink}>
-                Inicio
-              </span>{' '}
-              / <span>Médicos</span>
-            </div>
             <h1 style={styles.title}>Cuerpo Médico y Especialistas</h1>
             <p style={styles.subtitle}>
               Administración de profesionales de la salud, especialidades y vinculación con cuentas del sistema.
@@ -379,22 +398,25 @@ export default function MedicosPage() {
               </div>
 
               <div style={styles.formGroup}>
-                <label style={styles.label}>Cuenta de Usuario del Sistema (Opcional)</label>
+                <label style={styles.label}>Cuenta de Usuario del Sistema *</label>
                 <select
                   name="idUsuario"
                   value={formData.idUsuario}
                   onChange={handleChange}
                   style={styles.select}
+                  required
                 >
-                  <option value="">— Ningún usuario asignado —</option>
-                  {usuariosMedicos.map((u) => (
+                  <option value="">— Seleccione una cuenta con rol MÉDICO —</option>
+                  {usuariosMedicosDisponibles.map((u) => (
                     <option key={u.idUsuario} value={u.idUsuario}>
                       {u.username} (ID: {u.idUsuario})
                     </option>
                   ))}
                 </select>
                 <span style={styles.inputHelp}>
-                  Permite al médico autenticarse para firmar consultas y recetas médicas.
+                  {usuariosMedicosDisponibles.length === 0
+                    ? 'No hay cuentas con rol MÉDICO disponibles sin asignar. Primero cree un usuario con rol MÉDICO en Usuarios del Sistema.'
+                    : 'Obligatorio. Solo se listan cuentas de usuario con rol MÉDICO que no tienen un doctor asignado.'}
                 </span>
               </div>
 

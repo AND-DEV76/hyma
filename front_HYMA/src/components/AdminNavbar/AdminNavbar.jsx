@@ -11,6 +11,8 @@ import {
   Shield,
   FlaskConical,
   FileSpreadsheet,
+  CircleDollarSign,
+  Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -71,22 +73,28 @@ export default function AdminNavbar() {
 
   const isActive = (path) => {
     if (path === '/inicio') return location.pathname === '/inicio';
-    if (path === '/farmacia/dispensacion') {
-      return (
-        location.pathname.startsWith('/farmacia/dispensacion') ||
-        location.pathname.startsWith('/farmacia/dispensar')
-      );
-    }
     if (path === '/farmacia') {
       return (
-        location.pathname.startsWith('/farmacia') &&
-        !location.pathname.startsWith('/farmacia/dispensacion') &&
-        !location.pathname.startsWith('/farmacia/dispensar')
+        location.pathname.startsWith('/farmacia') ||
+        location.pathname.startsWith('/reportes')
       );
     }
     if (path === '/preconsulta') return location.pathname.startsWith('/preconsulta');
     if (path === '/clinica') return location.pathname.startsWith('/clinica');
-    if (path === '/reportes') return location.pathname.startsWith('/reportes');
+    if (path === '/configuracion') {
+      return (
+        location.pathname.startsWith('/configuracion') ||
+        location.pathname.startsWith('/tarifas') ||
+        location.pathname.startsWith('/diagnosticos') ||
+        location.pathname.startsWith('/alergias')
+      );
+    }
+    if (path === '/usuarios') {
+      return (
+        location.pathname.startsWith('/usuarios') ||
+        location.pathname.startsWith('/medicos')
+      );
+    }
     return location.pathname === path;
   };
 
@@ -111,45 +119,21 @@ export default function AdminNavbar() {
       show: isAdmin || isMedico,
     },
     {
-      label: 'Diagnósticos',
-      path: '/diagnosticos',
-      icon: BookOpen,
-      show: isAdmin || isMedico,
-    },
-    {
-      label: 'Dispensación',
-      path: '/farmacia/dispensacion',
-      icon: Pill,
-      show: isAdmin || isFarmacia,
-    },
-    {
-      label: 'Inventario',
+      label: 'Farmacia',
       path: '/farmacia',
-      icon: Package,
-      show: isAdmin || isFarmacia,
+      icon: Pill,
+      show: isAdmin || isFarmacia || isMedico || isEnfermera,
     },
     {
-      label: 'Estadísticas y Reportes',
-      path: '/reportes',
-      icon: FileSpreadsheet,
-      show: isAdmin || isMedico || isFarmacia || isEnfermera,
-    },
-    {
-      label: 'Médicos',
-      path: '/medicos',
-      icon: Users,
-      show: isAdmin || isFarmacia,
+      label: 'Configuración',
+      path: '/configuracion',
+      icon: Settings,
+      show: isAdmin || isMedico,
     },
     {
       label: 'Usuarios',
       path: '/usuarios',
       icon: Shield,
-      show: isAdmin,
-    },
-    {
-      label: 'Alergias',
-      path: '/alergias',
-      icon: FlaskConical,
       show: isAdmin,
     },
   ];

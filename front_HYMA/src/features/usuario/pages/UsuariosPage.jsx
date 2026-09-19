@@ -4,6 +4,7 @@ import { useUsuarios } from '../hooks/useUsuarios';
 import UsuarioTable from '../components/UsuarioTable';
 import UsuarioFormModal from '../components/UsuarioFormModal';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
+import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
 import '../styles/usuarios.css';
 
 export default function UsuariosPage() {
@@ -54,6 +55,14 @@ export default function UsuariosPage() {
       <AdminNavbar />
 
       <main className="usuarios-container">
+        {/* Breadcrumb de navegación */}
+        <Breadcrumb
+          items={[
+            { label: 'Usuarios y Personal', to: '/usuarios' },
+            { label: 'Usuarios del Sistema' }
+          ]}
+        />
+
         {/* Barra Superior de Control estilo Odoo */}
         <header className="usuarios-control-panel">
           <div className="usuarios-panel-left">

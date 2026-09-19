@@ -1,0 +1,229 @@
+/* Estilos para el Portal de Usuarios (Paleta Clara y Limpia HYMA) */
+
+.usuarios-portal-page {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+}
+
+.usuarios-portal-container {
+  flex: 1;
+  padding: 1.75rem 2.25rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Encabezado del portal */
+.usuarios-portal-header {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.25rem 1.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  margin-bottom: 2rem;
+}
+
+.usuarios-portal-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0284c7;
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.usuarios-portal-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+}
+
+.usuarios-portal-subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0.35rem 0 0 0;
+}
+
+/* Grilla principal: Tarjeta Izquierda Logo/Icono + 2 Botones Derecha */
+.usuarios-portal-grid {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 2rem;
+  align-items: stretch;
+}
+
+@media (max-width: 920px) {
+  .usuarios-portal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Tarjeta Izquierda: LOGO con ICONO */
+.usuarios-portal-logo-card {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 2.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+  position: relative;
+  overflow: hidden;
+  min-height: 400px;
+  transition: all 0.25s ease;
+}
+
+.usuarios-portal-logo-card:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.12);
+  transform: translateY(-2px);
+}
+
+.usuarios-portal-logo-glow {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, rgba(14, 165, 233, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Contenedor circular del icono principal */
+.usuarios-hero-icon-wrapper {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 3px solid #bae6fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0284c7;
+  z-index: 1;
+  box-shadow: 0 8px 20px rgba(2, 132, 199, 0.15);
+  transition: transform 0.3s ease;
+}
+
+.usuarios-portal-logo-card:hover .usuarios-hero-icon-wrapper {
+  transform: scale(1.06);
+  border-color: #0284c7;
+  color: #0369a1;
+}
+
+.usuarios-portal-logo-caption {
+  margin-top: 1.75rem;
+  z-index: 1;
+}
+
+.usuarios-portal-logo-caption h3 {
+  color: #1e293b;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.usuarios-portal-logo-caption p {
+  color: #64748b;
+  font-size: 0.85rem;
+  margin: 0.4rem 0 0 0;
+}
+
+/* Columna Derecha: Las 2 opciones horizontales */
+.usuarios-portal-options-list {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+/* Tarjeta / Botón de Opción estilo Wireframe */
+.usuarios-portal-option-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.75rem 2rem;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.usuarios-portal-option-card:hover {
+  transform: translateY(-2px);
+  border-color: #0284c7;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  box-shadow: 0 8px 20px -3px rgba(2, 132, 199, 0.12), 0 3px 6px -2px rgba(0, 0, 0, 0.04);
+}
+
+/* Círculo del icono como en el wireframe */
+.usuarios-circle-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 2px solid #bae6fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f9ff;
+  color: #0284c7;
+  flex-shrink: 0;
+  transition: all 0.22s ease;
+}
+
+.usuarios-portal-option-card:hover .usuarios-circle-icon {
+  border-color: #0284c7;
+  background: #0284c7;
+  color: #ffffff;
+  transform: scale(1.06);
+}
+
+/* Textos de la opción */
+.usuarios-portal-option-content {
+  flex: 1;
+}
+
+.usuarios-portal-option-title {
+  color: #1e293b;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.usuarios-portal-option-desc {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin: 0.35rem 0 0 0;
+  line-height: 1.4;
+}
+
+/* Flecha al extremo derecho */
+.usuarios-portal-option-arrow {
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.22s ease;
+}
+
+.usuarios-portal-option-card:hover .usuarios-portal-option-arrow {
+  color: #0284c7;
+  transform: translateX(4px);
+}

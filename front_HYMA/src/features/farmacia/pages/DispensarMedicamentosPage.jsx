@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useDispensacion } from '../hooks/useDispensacion';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
+import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
 import userImg from '../../../assets/images/user.png';
 
 export default function DispensarMedicamentosPage() {
@@ -138,6 +139,15 @@ export default function DispensarMedicamentosPage() {
       <AdminNavbar />
 
       <main style={styles.content}>
+        {/* Breadcrumb de navegación */}
+        <Breadcrumb
+          items={[
+            { label: 'Farmacia', to: '/farmacia' },
+            { label: 'Dispersión', to: '/farmacia/dispensacion' },
+            { label: `Dispensar a ${receta?.nombreCompletoPaciente || 'Paciente'}` }
+          ]}
+        />
+
         {/* Header Odoo */}
         <div style={styles.odooHeaderCard}>
           <div style={styles.headerLeft}>

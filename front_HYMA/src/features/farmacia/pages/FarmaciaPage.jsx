@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowDownToLine, History } from 'lucide-react';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
+import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
 import { useFarmacia } from '../hooks/useFarmacia';
 import MedicamentosList from '../components/MedicamentosList';
 import CatalogosFarmacia from '../components/CatalogosFarmacia';
@@ -44,8 +45,9 @@ function FarmaciaPage() {
     actualizarParametro,
   } = useFarmacia();
 
-  const section = location.pathname.split('/')[2] || 'dashboard';
-  const currentTab = tabs.some((tab) => tab.key === section) ? section : 'dashboard';
+  const pathParts = location.pathname.split('/').filter(Boolean);
+  const lastPart = pathParts[pathParts.length - 1];
+  const currentTab = tabs.some((tab) => tab.key === lastPart) ? lastPart : 'dashboard';
 
   // Refrescar automáticamente al cambiar de pestaña para garantizar datos en tiempo real
   useEffect(() => {
@@ -54,7 +56,9 @@ function FarmaciaPage() {
     }
   }, [currentTab, refresh]);
   const [vistaEntrada, setVistaEntrada] = useState('registro');
-  const goTo = (nextSection) => navigate(nextSection === 'dashboard' ? '/farmacia' : '/farmacia/' + nextSection);
+  const goTo = (nextSection) => {
+    navigate(nextSection === 'dashboard' ? '/farmacia/inventario' : '/farmacia/inventario/' + nextSection);
+  };
 
   const deleteWithConfirmation = async (type, id) => {
     const label = type === 'categoria' ? 'la categoría' : 'la casa farmacéutica';
@@ -72,6 +76,15 @@ function FarmaciaPage() {
     <div className="farmacia-page">
       <AdminNavbar />
       <main className="farmacia-container">
+        {/* Breadcrumb */}
+        <Breadcrumb
+          items={[
+            { label: 'Farmacia', to: '/farmacia' },
+            { label: 'Medicamentos (Inventario)' },
+            ...(currentTab !== 'dashboard' ? [{ label: tabs.find(t => t.key === currentTab)?.label || currentTab }] : [])
+          ]}
+        />
+
         {/* Cabecera Principal */}
         <div className="farmacia-heading">
           <div>

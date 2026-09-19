@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useDispensacion } from '../hooks/useDispensacion';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
+import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
 import userImg from '../../../assets/images/user.png';
 
 export default function DispensacionColaPage() {
@@ -76,6 +77,14 @@ export default function DispensacionColaPage() {
       <AdminNavbar />
 
       <main style={styles.content}>
+        {/* Breadcrumb de navegación */}
+        <Breadcrumb
+          items={[
+            { label: 'Farmacia', to: '/farmacia' },
+            { label: 'Dispersión' }
+          ]}
+        />
+
         {/* Panel Superior estilo Odoo */}
         <header style={styles.headerBar}>
           <div>

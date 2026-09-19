@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useDiagnosticos } from '../hooks/useDiagnosticos';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
+import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
 import '../styles/diagnosticos.css';
 
 export default function DiagnosticosPage() {
@@ -263,6 +264,14 @@ export default function DiagnosticosPage() {
       <AdminNavbar />
 
       <main className="diagnosticos-container">
+        {/* Breadcrumb de navegación */}
+        <Breadcrumb
+          items={[
+            { label: 'Configuración', to: '/configuracion' },
+            { label: 'Catálogo de Diagnósticos' }
+          ]}
+        />
+
         {/* Navegación por Píldoras Subtab Odoo Style */}
         <div className="diagnosticos-subtabs-nav">
           <button

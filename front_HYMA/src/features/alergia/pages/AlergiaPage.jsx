@@ -4,6 +4,7 @@ import { useAlergias } from '../hooks/useAlergias';
 import { AlergiaForm } from '../components/AlergiaForm';
 import { AlergiaList } from '../components/AlergiaList';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
+import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
 import '../styles/alergias.css';
 
 export const AlergiaPage = () => {
@@ -57,6 +58,14 @@ export const AlergiaPage = () => {
       <AdminNavbar />
 
       <main className="alergias-container">
+        {/* Breadcrumb de navegación */}
+        <Breadcrumb
+          items={[
+            { label: 'Configuración', to: '/configuracion' },
+            { label: 'Catálogo de Alergias' }
+          ]}
+        />
+
         {/* Barra Superior de Control estilo Odoo */}
         <header className="alergias-control-panel">
           <div className="alergias-panel-left">
