@@ -111,6 +111,27 @@
   transform: scale(1.04);
 }
 
+.portal-hero-icon-wrapper {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 3px solid #bae6fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0284c7;
+  z-index: 1;
+  box-shadow: 0 8px 20px rgba(2, 132, 199, 0.15);
+  transition: transform 0.3s ease;
+}
+
+.portal-logo-card:hover .portal-hero-icon-wrapper {
+  transform: scale(1.06) rotate(15deg);
+  border-color: #0284c7;
+  color: #0369a1;
+}
+
 .portal-logo-caption {
   margin-top: 1.5rem;
   z-index: 1;

@@ -12,6 +12,10 @@ import FarmaciaPortalPage from './features/farmacia/pages/FarmaciaPortalPage';
 import FarmaciaPage from './features/farmacia/pages/FarmaciaPage';
 import DispensacionColaPage from './features/farmacia/pages/DispensacionColaPage';
 import DispensarMedicamentosPage from './features/farmacia/pages/DispensarMedicamentosPage';
+import MedicamentosHubPage from './features/farmacia/pages/MedicamentosHubPage';
+import InventarioPage from './features/farmacia/pages/InventarioPage';
+import MovimientosPage from './features/farmacia/pages/MovimientosPage';
+import CatalogoMedicamentosPage from './features/farmacia/pages/CatalogoMedicamentosPage';
 import MedicosPage from './features/doctor/pages/MedicosPage';
 import UsuariosPage from './features/usuario/pages/UsuariosPage';
 import UsuariosPortalPage from './features/usuario/pages/UsuariosPortalPage';
@@ -40,6 +44,10 @@ function App() {
             <Route path="/farmacia" element={<FarmaciaPortalPage />} />
             <Route path="/farmacia/dispensacion" element={<DispensacionColaPage />} />
             <Route path="/farmacia/dispensar" element={<DispensarMedicamentosPage />} />
+            <Route path="/farmacia/medicamentos" element={<MedicamentosHubPage />} />
+            <Route path="/farmacia/medicamentos/inventario" element={<InventarioPage />} />
+            <Route path="/farmacia/medicamentos/movimientos" element={<MovimientosPage />} />
+            <Route path="/farmacia/medicamentos/catalogo" element={<CatalogoMedicamentosPage />} />
             <Route path="/farmacia/inventario/*" element={<FarmaciaPage />} />
             <Route path="/farmacia/inventario" element={<FarmaciaPage />} />
             <Route path="/farmacia/*" element={<FarmaciaPage />} />

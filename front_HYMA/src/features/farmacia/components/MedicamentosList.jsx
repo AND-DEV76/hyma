@@ -10,6 +10,11 @@ function MedicamentosList({
   categorias = [],
   casas = [],
   onSaveMedicamento,
+  soloConExistencias = false,
+  mostrarDesactivar = true,
+  mostrarBotonNuevo = true,
+  titulo = 'Medicamentos Registrados',
+  esCatalogo = false,
 }) {
   const [buscar, setBuscar] = useState('');
   const [categoriaId, setCategoriaId] = useState('');
@@ -86,31 +91,40 @@ function MedicamentosList({
     return { unidades, precio, diasMinimos };
   };
 
+  // Medicamentos base (filtrados por stock si soloConExistencias es true)
+  const baseMedicamentos = useMemo(() => {
+    if (!soloConExistencias) return medicamentos;
+    return medicamentos.filter((m) => {
+      const { unidades } = getMedMetadata(m);
+      return (Number(unidades) || 0) > 0;
+    });
+  }, [medicamentos, lotesPorMedicamento, soloConExistencias]);
+
   // Conteos de medicamentos que vencen pronto
   const count30 = useMemo(() => {
-    return medicamentos.filter((m) => {
+    return baseMedicamentos.filter((m) => {
       const { diasMinimos } = getMedMetadata(m);
       return diasMinimos !== null && diasMinimos <= 30;
     }).length;
-  }, [medicamentos, lotesPorMedicamento]);
+  }, [baseMedicamentos, lotesPorMedicamento]);
 
   const count60 = useMemo(() => {
-    return medicamentos.filter((m) => {
+    return baseMedicamentos.filter((m) => {
       const { diasMinimos } = getMedMetadata(m);
       return diasMinimos !== null && diasMinimos <= 60;
     }).length;
-  }, [medicamentos, lotesPorMedicamento]);
+  }, [baseMedicamentos, lotesPorMedicamento]);
 
   const count90 = useMemo(() => {
-    return medicamentos.filter((m) => {
+    return baseMedicamentos.filter((m) => {
       const { diasMinimos } = getMedMetadata(m);
       return diasMinimos !== null && diasMinimos <= 90;
     }).length;
-  }, [medicamentos, lotesPorMedicamento]);
+  }, [baseMedicamentos, lotesPorMedicamento]);
 
   // Filtering
   const filteredMedicamentos = useMemo(() => {
-    return medicamentos.filter((item) => {
+    return baseMedicamentos.filter((item) => {
       const text = `${item.nombre || ''} ${item.presentacion || ''} ${item.concentracion || ''}`.toLowerCase();
       const matchesSearch = text.includes(buscar.toLowerCase().trim());
       const matchesCat = !categoriaId || String(item.idCategoriaMedicamento) === categoriaId;
@@ -127,7 +141,7 @@ function MedicamentosList({
 
       return matchesSearch && matchesCat && matchesCasa && matchesEstado && matchesVencimiento;
     });
-  }, [medicamentos, buscar, categoriaId, casaId, estado, filtroVencimiento, lotesPorMedicamento]);
+  }, [baseMedicamentos, buscar, categoriaId, casaId, estado, filtroVencimiento, lotesPorMedicamento]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filteredMedicamentos.length / ITEMS_PER_PAGE));
@@ -166,7 +180,7 @@ function MedicamentosList({
       {/* Control Panel Odoo Style */}
       <div className="farmacia-control-panel">
         <div className="farmacia-panel-left">
-          <h2 className="farmacia-main-title">Medicamentos Registrados</h2>
+          <h2 className="farmacia-main-title">{titulo}</h2>
           <span className="farmacia-count-pill">
             <Pill size={14} />
             <strong>{filteredMedicamentos.length}</strong>
@@ -204,110 +218,114 @@ function MedicamentosList({
           </div>
 
           {/* Botón Principal Nuevo */}
-          <button
-            type="button"
-            className="farmacia-btn-primary"
-            onClick={handleOpenCreateModal}
-          >
-            <Plus size={16} />
-            Nuevo Medicamento
-          </button>
+          {mostrarBotonNuevo && (
+            <button
+              type="button"
+              className="farmacia-btn-primary"
+              onClick={handleOpenCreateModal}
+            >
+              <Plus size={16} />
+              Nuevo Medicamento
+            </button>
+          )}
         </div>
       </div>
 
       {/* Botones de Filtro Rápido de Vencimiento */}
-      <div className="farmacia-quick-filters-bar" style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
-        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginRight: '4px' }}>
-          Vencimientos:
-        </span>
-        <button
-          type="button"
-          onClick={() => { setFiltroVencimiento(''); setCurrentPage(1); }}
-          className={`farmacia-quick-pill ${filtroVencimiento === '' ? 'active' : ''}`}
-          style={{
-            padding: '5px 12px',
-            borderRadius: '20px',
-            border: '1px solid ' + (filtroVencimiento === '' ? '#0077b6' : '#cbd5e1'),
-            background: filtroVencimiento === '' ? '#0077b6' : 'white',
-            color: filtroVencimiento === '' ? 'white' : '#334155',
-            fontSize: '0.78rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-          }}
-        >
-          Todos ({medicamentos.length})
-        </button>
+      {!esCatalogo && (
+        <div className="farmacia-quick-filters-bar" style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginRight: '4px' }}>
+            Vencimientos:
+          </span>
+          <button
+            type="button"
+            onClick={() => { setFiltroVencimiento(''); setCurrentPage(1); }}
+            className={`farmacia-quick-pill ${filtroVencimiento === '' ? 'active' : ''}`}
+            style={{
+              padding: '5px 12px',
+              borderRadius: '20px',
+              border: '1px solid ' + (filtroVencimiento === '' ? '#0077b6' : '#cbd5e1'),
+              background: filtroVencimiento === '' ? '#0077b6' : 'white',
+              color: filtroVencimiento === '' ? 'white' : '#334155',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+          >
+            Todos ({baseMedicamentos.length})
+          </button>
 
-        <button
-          type="button"
-          onClick={() => { setFiltroVencimiento('30'); setCurrentPage(1); }}
-          className={`farmacia-quick-pill ${filtroVencimiento === '30' ? 'active' : ''}`}
-          style={{
-            padding: '5px 12px',
-            borderRadius: '20px',
-            border: '1px solid ' + (filtroVencimiento === '30' ? '#dc2626' : '#fecaca'),
-            background: filtroVencimiento === '30' ? '#dc2626' : '#fff5f5',
-            color: filtroVencimiento === '30' ? 'white' : '#dc2626',
-            fontSize: '0.78rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            transition: 'all 0.2s',
-          }}
-        >
-          <Clock size={13} />
-          Vencen en 30 días ({count30})
-        </button>
+          <button
+            type="button"
+            onClick={() => { setFiltroVencimiento('30'); setCurrentPage(1); }}
+            className={`farmacia-quick-pill ${filtroVencimiento === '30' ? 'active' : ''}`}
+            style={{
+              padding: '5px 12px',
+              borderRadius: '20px',
+              border: '1px solid ' + (filtroVencimiento === '30' ? '#dc2626' : '#fecaca'),
+              background: filtroVencimiento === '30' ? '#dc2626' : '#fff5f5',
+              color: filtroVencimiento === '30' ? 'white' : '#dc2626',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+            }}
+          >
+            <Clock size={13} />
+            Vencen en 30 días ({count30})
+          </button>
 
-        <button
-          type="button"
-          onClick={() => { setFiltroVencimiento('60'); setCurrentPage(1); }}
-          className={`farmacia-quick-pill ${filtroVencimiento === '60' ? 'active' : ''}`}
-          style={{
-            padding: '5px 12px',
-            borderRadius: '20px',
-            border: '1px solid ' + (filtroVencimiento === '60' ? '#d97706' : '#fed7aa'),
-            background: filtroVencimiento === '60' ? '#d97706' : '#fffbeb',
-            color: filtroVencimiento === '60' ? 'white' : '#b45309',
-            fontSize: '0.78rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            transition: 'all 0.2s',
-          }}
-        >
-          <Clock size={13} />
-          Vencen en 60 días ({count60})
-        </button>
+          <button
+            type="button"
+            onClick={() => { setFiltroVencimiento('60'); setCurrentPage(1); }}
+            className={`farmacia-quick-pill ${filtroVencimiento === '60' ? 'active' : ''}`}
+            style={{
+              padding: '5px 12px',
+              borderRadius: '20px',
+              border: '1px solid ' + (filtroVencimiento === '60' ? '#d97706' : '#fed7aa'),
+              background: filtroVencimiento === '60' ? '#d97706' : '#fffbeb',
+              color: filtroVencimiento === '60' ? 'white' : '#b45309',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+            }}
+          >
+            <Clock size={13} />
+            Vencen en 60 días ({count60})
+          </button>
 
-        <button
-          type="button"
-          onClick={() => { setFiltroVencimiento('90'); setCurrentPage(1); }}
-          className={`farmacia-quick-pill ${filtroVencimiento === '90' ? 'active' : ''}`}
-          style={{
-            padding: '5px 12px',
-            borderRadius: '20px',
-            border: '1px solid ' + (filtroVencimiento === '90' ? '#0077b6' : '#bae6fd'),
-            background: filtroVencimiento === '90' ? '#0077b6' : '#f0f9ff',
-            color: filtroVencimiento === '90' ? 'white' : '#0077b6',
-            fontSize: '0.78rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            transition: 'all 0.2s',
-          }}
-        >
-          <Clock size={13} />
-          Vencen en 90 días ({count90})
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => { setFiltroVencimiento('90'); setCurrentPage(1); }}
+            className={`farmacia-quick-pill ${filtroVencimiento === '90' ? 'active' : ''}`}
+            style={{
+              padding: '5px 12px',
+              borderRadius: '20px',
+              border: '1px solid ' + (filtroVencimiento === '90' ? '#0077b6' : '#bae6fd'),
+              background: filtroVencimiento === '90' ? '#0077b6' : '#f0f9ff',
+              color: filtroVencimiento === '90' ? 'white' : '#0077b6',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+            }}
+          >
+            <Clock size={13} />
+            Vencen en 90 días ({count90})
+          </button>
+        </div>
+      )}
 
       {/* Filter Bar Row */}
       <div className="farmacia-filters-toolbar">
@@ -368,25 +386,27 @@ function MedicamentosList({
           </select>
         </div>
 
-        <div className="farmacia-filter-group">
-          <label htmlFor="filter-vencimiento" className="farmacia-filter-label">Vencimiento:</label>
-          <select
-            id="filter-vencimiento"
-            className="farmacia-filter-select"
-            value={filtroVencimiento}
-            onChange={(e) => {
-              setFiltroVencimiento(e.target.value);
-              setCurrentPage(1);
-            }}
-          >
-            <option value="">Todos los vencimientos</option>
-            <option value="30">Vencen en 30 días</option>
-            <option value="60">Vencen en 60 días</option>
-            <option value="90">Vencen en 90 días</option>
-          </select>
-        </div>
+        {!esCatalogo && (
+          <div className="farmacia-filter-group">
+            <label htmlFor="filter-vencimiento" className="farmacia-filter-label">Vencimiento:</label>
+            <select
+              id="filter-vencimiento"
+              className="farmacia-filter-select"
+              value={filtroVencimiento}
+              onChange={(e) => {
+                setFiltroVencimiento(e.target.value);
+                setCurrentPage(1);
+              }}
+            >
+              <option value="">Todos los vencimientos</option>
+              <option value="30">Vencen en 30 días</option>
+              <option value="60">Vencen en 60 días</option>
+              <option value="90">Vencen en 90 días</option>
+            </select>
+          </div>
+        )}
 
-        {(buscar || categoriaId || casaId || estado || filtroVencimiento) && (
+        {(buscar || categoriaId || casaId || estado || (!esCatalogo && filtroVencimiento)) && (
           <button
             type="button"
             className="farmacia-btn-clear-filters"
@@ -414,8 +434,12 @@ function MedicamentosList({
                 <th className="farmacia-th">Presentación</th>
                 <th className="farmacia-th">Categoría</th>
                 <th className="farmacia-th">Casa Farmacéutica</th>
-                <th className="farmacia-th" style={{ textAlign: 'center' }}>Unidades</th>
-                <th className="farmacia-th" style={{ textAlign: 'right' }}>Precio</th>
+                {!esCatalogo && (
+                  <>
+                    <th className="farmacia-th" style={{ textAlign: 'center' }}>Unidades</th>
+                    <th className="farmacia-th" style={{ textAlign: 'right' }}>Precio</th>
+                  </>
+                )}
                 <th className="farmacia-th">Estado</th>
                 <th className="farmacia-th" style={{ textAlign: 'right' }}>Acciones</th>
               </tr>
@@ -433,7 +457,7 @@ function MedicamentosList({
                         <span className="farmacia-med-conc">
                           {item.concentracion || 'Sin concentración especificada'}
                         </span>
-                        {diasMinimos !== null && diasMinimos <= 90 && (
+                        {!esCatalogo && diasMinimos !== null && diasMinimos <= 90 && (
                           <span
                             style={{
                               display: 'inline-flex',
@@ -495,25 +519,29 @@ function MedicamentosList({
                         {item.casaFarmaceuticaNombre || '—'}
                       </span>
                     </td>
-                    <td className="farmacia-td" style={{ textAlign: 'center' }}>
-                      <span
-                        className="farmacia-badge-pill"
-                        style={{
-                          background: cantUnidades > 0 ? '#e0f2fe' : '#fee2e2',
-                          color: cantUnidades > 0 ? '#03045e' : '#991b1b',
-                          fontWeight: 700,
-                          padding: '3px 10px',
-                          border: cantUnidades > 0 ? '1px solid #bae6fd' : '1px solid #fecaca',
-                        }}
-                      >
-                        {cantUnidades} {cantUnidades === 1 ? 'unidad' : 'unidades'}
-                      </span>
-                    </td>
-                    <td className="farmacia-td" style={{ textAlign: 'right' }}>
-                      <span style={{ fontWeight: 700, color: '#03045e', fontSize: '0.88rem' }}>
-                        {precio != null ? `Q ${Number(precio).toFixed(2)}` : '—'}
-                      </span>
-                    </td>
+                    {!esCatalogo && (
+                      <>
+                        <td className="farmacia-td" style={{ textAlign: 'center' }}>
+                          <span
+                            className="farmacia-badge-pill"
+                            style={{
+                              background: cantUnidades > 0 ? '#e0f2fe' : '#fee2e2',
+                              color: cantUnidades > 0 ? '#03045e' : '#991b1b',
+                              fontWeight: 700,
+                              padding: '3px 10px',
+                              border: cantUnidades > 0 ? '1px solid #bae6fd' : '1px solid #fecaca',
+                            }}
+                          >
+                            {cantUnidades} {cantUnidades === 1 ? 'unidad' : 'unidades'}
+                          </span>
+                        </td>
+                        <td className="farmacia-td" style={{ textAlign: 'right' }}>
+                          <span style={{ fontWeight: 700, color: '#03045e', fontSize: '0.88rem' }}>
+                            {precio != null ? `Q ${Number(precio).toFixed(2)}` : '—'}
+                          </span>
+                        </td>
+                      </>
+                    )}
                     <td className="farmacia-td">
                       <span className={`farmacia-status-pill ${item.estado ? 'active' : 'inactive'}`}>
                         {item.estado ? 'Activo' : 'Inactivo'}
@@ -531,15 +559,17 @@ function MedicamentosList({
                           <span>Editar</span>
                         </button>
 
-                        <button
-                          type="button"
-                          className={`farmacia-action-btn ${item.estado ? 'deactivate' : 'activate'}`}
-                          onClick={() => handleToggleEstado(item)}
-                          title={item.estado ? 'Desactivar medicamento' : 'Activar medicamento'}
-                        >
-                          {item.estado ? <XCircle size={13} /> : <CheckCircle2 size={13} />}
-                          <span>{item.estado ? 'Desactivar' : 'Activar'}</span>
-                        </button>
+                        {mostrarDesactivar && (
+                          <button
+                            type="button"
+                            className={`farmacia-action-btn ${item.estado ? 'deactivate' : 'activate'}`}
+                            onClick={() => handleToggleEstado(item)}
+                            title={item.estado ? 'Desactivar medicamento' : 'Activar medicamento'}
+                          >
+                            {item.estado ? <XCircle size={13} /> : <CheckCircle2 size={13} />}
+                            <span>{item.estado ? 'Desactivar' : 'Activar'}</span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

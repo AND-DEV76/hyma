@@ -168,4 +168,9 @@ public class FarmaciaController {
             @PathVariable(name = "idCola") Long idCola) {
         return ResponseEntity.ok(farmaciaService.cancelarTurnoDispensacion(idCola));
     }
+
+    @GetMapping("/salidas")
+    public ResponseEntity<List<SalidaMedicamentoResponse>> listarSalidas() {
+        return ResponseEntity.ok(farmaciaService.listarSalidas());
+    }
 }

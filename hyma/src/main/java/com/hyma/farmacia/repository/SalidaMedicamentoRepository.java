@@ -14,4 +14,6 @@ public interface SalidaMedicamentoRepository extends JpaRepository<SalidaMedicam
     Optional<SalidaMedicamento> findByConsulta_IdConsulta(Long idConsulta);
 
     List<SalidaMedicamento> findByConsulta_IdConsultaIn(Collection<Long> idsConsultas);
+
+    List<SalidaMedicamento> findAllByOrderByFechaSalidaDesc();
 }

@@ -26,6 +26,7 @@ import com.hyma.clinica.repository.TratamientoRepository;
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -676,5 +677,83 @@ public class FarmaciaService {
         cola.setEstado(EstadoCola.CANCELADO);
         cola.setFechaAtencion(LocalDateTime.now());
         return colaAtencionMapper.toResponse(colaAtencionRepository.save(cola));
+    }
+
+    @Transactional(readOnly = true)
+    public List<SalidaMedicamentoResponse> listarSalidas() {
+        List<SalidaMedicamento> salidas = salidaMedicamentoRepository.findAllByOrderByFechaSalidaDesc();
+        if (salidas.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> idsSalidas = salidas.stream().map(SalidaMedicamento::getIdSalida).toList();
+        List<DetalleSalidaMedicamento> todosDetalles = detalleSalidaMedicamentoRepository.findBySalida_IdSalidaIn(idsSalidas);
+
+        Map<Long, List<DetalleSalidaMedicamento>> detallesPorSalida = todosDetalles.stream()
+                .filter(d -> d.getSalida() != null && d.getSalida().getIdSalida() != null)
+                .collect(Collectors.groupingBy(d -> d.getSalida().getIdSalida()));
+
+        return salidas.stream().map(salida -> {
+            List<DetalleSalidaMedicamento> dList = detallesPorSalida.getOrDefault(salida.getIdSalida(), Collections.emptyList());
+
+            BigDecimal totalMed = BigDecimal.ZERO;
+            List<DetalleSalidaMedicamentoResponse> detalleResponses = new ArrayList<>();
+
+            for (DetalleSalidaMedicamento d : dList) {
+                LoteMedicamento lote = d.getLote();
+                Medicamento med = lote != null ? lote.getMedicamento() : null;
+
+                BigDecimal pUnit = d.getPrecioUnitario() != null ? d.getPrecioUnitario() : BigDecimal.ZERO;
+                int cant = d.getCantidad() != null ? d.getCantidad() : 0;
+                BigDecimal sub = pUnit.multiply(BigDecimal.valueOf(cant));
+                totalMed = totalMed.add(sub);
+
+                detalleResponses.add(DetalleSalidaMedicamentoResponse.builder()
+                        .idDetalleSalida(d.getIdDetalleSalida())
+                        .idLote(lote != null ? lote.getIdLote() : null)
+                        .idMedicamento(med != null ? med.getIdMedicamento() : null)
+                        .medicamentoNombre(med != null ? med.getNombre() : "—")
+                        .presentacion(med != null ? med.getPresentacion() : null)
+                        .concentracion(med != null ? med.getConcentracion() : null)
+                        .categoriaNombre(med != null && med.getCategoria() != null ? med.getCategoria().getNombre() : null)
+                        .casaFarmaceuticaNombre(med != null && med.getCasaFarmaceutica() != null ? med.getCasaFarmaceutica().getNombre() : null)
+                        .numeroLote(lote != null ? lote.getNumeroLote() : "S/L")
+                        .fechaExpiracion(lote != null ? lote.getFechaExpiracion() : null)
+                        .cantidad(cant)
+                        .precioUnitario(pUnit)
+                        .subtotal(sub)
+                        .build());
+            }
+
+            Consulta c = salida.getConsulta();
+            Paciente p = c != null ? c.getPaciente() : null;
+            var medico = c != null ? c.getMedico() : null;
+            Usuario u = salida.getUsuario();
+
+            String pacienteNombre = p != null
+                    ? ((p.getNombres() != null ? p.getNombres() : "") + " " + (p.getApellidos() != null ? p.getApellidos() : "")).trim()
+                    : null;
+
+            String medicoNombre = medico != null
+                    ? ((medico.getNombres() != null ? medico.getNombres() : "") + " " + (medico.getApellidos() != null ? medico.getApellidos() : "")).trim()
+                    : null;
+
+            String usuarioNombre = u != null ? u.getUsername() : null;
+
+            return SalidaMedicamentoResponse.builder()
+                    .idSalida(salida.getIdSalida())
+                    .idConsulta(c != null ? c.getIdConsulta() : null)
+                    .idPaciente(p != null ? p.getIdPaciente() : null)
+                    .pacienteNombre(pacienteNombre)
+                    .medicoNombre(medicoNombre)
+                    .usuarioNombre(usuarioNombre)
+                    .fechaSalida(salida.getFechaSalida())
+                    .tipoSalida(salida.getTipoSalida())
+                    .observaciones(salida.getObservaciones())
+                    .costoConsulta(salida.getCostoConsulta() != null ? salida.getCostoConsulta() : BigDecimal.ZERO)
+                    .totalMedicamentos(totalMed)
+                    .detalles(detalleResponses)
+                    .build();
+        }).toList();
     }
 }

@@ -19,7 +19,6 @@ const tabs = [
   { key: 'catalogos', label: 'Catálogos' },
   { key: 'entradas', label: 'Entradas' },
   { key: 'lotes', label: 'Lotes activos' },
-  { key: 'parametros', label: 'Parámetros' },
 ];
 
 function FarmaciaPage() {
@@ -210,11 +209,6 @@ function FarmaciaPage() {
             {/* 5. Lotes Activos */}
             {currentTab === 'lotes' && (
               <LotesFarmacia lotes={lotes} medicamentos={medicamentos} />
-            )}
-
-            {/* 6. Parámetros del sistema */}
-            {currentTab === 'parametros' && (
-              <ParametrosFarmacia parametros={parametros} onSave={actualizarParametro} />
             )}
           </div>
         )}
