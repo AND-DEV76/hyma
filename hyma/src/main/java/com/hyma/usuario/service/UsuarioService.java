@@ -45,15 +45,33 @@ public class UsuarioService {
             throw new RuntimeException("El nombre de usuario ya está en uso");
         }
 
-        Rol rol = rolRepository.findById(request.getIdRol())
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + request.getIdRol()));
+        String correo = (request.getCorreo() != null && !request.getCorreo().isBlank())
+                ? request.getCorreo().trim()
+                : null;
+        if (correo != null && usuarioRepository.existsByCorreo(correo)) {
+            throw new RuntimeException("El correo electrónico ya está registrado");
+        }
+
+        java.util.Set<Rol> roles = new java.util.HashSet<>();
+        if (request.getIdRoles() != null && !request.getIdRoles().isEmpty()) {
+            roles.addAll(rolRepository.findAllById(request.getIdRoles()));
+        } else if (request.getIdRol() != null) {
+            Rol rol = rolRepository.findById(request.getIdRol())
+                    .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + request.getIdRol()));
+            roles.add(rol);
+        }
+
+        if (roles.isEmpty()) {
+            throw new RuntimeException("Debe asignar al menos un rol al usuario");
+        }
 
         // Codificación con Argon2id
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
         Usuario usuario = Usuario.builder()
-                .rol(rol)
-                .username(request.getUsername())
+                .roles(roles)
+                .username(request.getUsername().trim())
+                .correo(correo)
                 .passwordHash(encodedPassword)
                 .estado(true)
                 .build();
@@ -70,11 +88,27 @@ public class UsuarioService {
             throw new RuntimeException("El nombre de usuario ya está asignado a otro registro");
         }
 
-        Rol rol = rolRepository.findById(request.getIdRol())
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + request.getIdRol()));
+        String correo = (request.getCorreo() != null && !request.getCorreo().isBlank())
+                ? request.getCorreo().trim()
+                : null;
+        if (correo != null && usuarioRepository.existsByCorreoAndIdUsuarioNot(correo, id)) {
+            throw new RuntimeException("El correo electrónico ya está asignado a otra cuenta");
+        }
 
-        usuario.setRol(rol);
-        usuario.setUsername(request.getUsername());
+        if (request.getIdRoles() != null && !request.getIdRoles().isEmpty()) {
+            java.util.Set<Rol> nuevosRoles = new java.util.HashSet<>(rolRepository.findAllById(request.getIdRoles()));
+            if (nuevosRoles.isEmpty()) {
+                throw new RuntimeException("Debe asignar al menos un rol válido al usuario");
+            }
+            usuario.setRoles(nuevosRoles);
+        } else if (request.getIdRol() != null) {
+            Rol rol = rolRepository.findById(request.getIdRol())
+                    .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + request.getIdRol()));
+            usuario.setRol(rol);
+        }
+
+        usuario.setUsername(request.getUsername().trim());
+        usuario.setCorreo(correo);
         usuario.setEstado(request.getEstado());
 
         if (request.getPassword() != null && !request.getPassword().isBlank()) {

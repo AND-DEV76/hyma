@@ -28,12 +28,17 @@ function LoginPage() {
       }
       localStorage.setItem('user', JSON.stringify(data.usuario));
 
-      if (data.usuario.nombreRol === 'ENFERMERA') {
-        navigate('/recepcion');
-      } else if (data.usuario.nombreRol === 'MEDICO') {
+      const userRoles = (data.usuario.roles && data.usuario.roles.length > 0)
+        ? data.usuario.roles
+        : (data.usuario.nombreRol ? [data.usuario.nombreRol] : []);
+
+      if (userRoles.includes('ADMIN') || userRoles.includes('FARMACIA')) {
+        navigate('/dashboard');
+      } else if (userRoles.includes('MEDICO')) {
         navigate('/clinica');
+      } else if (userRoles.includes('ENFERMERA')) {
+        navigate('/recepcion');
       } else {
-        // ADMIN, FARMACIA y demás roles administrativos
         navigate('/dashboard');
       }
     } catch (err) {

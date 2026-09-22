@@ -49,19 +49,36 @@ export default function UsuarioTable({ usuarios, onEdit, onDelete }) {
 
               return (
                 <tr key={u.idUsuario} className="usuarios-tr">
-                  {/* Usuario */}
+                  {/* Usuario y Correo */}
                   <td className="usuarios-td">
                     <div className="usuarios-user-cell">
                       <div className="usuarios-avatar">{initial}</div>
-                      <span className="usuarios-username">{u.username}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span className="usuarios-username">{u.username}</span>
+                        {u.correo ? (
+                          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{u.correo}</span>
+                        ) : (
+                          <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontStyle: 'italic' }}>Sin correo</span>
+                        )}
+                      </div>
                     </div>
                   </td>
 
-                  {/* Rol */}
+                  {/* Roles Asignados */}
                   <td className="usuarios-td">
-                    <span className={`usuarios-role-badge ${getRoleClass(u.nombreRol)}`}>
-                      {u.nombreRol || 'SIN ROL'}
-                    </span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                      {u.roles && u.roles.length > 0 ? (
+                        u.roles.map((r) => (
+                          <span key={r} className={`usuarios-role-badge ${getRoleClass(r)}`}>
+                            {r}
+                          </span>
+                        ))
+                      ) : (
+                        <span className={`usuarios-role-badge ${getRoleClass(u.nombreRol)}`}>
+                          {u.nombreRol || 'SIN ROL'}
+                        </span>
+                      )}
+                    </div>
                   </td>
 
                   {/* Estado */}

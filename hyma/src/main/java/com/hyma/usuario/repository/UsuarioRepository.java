@@ -8,7 +8,10 @@ import java.util.Optional;
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     boolean existsByUsername(String username);
     boolean existsByUsernameAndIdUsuarioNot(String username, Long idUsuario);
+    boolean existsByCorreo(String correo);
+    boolean existsByCorreoAndIdUsuarioNot(String correo, Long idUsuario);
 
     // Método necesario para la autenticación
     Optional<Usuario> findByUsername(String username);
+    Optional<Usuario> findByCorreo(String correo);
 }

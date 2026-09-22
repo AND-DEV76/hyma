@@ -130,3 +130,33 @@ BEGIN
 END $$;
 
 
+
+-- 1. Crear la tabla intermedia de roles
+CREATE TABLE usuario_rol (
+    id_usuario BIGINT NOT NULL,
+    id_rol BIGINT NOT NULL,
+    PRIMARY KEY (id_usuario, id_rol),
+    CONSTRAINT fk_ur_usuario 
+        FOREIGN KEY (id_usuario) 
+        REFERENCES usuario(id_usuario) 
+        ON DELETE CASCADE,
+    CONSTRAINT fk_ur_rol 
+        FOREIGN KEY (id_rol) 
+        REFERENCES rol(id_rol) 
+        ON DELETE CASCADE
+);
+
+-- 2. Migrar los roles que ya tienen tus usuarios actuales (así nadie pierde su acceso)
+INSERT INTO usuario_rol (id_usuario, id_rol)
+SELECT id_usuario, id_rol FROM usuario;
+
+-- 3. Agregar el nuevo campo de correo en la tabla usuario
+ALTER TABLE usuario ADD COLUMN correo VARCHAR(100);
+
+-- (Opcional recomendado) Si deseas que cada correo sea único en el sistema:
+ALTER TABLE usuario ADD CONSTRAINT uk_usuario_correo UNIQUE (correo);
+
+-- 4. Retirar la llave foránea antigua y la columna id_rol de usuario
+-- (Primero quitamos la restricción fk y luego la columna para que los roles vivan en usuario_rol)
+ALTER TABLE usuario DROP CONSTRAINT IF EXISTS fk_usuario_rol;
+ALTER TABLE usuario DROP COLUMN IF EXISTS id_rol;

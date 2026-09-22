@@ -240,3 +240,46 @@
   color: #0284c7;
   transform: translateX(4px);
 }
+
+@media (max-width: 640px) {
+  .farmacia-portal-container {
+    padding: 1.25rem 1rem 2.5rem;
+  }
+
+  .portal-header {
+    margin-bottom: 1.25rem;
+  }
+
+  .portal-title {
+    font-size: 1.35rem;
+  }
+
+  .portal-logo-card {
+    min-height: 200px;
+    padding: 1.5rem 1rem;
+  }
+
+  .portal-logo-img {
+    width: 120px;
+    height: 120px;
+  }
+
+  .portal-hero-icon-wrapper {
+    width: 90px;
+    height: 90px;
+  }
+
+  .portal-option-card {
+    padding: 1.1rem 1rem;
+    gap: 0.85rem;
+  }
+
+  .portal-circle-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .portal-option-title {
+    font-size: 1.05rem;
+  }
+}

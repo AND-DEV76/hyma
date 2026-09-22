@@ -5,12 +5,16 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import java.util.List;
 
 @Data
 public class UsuarioUpdateRequest {
 
-    @NotNull(message = "El id_rol es obligatorio")
+    // Soporta lista de roles o un rol único por compatibilidad
+    private List<Long> idRoles;
     private Long idRol;
+
+    private String correo;
 
     @NotBlank(message = "El username es obligatorio")
     @Size(min = 3, max = 50, message = "El username debe tener entre 3 y 50 caracteres")

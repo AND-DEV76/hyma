@@ -37,10 +37,16 @@ export default function AdminNavbar() {
     nombreRol: 'INVITADO',
   };
 
-  const isAdmin = user.nombreRol === 'ADMIN';
-  const isEnfermera = user.nombreRol === 'ENFERMERA';
-  const isFarmacia = user.nombreRol === 'FARMACIA';
-  const isMedico = user.nombreRol === 'MEDICO';
+  const userRoles = (user.roles && user.roles.length > 0)
+    ? user.roles
+    : (user.nombreRol ? [user.nombreRol] : ['INVITADO']);
+
+  const hasRole = (role) => userRoles.includes(role);
+
+  const isAdmin = hasRole('ADMIN');
+  const isEnfermera = hasRole('ENFERMERA');
+  const isFarmacia = hasRole('FARMACIA');
+  const isMedico = hasRole('MEDICO');
 
   // Sincronizar CSS variable en :root y body class
   useEffect(() => {
@@ -241,7 +247,7 @@ export default function AdminNavbar() {
             {!isCollapsed && (
               <div className="user-details">
                 <span className="user-name-text">{user.username}</span>
-                <span className="user-role-tag">{user.nombreRol}</span>
+                <span className="user-role-tag">{userRoles.join(' • ')}</span>
               </div>
             )}
           </div>

@@ -18,10 +18,12 @@ export default function UsuariosPage() {
   // Filtrado reactivo en frontend
   const filteredUsuarios = useMemo(() => {
     return usuarios.filter((u) => {
+      const uRoles = (u.roles && u.roles.length > 0) ? u.roles : (u.nombreRol ? [u.nombreRol] : []);
       const matchSearch =
         u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (u.nombreRol && u.nombreRol.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchRole = roleFilter === 'ALL' || u.nombreRol === roleFilter;
+        (u.correo && u.correo.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        uRoles.some((r) => r.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchRole = roleFilter === 'ALL' || uRoles.includes(roleFilter);
       return matchSearch && matchRole;
     });
   }, [usuarios, searchTerm, roleFilter]);

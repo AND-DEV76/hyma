@@ -58,7 +58,15 @@ public class AuthService {
         // 5. Preparar claims personalizados para incluir en el payload del JWT
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("idUsuario", usuario.getIdUsuario());
-        extraClaims.put("rol", usuario.getRol().getNombre());
+        if (usuario.getCorreo() != null) {
+            extraClaims.put("correo", usuario.getCorreo());
+        }
+
+        java.util.List<String> roleNames = (usuario.getRoles() != null)
+                ? usuario.getRoles().stream().map(com.hyma.usuario.model.Rol::getNombre).toList()
+                : java.util.Collections.emptyList();
+        extraClaims.put("roles", roleNames);
+        extraClaims.put("rol", roleNames.isEmpty() ? "SIN_ROL" : roleNames.get(0));
 
         // 6. Generar token JWT firmado
         String jwtToken = jwtService.generateToken(extraClaims, userDetails);

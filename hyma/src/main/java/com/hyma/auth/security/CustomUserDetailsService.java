@@ -30,15 +30,18 @@ public class CustomUserDetailsService implements UserDetailsService {
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con username: " + username));
 
-        // Formatear rol para compatibilidad con hasRole(...) de Spring Security (ej. ROLE_ADMIN)
-        String roleName = usuario.getRol().getNombre().toUpperCase();
-        if (!roleName.startsWith("ROLE_")) {
-            roleName = "ROLE_" + roleName;
-        }
-
-        List<SimpleGrantedAuthority> authorities = Collections.singletonList(
-                new SimpleGrantedAuthority(roleName)
-        );
+        // Formatear todos los roles para compatibilidad con hasRole(...) de Spring Security (ej. ROLE_ADMIN)
+        List<SimpleGrantedAuthority> authorities = (usuario.getRoles() == null || usuario.getRoles().isEmpty())
+                ? Collections.emptyList()
+                : usuario.getRoles().stream()
+                        .map(r -> {
+                            String roleName = r.getNombre().toUpperCase();
+                            if (!roleName.startsWith("ROLE_")) {
+                                roleName = "ROLE_" + roleName;
+                            }
+                            return new SimpleGrantedAuthority(roleName);
+                        })
+                        .toList();
 
         return new User(
                 usuario.getUsername(),
