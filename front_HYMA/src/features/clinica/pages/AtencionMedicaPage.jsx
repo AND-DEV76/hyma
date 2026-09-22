@@ -26,7 +26,7 @@ const PASOS = [
   { id: 1, label: 'Paciente & Signos', icon: User },
   { id: 2, label: 'Consulta & Evolución', icon: FileText },
   { id: 3, label: 'Examen Físico', icon: Activity },
-  { id: 4, label: 'Diagnósticos CIE-10', icon: Stethoscope },
+  { id: 4, label: 'Diagnósticos', icon: Stethoscope },
   { id: 5, label: 'Receta & Tratamiento', icon: Pill },
 ];
 
@@ -387,7 +387,7 @@ export default function AtencionMedicaPage() {
 
   const handleSubmit = async () => {
     if (!diagnosticos || diagnosticos.length === 0) {
-      alert('Debe agregar al menos un diagnóstico (CIE-10) antes de finalizar la consulta médica.');
+      alert('Debe agregar al menos un diagnóstico antes de finalizar la consulta médica.');
       setPasoActual(4);
       return;
     }
@@ -792,7 +792,7 @@ export default function AtencionMedicaPage() {
             </div>
           )}
 
-          {/* PASO 4: Diagnósticos CIE-10 */}
+          {/* PASO 4: Diagnósticos */}
           {pasoActual === 4 && (
             <div style={styles.stepContentFade}>
               <div style={styles.stepTitleBar}>
@@ -812,7 +812,7 @@ export default function AtencionMedicaPage() {
                   <Search size={16} color="#64748b" style={styles.searchIcon} />
                   <input
                     type="text"
-                    placeholder="Escriba código CIE-10 o nombre de la patología..."
+                    placeholder="Escriba código o nombre de la patología..."
                     value={searchDiag}
                     onChange={handleSearchDiag}
                     style={styles.searchInput}
@@ -858,7 +858,7 @@ export default function AtencionMedicaPage() {
                 <div style={styles.emptyDiagBox}>
                   <Stethoscope size={32} color="#94a3b8" />
                   <p style={styles.emptyHint}>
-                    Aún no ha seleccionado ningún diagnóstico CIE-10 para esta consulta.
+                    Aún no ha seleccionado ningún diagnóstico para esta consulta.
                   </p>
                 </div>
               )}
@@ -1517,7 +1517,7 @@ const styles = {
     outline: 'none',
     resize: 'vertical',
   },
-  // Step 4: Search & CIE-10
+  // Step 4: Search & Diagnósticos
   searchContainer: {
     position: 'relative',
     marginBottom: '16px',

@@ -15,6 +15,15 @@ import '../styles/configuracion.css';
 export default function ConfiguracionPage() {
   const navigate = useNavigate();
 
+  const user = JSON.parse(localStorage.getItem('user')) || {
+    username: 'Usuario',
+    nombreRol: 'INVITADO',
+  };
+
+  const isAdmin = user.nombreRol === 'ADMIN';
+  const isFarmacia = user.nombreRol === 'FARMACIA';
+  const isMedico = user.nombreRol === 'MEDICO';
+
   const opciones = [
     {
       id: 'tarifas',
@@ -22,13 +31,15 @@ export default function ConfiguracionPage() {
       descripcion: 'Configuración de precios y aranceles de consulta médica general.',
       ruta: '/tarifas',
       icono: <CircleDollarSign size={26} />,
+      show: isAdmin || isFarmacia,
     },
     {
       id: 'diagnosticos',
       titulo: 'Catálogo de Diagnósticos',
-      descripcion: 'Gestión de catálogo de diagnósticos CIE-10 y categorías asociadas.',
+      descripcion: 'Gestión de catálogo de diagnósticos y categorías asociadas.',
       ruta: '/diagnosticos',
       icono: <BookOpen size={26} />,
+      show: isAdmin || isMedico || isFarmacia,
     },
     {
       id: 'alergias',
@@ -36,6 +47,7 @@ export default function ConfiguracionPage() {
       descripcion: 'Administración del catálogo de sustancias y tipos de alergias.',
       ruta: '/alergias',
       icono: <FlaskConical size={26} />,
+      show: isAdmin || isMedico || isFarmacia,
     },
   ];
 
@@ -70,9 +82,11 @@ export default function ConfiguracionPage() {
             </div>
           </div>
 
-          {/* Columna Derecha con las 3 Opciones */}
+          {/* Columna Derecha con las Opciones según Rol */}
           <div className="config-options-list">
-            {opciones.map((opcion) => (
+            {opciones
+              .filter((opcion) => opcion.show)
+              .map((opcion) => (
               <div
                 key={opcion.id}
                 className="config-option-card"

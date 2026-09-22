@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/diagnosticos/catalogo")
-@PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
+@PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'FARMACIA')")
 @RequiredArgsConstructor
 public class CatalogoCie10Controller {
 

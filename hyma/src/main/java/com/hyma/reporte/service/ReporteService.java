@@ -12,6 +12,15 @@ import com.hyma.farmacia.model.SalidaMedicamento;
 import com.hyma.farmacia.repository.DetalleSalidaMedicamentoRepository;
 import com.hyma.farmacia.repository.SalidaMedicamentoRepository;
 import com.hyma.recepcion.model.Paciente;
+import com.hyma.recepcion.model.ColaAtencion;
+import com.hyma.recepcion.model.EstadoCola;
+import com.hyma.recepcion.model.Sexo;
+import com.hyma.recepcion.repository.ColaAtencionRepository;
+import com.hyma.farmacia.model.EstadoLote;
+import com.hyma.farmacia.model.LoteMedicamento;
+import com.hyma.farmacia.model.Medicamento;
+import com.hyma.farmacia.repository.LoteMedicamentoRepository;
+import com.hyma.farmacia.repository.MedicamentoRepository;
 import com.hyma.reporte.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +56,9 @@ public class ReporteService {
     private final CatalogoCie10Repository catalogoCie10Repository;
     private final SalidaMedicamentoRepository salidaMedicamentoRepository;
     private final DetalleSalidaMedicamentoRepository detalleSalidaMedicamentoRepository;
+    private final ColaAtencionRepository colaAtencionRepository;
+    private final LoteMedicamentoRepository loteMedicamentoRepository;
+    private final MedicamentoRepository medicamentoRepository;
 
 
     // Paleta base institucional de colores pastel para categorías
@@ -946,5 +958,302 @@ public class ReporteService {
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);
         style.setBorderRight(BorderStyle.THIN);
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardHospitalarioResponse generarDashboardHospitalario(int anio, int mes) {
+        YearMonth ym = YearMonth.of(anio, mes);
+        LocalDateTime inicioMes = ym.atDay(1).atStartOfDay();
+        LocalDateTime finMes = ym.atEndOfMonth().atTime(23, 59, 59, 999999999);
+
+        LocalDate hoy = LocalDate.now();
+        LocalDateTime inicioHoy = hoy.atStartOfDay();
+
+        // 1. Consultas del mes
+        List<Consulta> consultasMes = consultaRepository.findByFechaConsultaBetweenOrderByFechaConsultaAsc(inicioMes, finMes);
+        long totalConsultasMes = consultasMes.size();
+
+        // Determinar Nuevos vs Reconsulta
+        Map<Long, LocalDateTime> primerConsultaMap = new HashMap<>();
+        try {
+            List<Object[]> minConsultas = consultaRepository.findMinFechaConsultaPorPaciente();
+            for (Object[] row : minConsultas) {
+                if (row == null || row.length < 2 || row[0] == null) continue;
+
+                Long idPac = null;
+                if (row[0] instanceof Number num) {
+                    idPac = num.longValue();
+                } else {
+                    try {
+                        idPac = Long.valueOf(row[0].toString());
+                    } catch (Exception ignored) {}
+                }
+
+                LocalDateTime minFecha = null;
+                if (row[1] instanceof LocalDateTime ldt) {
+                    minFecha = ldt;
+                } else if (row[1] instanceof java.sql.Timestamp ts) {
+                    minFecha = ts.toLocalDateTime();
+                } else if (row[1] instanceof java.util.Date d) {
+                    minFecha = d.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime();
+                } else if (row[1] != null) {
+                    try {
+                        minFecha = LocalDateTime.parse(row[1].toString().replace(" ", "T"));
+                    } catch (Exception ignored) {}
+                }
+
+                if (idPac != null && minFecha != null) {
+                    primerConsultaMap.put(idPac, minFecha);
+                }
+            }
+        } catch (Exception ex) {
+            log.warn("Error calculando primer consulta para dashboard: {}", ex.getMessage());
+        }
+
+        long pacientesNuevos = 0;
+        long pacientesReconsulta = 0;
+
+        for (Consulta c : consultasMes) {
+            if (c.getPaciente() != null && c.getPaciente().getIdPaciente() != null) {
+                LocalDateTime minFecha = primerConsultaMap.get(c.getPaciente().getIdPaciente());
+                if (minFecha == null || !minFecha.isBefore(inicioMes)) {
+                    pacientesNuevos++;
+                } else {
+                    pacientesReconsulta++;
+                }
+            }
+        }
+
+        double pctNuevos = totalConsultasMes > 0 ? Math.round((pacientesNuevos * 1000.0) / totalConsultasMes) / 10.0 : 0.0;
+        double pctReconsulta = totalConsultasMes > 0 ? Math.round((pacientesReconsulta * 1000.0) / totalConsultasMes) / 10.0 : 0.0;
+
+        // 2. Pacientes hoy y Cola de atención
+        List<ColaAtencion> todasCola = colaAtencionRepository.findAll();
+        long atendidosHoy = todasCola.stream()
+                .filter(c -> c.getEstado() == EstadoCola.FINALIZADO && c.getFechaAtencion() != null && !c.getFechaAtencion().isBefore(inicioHoy))
+                .count();
+
+        long enEsperaPreconsulta = todasCola.stream()
+                .filter(c -> c.getEstado() == EstadoCola.PENDIENTE || c.getEstado() == EstadoCola.EN_PRECONSULTA)
+                .count();
+
+        long enEsperaClinica = todasCola.stream()
+                .filter(c -> c.getEstado() == EstadoCola.EN_CONSULTA)
+                .count();
+
+        long enEsperaFarmacia = todasCola.stream()
+                .filter(c -> c.getEstado() == EstadoCola.EN_FARMACIA)
+                .count();
+
+        long enEsperaHoy = enEsperaPreconsulta + enEsperaClinica + enEsperaFarmacia;
+
+        // 3. Recaudación y Salidas
+        List<Long> idsConsultasMes = consultasMes.stream()
+                .map(Consulta::getIdConsulta)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        BigDecimal totalRecaudacionConsultas = BigDecimal.ZERO;
+        BigDecimal totalRecaudacionMeds = BigDecimal.ZERO;
+
+        Map<Long, Long> unidadesPorMedicamento = new HashMap<>();
+        Map<Long, BigDecimal> montoPorMedicamento = new HashMap<>();
+        Map<Long, Medicamento> medObjMap = new HashMap<>();
+
+        if (!idsConsultasMes.isEmpty()) {
+            List<SalidaMedicamento> salidas = salidaMedicamentoRepository.findByConsulta_IdConsultaIn(idsConsultasMes);
+            for (SalidaMedicamento s : salidas) {
+                if (s.getCostoConsulta() != null) {
+                    totalRecaudacionConsultas = totalRecaudacionConsultas.add(s.getCostoConsulta());
+                }
+            }
+
+            List<Long> idsSalidas = salidas.stream().map(SalidaMedicamento::getIdSalida).filter(Objects::nonNull).toList();
+            if (!idsSalidas.isEmpty()) {
+                List<DetalleSalidaMedicamento> detalles = detalleSalidaMedicamentoRepository.findBySalida_IdSalidaIn(idsSalidas);
+                for (DetalleSalidaMedicamento d : detalles) {
+                    int cant = d.getCantidad() != null ? d.getCantidad() : 0;
+                    BigDecimal pUnit = d.getPrecioUnitario() != null ? d.getPrecioUnitario() : BigDecimal.ZERO;
+                    BigDecimal sub = pUnit.multiply(BigDecimal.valueOf(cant));
+                    totalRecaudacionMeds = totalRecaudacionMeds.add(sub);
+
+                    LoteMedicamento l = d.getLote();
+                    Medicamento m = l != null ? l.getMedicamento() : null;
+                    if (m != null && m.getIdMedicamento() != null) {
+                        Long medId = m.getIdMedicamento();
+                        medObjMap.putIfAbsent(medId, m);
+                        unidadesPorMedicamento.put(medId, unidadesPorMedicamento.getOrDefault(medId, 0L) + cant);
+                        montoPorMedicamento.put(medId, montoPorMedicamento.getOrDefault(medId, BigDecimal.ZERO).add(sub));
+                    }
+                }
+            }
+        }
+
+        BigDecimal recaudacionTotal = totalRecaudacionConsultas.add(totalRecaudacionMeds);
+
+        // 4. Alertas de inventario
+        long lotesPorVencer30 = loteMedicamentoRepository.countByEstadoAndFechaExpiracionBetween(
+                EstadoLote.ACTIVO, hoy, hoy.plusDays(30)
+        );
+
+        List<LoteMedicamento> lotesActivos = loteMedicamentoRepository.buscar(EstadoLote.ACTIVO, null, null);
+        Set<Long> medsConStock = lotesActivos.stream()
+                .filter(l -> l.getCantidadInicial() != null && l.getCantidadInicial() > 0)
+                .map(l -> l.getMedicamento() != null ? l.getMedicamento().getIdMedicamento() : null)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        long totalMedicamentosCatalogo = medicamentoRepository.count();
+        long medicamentosAgotados = Math.max(0, totalMedicamentosCatalogo - medsConStock.size());
+
+        // 5. Top 10 Diagnósticos
+        List<DashboardHospitalarioResponse.ItemTopDiagnostico> topDiagnosticos = Collections.emptyList();
+        if (!idsConsultasMes.isEmpty()) {
+            List<Diagnostico> todosDiag = diagnosticoRepository.findByConsulta_IdConsultaIn(idsConsultasMes);
+            long totalDiag = todosDiag.size();
+
+            Map<String, List<Diagnostico>> diagPorClave = todosDiag.stream()
+                    .filter(d -> (d.getCodigoCie10() != null && !d.getCodigoCie10().isBlank()) || (d.getDescripcion() != null && !d.getDescripcion().isBlank()))
+                    .collect(Collectors.groupingBy(d -> {
+                        if (d.getCodigoCie10() != null && !d.getCodigoCie10().isBlank()) {
+                            return d.getCodigoCie10().trim().toUpperCase();
+                        }
+                        return d.getDescripcion().trim().toUpperCase();
+                    }));
+
+            topDiagnosticos = diagPorClave.entrySet().stream()
+                    .sorted((a, b) -> Integer.compare(b.getValue().size(), a.getValue().size()))
+                    .limit(10)
+                    .map(entry -> {
+                        List<Diagnostico> lista = entry.getValue();
+                        Diagnostico primer = lista.get(0);
+                        String cod = (primer.getCodigoCie10() != null && !primer.getCodigoCie10().isBlank())
+                                ? primer.getCodigoCie10()
+                                : "S/C";
+                        String desc = (primer.getDescripcion() != null && !primer.getDescripcion().isBlank())
+                                ? primer.getDescripcion()
+                                : "Sin descripción";
+                        String cat = (primer.getCategoria() != null && primer.getCategoria().getNombre() != null)
+                                ? primer.getCategoria().getNombre()
+                                : "General";
+                        long cant = lista.size();
+                        double pct = totalDiag > 0 ? Math.round((cant * 1000.0) / totalDiag) / 10.0 : 0.0;
+
+                        return DashboardHospitalarioResponse.ItemTopDiagnostico.builder()
+                                .codigo(cod)
+                                .descripcion(desc)
+                                .categoria(cat)
+                                .cantidad(cant)
+                                .porcentaje(pct)
+                                .build();
+                    })
+                    .toList();
+        }
+
+        // 6. Demografía (Sexo y Edad)
+        Map<Long, Paciente> pacientesUnicos = new HashMap<>();
+        for (Consulta c : consultasMes) {
+            if (c.getPaciente() != null && c.getPaciente().getIdPaciente() != null) {
+                pacientesUnicos.putIfAbsent(c.getPaciente().getIdPaciente(), c.getPaciente());
+            }
+        }
+
+        long totalPacientes = pacientesUnicos.size();
+        long hombres = 0;
+        long mujeres = 0;
+        long pediatricos = 0;
+        long jovenes = 0;
+        long adultos = 0;
+        long adultosMayores = 0;
+
+        for (Paciente p : pacientesUnicos.values()) {
+            if (p.getSexo() == Sexo.M) hombres++;
+            else if (p.getSexo() == Sexo.F) mujeres++;
+
+            if (p.getFechaNacimiento() != null) {
+                int edad = Period.between(p.getFechaNacimiento(), hoy).getYears();
+                if (edad <= 12) pediatricos++;
+                else if (edad <= 18) jovenes++;
+                else if (edad <= 59) adultos++;
+                else adultosMayores++;
+            }
+        }
+
+        double pctH = totalPacientes > 0 ? Math.round((hombres * 1000.0) / totalPacientes) / 10.0 : 0.0;
+        double pctM = totalPacientes > 0 ? Math.round((mujeres * 1000.0) / totalPacientes) / 10.0 : 0.0;
+
+        double pctPed = totalPacientes > 0 ? Math.round((pediatricos * 1000.0) / totalPacientes) / 10.0 : 0.0;
+        double pctJov = totalPacientes > 0 ? Math.round((jovenes * 1000.0) / totalPacientes) / 10.0 : 0.0;
+        double pctAdu = totalPacientes > 0 ? Math.round((adultos * 1000.0) / totalPacientes) / 10.0 : 0.0;
+        double pctMay = totalPacientes > 0 ? Math.round((adultosMayores * 1000.0) / totalPacientes) / 10.0 : 0.0;
+
+        DashboardHospitalarioResponse.DemografiaDashboard demografia = DashboardHospitalarioResponse.DemografiaDashboard.builder()
+                .totalPacientes(totalPacientes)
+                .hombres(hombres)
+                .porcentajeHombres(pctH)
+                .mujeres(mujeres)
+                .porcentajeMujeres(pctM)
+                .pediatricos(pediatricos)
+                .porcentajePediatricos(pctPed)
+                .jovenes(jovenes)
+                .porcentajeJovenes(pctJov)
+                .adultos(adultos)
+                .porcentajeAdultos(pctAdu)
+                .adultosMayores(adultosMayores)
+                .porcentajeAdultosMayores(pctMay)
+                .build();
+
+        // 7. Top 10 Medicamentos
+        List<DashboardHospitalarioResponse.ItemTopMedicamento> topMedicamentos = unidadesPorMedicamento.entrySet().stream()
+                .sorted(Map.Entry.<Long, Long>comparingByValue().reversed())
+                .limit(10)
+                .map(entry -> {
+                    Long medId = entry.getKey();
+                    Medicamento m = medObjMap.get(medId);
+                    String nombre = m != null ? m.getNombre() : "Medicamento";
+                    String pres = m != null ? m.getPresentacion() : "";
+                    String conc = m != null ? m.getConcentracion() : "";
+                    String cat = (m != null && m.getCategoria() != null) ? m.getCategoria().getNombre() : "Farmacia";
+
+                    return DashboardHospitalarioResponse.ItemTopMedicamento.builder()
+                            .idMedicamento(medId)
+                            .nombre(nombre)
+                            .presentacion(pres)
+                            .concentracion(conc)
+                            .categoria(cat)
+                            .unidadesDispensadas(entry.getValue())
+                            .totalGenerado(montoPorMedicamento.getOrDefault(medId, BigDecimal.ZERO))
+                            .build();
+                })
+                .toList();
+
+        // 8. Construir respuesta final
+        DashboardHospitalarioResponse.KpisDashboard kpis = DashboardHospitalarioResponse.KpisDashboard.builder()
+                .pacientesMesTotal(totalConsultasMes)
+                .pacientesNuevos(pacientesNuevos)
+                .pacientesReconsulta(pacientesReconsulta)
+                .porcentajeNuevos(pctNuevos)
+                .porcentajeReconsulta(pctReconsulta)
+                .atendidosHoy(atendidosHoy)
+                .enEsperaHoy(enEsperaHoy)
+                .enEsperaPreconsulta(enEsperaPreconsulta)
+                .enEsperaClinica(enEsperaClinica)
+                .enEsperaFarmacia(enEsperaFarmacia)
+                .recaudacionMesTotal(recaudacionTotal)
+                .recaudacionConsultas(totalRecaudacionConsultas)
+                .recaudacionMedicamentos(totalRecaudacionMeds)
+                .medicamentosAgotados(medicamentosAgotados)
+                .lotesPorVencer30Dias(lotesPorVencer30)
+                .build();
+
+        return DashboardHospitalarioResponse.builder()
+                .anio(anio)
+                .mes(mes)
+                .kpis(kpis)
+                .topDiagnosticos(topDiagnosticos)
+                .demografia(demografia)
+                .topMedicamentos(topMedicamentos)
+                .build();
     }
 }

@@ -22,7 +22,9 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   if (allowedRoles && allowedRoles.length > 0) {
     const userRole = user.nombreRol;
     if (!allowedRoles.includes(userRole)) {
-      return <Navigate to="/inicio" replace />;
+      if (userRole === 'MEDICO') return <Navigate to="/clinica" replace />;
+      if (userRole === 'ENFERMERA') return <Navigate to="/recepcion" replace />;
+      return <Navigate to="/dashboard" replace />;
     }
   }
 

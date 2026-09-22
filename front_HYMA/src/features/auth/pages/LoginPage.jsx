@@ -30,8 +30,11 @@ function LoginPage() {
 
       if (data.usuario.nombreRol === 'ENFERMERA') {
         navigate('/recepcion');
+      } else if (data.usuario.nombreRol === 'MEDICO') {
+        navigate('/clinica');
       } else {
-        navigate('/inicio');
+        // ADMIN, FARMACIA y demás roles administrativos
+        navigate('/dashboard');
       }
     } catch (err) {
       setErrorMessage(

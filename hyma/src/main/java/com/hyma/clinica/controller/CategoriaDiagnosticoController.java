@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/diagnosticos/categorias")
-@PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
+@PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'FARMACIA')")
 @RequiredArgsConstructor
 public class CategoriaDiagnosticoController {
 

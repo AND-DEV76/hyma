@@ -1,0 +1,634 @@
+/* Estilos del Dashboard Hospitalario */
+
+.dashboard-page-container {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-main-content {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Header principal */
+.dashboard-header {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 1.25rem 1.75rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e2e8f0;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard-header-titles h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.25rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-header-titles p {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.dashboard-header-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.dashboard-period-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f1f5f9;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+}
+
+.dashboard-period-selector select {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.875rem;
+  color: #1e293b;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.dashboard-period-selector select:focus {
+  border-color: #0284c7;
+}
+
+.dashboard-btn-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #0284c7;
+  color: #ffffff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dashboard-btn-refresh:hover:not(:disabled) {
+  background: #0369a1;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+}
+
+.dashboard-btn-refresh:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Fila de KPIs */
+.dashboard-kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-kpi-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.25rem 1.4rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dashboard-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.kpi-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.kpi-card-title {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.kpi-card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kpi-icon-blue { background: #e0f2fe; color: #0284c7; }
+.kpi-icon-emerald { background: #d1fae5; color: #059669; }
+.kpi-icon-violet { background: #ede9fe; color: #7c3aed; }
+.kpi-icon-amber { background: #fef3c7; color: #d97706; }
+
+.kpi-card-value {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+
+.kpi-card-footer {
+  margin-top: 0.5rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.8rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.kpi-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.kpi-badge-teal { background: #ccfbf1; color: #0f766e; }
+.kpi-badge-blue { background: #e0f2fe; color: #0369a1; }
+.kpi-badge-orange { background: #ffedd5; color: #c2410c; }
+.kpi-badge-amber { background: #fef3c7; color: #92400e; }
+.kpi-badge-rose { background: #ffe4e6; color: #be123c; }
+
+/* Grid de paneles analíticos principales */
+.dashboard-analytics-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-panel {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 1.4rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.panel-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.panel-header-badge {
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+}
+
+/* Lista de Diagnósticos Top 10 */
+.top-diagnosticos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.top-diag-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.top-diag-item:hover {
+  background: #f8fafc;
+}
+
+.top-diag-rank {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.top-diag-item:nth-child(1) .top-diag-rank { background: #fef3c7; color: #b45309; }
+.top-diag-item:nth-child(2) .top-diag-rank { background: #e2e8f0; color: #334155; }
+.top-diag-item:nth-child(3) .top-diag-rank { background: #ffedd5; color: #9a3412; }
+
+.top-diag-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.top-diag-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.top-diag-code {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.top-diag-desc {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-diag-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.top-diag-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0284c7, #38bdf8);
+  border-radius: 999px;
+}
+
+.top-diag-metrics {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 65px;
+  flex-shrink: 0;
+}
+
+.top-diag-count {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.top-diag-percent {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Panel de Demografía */
+.demografia-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.demo-sexo-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.demo-sex-box {
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.demo-box-men {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.demo-box-women {
+  background: #fdf2f8;
+  border-color: #fbcfe8;
+}
+
+.demo-sex-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.demo-box-men .demo-sex-icon { background: #dcfce7; color: #15803d; }
+.demo-box-women .demo-sex-icon { background: #fce7f3; color: #be185d; }
+
+.demo-sex-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.demo-sex-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.demo-sex-count {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.demo-sex-pct {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.demo-box-men .demo-sex-pct { color: #15803d; }
+.demo-box-women .demo-sex-pct { color: #be185d; }
+
+/* Barra combinada de sexo */
+.demo-sex-bar-wrapper {
+  margin-top: -0.5rem;
+}
+
+.demo-sex-ratio-bar {
+  display: flex;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #e2e8f0;
+}
+
+.demo-ratio-hombres {
+  background: #22c55e;
+  height: 100%;
+  transition: width 0.3s;
+}
+
+.demo-ratio-mujeres {
+  background: #ec4899;
+  height: 100%;
+  transition: width 0.3s;
+}
+
+/* Grupos de Edad */
+.demo-age-section-title {
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.75rem;
+}
+
+.demo-age-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.demo-age-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.demo-age-row-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.825rem;
+}
+
+.demo-age-name {
+  font-weight: 600;
+  color: #334155;
+}
+
+.demo-age-val {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.demo-age-progress {
+  width: 100%;
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.demo-age-fill-blue { background: #0284c7; }
+.demo-age-fill-cyan { background: #06b6d4; }
+.demo-age-fill-amber { background: #f59e0b; }
+.demo-age-fill-violet { background: #8b5cf6; }
+
+/* Panel de Medicamentos */
+.dashboard-meds-panel {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 1.4rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  border: 1px solid #e2e8f0;
+  margin-bottom: 2rem;
+}
+
+.meds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.med-card-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  transition: all 0.15s;
+}
+
+.med-card-item:hover {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.05);
+}
+
+.med-rank-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #e0f2fe;
+  color: #0284c7;
+  font-weight: 800;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.med-card-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.med-card-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.med-card-spec {
+  font-size: 0.775rem;
+  color: #64748b;
+  margin-bottom: 0.35rem;
+}
+
+.med-card-cat-tag {
+  display: inline-block;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.med-card-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+
+.med-stat-units {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.med-stat-label {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.med-stat-revenue {
+  font-size: 0.75rem;
+  color: #059669;
+  font-weight: 700;
+  margin-top: 0.2rem;
+}
+
+/* Estados vacíos y carga */
+.dashboard-loading-box,
+.dashboard-empty-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3.5rem 2rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.dashboard-spinner {
+  width: 42px;
+  height: 42px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #0284c7;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

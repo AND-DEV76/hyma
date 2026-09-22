@@ -1,5 +1,6 @@
 package com.hyma.reporte.controller;
 
+import com.hyma.reporte.dto.DashboardHospitalarioResponse;
 import com.hyma.reporte.dto.ReporteEstadisticaResponse;
 import com.hyma.reporte.service.ReporteService;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +20,21 @@ public class ReporteController {
 
     private final ReporteService reporteService;
 
+    @GetMapping("/dashboard/hospital")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA')")
+    public ResponseEntity<DashboardHospitalarioResponse> obtenerDashboardHospitalario(
+            @RequestParam(name = "anio", required = false) Integer anio,
+            @RequestParam(name = "mes", required = false) Integer mes) {
+
+        LocalDate now = LocalDate.now();
+        int a = (anio != null && anio > 2000) ? anio : now.getYear();
+        int m = (mes != null && mes >= 1 && mes <= 12) ? mes : now.getMonthValue();
+
+        return ResponseEntity.ok(reporteService.generarDashboardHospitalario(a, m));
+    }
+
     @GetMapping("/estadistica-mensual")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERA', 'FARMACIA')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA')")
     public ResponseEntity<ReporteEstadisticaResponse> obtenerEstadisticaMensual(
             @RequestParam(name = "anio", required = false) Integer anio,
             @RequestParam(name = "mes", required = false) Integer mes) {
@@ -33,7 +47,7 @@ public class ReporteController {
     }
 
     @GetMapping("/estadistica-mensual/excel")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERA', 'FARMACIA')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA')")
     public ResponseEntity<byte[]> descargarExcelEstadisticaMensual(
             @RequestParam(name = "anio", required = false) Integer anio,
             @RequestParam(name = "mes", required = false) Integer mes) throws IOException {

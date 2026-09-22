@@ -38,7 +38,7 @@ public class TarifaServicioController {
     }
 
     @PutMapping("/consulta-general")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA')")
     public ResponseEntity<TarifaDTO> actualizarPrecioConsultaGeneral(@RequestBody Map<String, Object> payload) {
         Object precioObj = payload.get("precio");
         if (precioObj == null) {

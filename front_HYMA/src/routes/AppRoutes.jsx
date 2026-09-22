@@ -11,13 +11,16 @@ export default function AppRoutes({ children }) {
         const path = child.props.path;
         let allowedRoles = [];
 
-        if (path.startsWith('/usuarios') || path === '/alergias' || path === '/farmacia/parametros') allowedRoles = ['ADMIN'];
+        if (path.startsWith('/usuarios') || path === '/farmacia/parametros') allowedRoles = ['ADMIN'];
         else if (path === '/recepcion' || path.startsWith('/preconsulta')) allowedRoles = ['ADMIN', 'ENFERMERA'];
-        else if (path.startsWith('/farmacia')) allowedRoles = ['ADMIN', 'FARMACIA', 'MEDICO', 'ENFERMERA'];
+        else if (path.startsWith('/farmacia') || path.startsWith('/reportes')) allowedRoles = ['ADMIN', 'FARMACIA'];
+        else if (path.startsWith('/dashboard')) allowedRoles = ['ADMIN', 'FARMACIA'];
         else if (path === '/medicos') allowedRoles = ['ADMIN', 'FARMACIA'];
-        else if (path.startsWith('/clinica') || path.startsWith('/diagnosticos')) allowedRoles = ['ADMIN', 'MEDICO'];
-        else if (path.startsWith('/reportes')) allowedRoles = ['ADMIN', 'MEDICO', 'FARMACIA', 'ENFERMERA'];
-        else if (path.startsWith('/tarifas') || path.startsWith('/configuracion')) allowedRoles = ['ADMIN', 'MEDICO'];
+        else if (path.startsWith('/clinica')) allowedRoles = ['ADMIN', 'MEDICO'];
+        else if (path.startsWith('/diagnosticos')) allowedRoles = ['ADMIN', 'MEDICO', 'FARMACIA'];
+        else if (path === '/alergias') allowedRoles = ['ADMIN', 'MEDICO', 'FARMACIA'];
+        else if (path.startsWith('/tarifas')) allowedRoles = ['ADMIN', 'FARMACIA'];
+        else if (path.startsWith('/configuracion')) allowedRoles = ['ADMIN', 'MEDICO', 'FARMACIA'];
         
         return (
           <Route

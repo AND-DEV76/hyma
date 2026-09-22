@@ -9,12 +9,17 @@ import './Breadcrumb.css';
  * @param {boolean} showHome
  */
 export default function Breadcrumb({ items = [], showHome = true }) {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const homePath = user.nombreRol === 'MEDICO'
+    ? '/clinica'
+    : (user.nombreRol === 'ENFERMERA' ? '/recepcion' : '/dashboard');
+
   return (
     <nav aria-label="Navegación secundaria" className="hyma-breadcrumb-nav">
       {showHome && (
         <>
           <div className="hyma-breadcrumb-item">
-            <Link to="/inicio" className="hyma-breadcrumb-link" title="Inicio">
+            <Link to={homePath} className="hyma-breadcrumb-link" title="Inicio">
               <Home size={15} />
               <span>Inicio</span>
             </Link>

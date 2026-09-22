@@ -17,7 +17,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
-  X
+  X,
+  LayoutDashboard
 } from 'lucide-react';
 import saludLogo from '../../assets/images/log1.png';
 import './AdminNavbar.css';
@@ -72,7 +73,7 @@ export default function AdminNavbar() {
   };
 
   const isActive = (path) => {
-    if (path === '/inicio') return location.pathname === '/inicio';
+    if (path === '/dashboard') return location.pathname.startsWith('/dashboard');
     if (path === '/farmacia') {
       return (
         location.pathname.startsWith('/farmacia') ||
@@ -101,6 +102,12 @@ export default function AdminNavbar() {
   // Grupos de navegación
   const navItems = [
     {
+      label: 'Dashboard',
+      path: '/dashboard',
+      icon: LayoutDashboard,
+      show: isAdmin || isFarmacia,
+    },
+    {
       label: 'Recepción',
       path: '/recepcion',
       icon: UserCheck,
@@ -122,13 +129,13 @@ export default function AdminNavbar() {
       label: 'Farmacia',
       path: '/farmacia',
       icon: Pill,
-      show: isAdmin || isFarmacia || isMedico || isEnfermera,
+      show: isAdmin || isFarmacia,
     },
     {
       label: 'Configuración',
       path: '/configuracion',
       icon: Settings,
-      show: isAdmin || isMedico,
+      show: isAdmin || isMedico || isFarmacia,
     },
     {
       label: 'Usuarios',
@@ -168,7 +175,7 @@ export default function AdminNavbar() {
         <div className="sidebar-header">
           <button
             className="sidebar-brand"
-            onClick={() => navigate(isEnfermera ? '/recepcion' : (isMedico ? '/clinica' : '/recepcion'))}
+            onClick={() => navigate(isEnfermera ? '/recepcion' : (isMedico ? '/clinica' : '/dashboard'))}
             title="Programa de Salud - Obras Sociales San Martín"
           >
             <div className="brand-logo-wrapper">
