@@ -1,4 +1,5 @@
 services:
+
   postgres:
     image: postgres:17
     container_name: hyma_postgres
@@ -15,6 +16,34 @@ services:
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./db.sql:/docker-entrypoint-initdb.d/01-db.sql
+      - ./datos.sql:/docker-entrypoint-initdb.d/02-datos.sql
+
+
+  backend:
+    build:
+      context: ./hyma
+
+    container_name: hyma_backend
+
+    restart: "no"
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/hyma_db
+      SPRING_DATASOURCE_USERNAME: hyma_user
+      SPRING_DATASOURCE_PASSWORD: hyma_pass
+
+      CORS_ALLOWED_ORIGINS: http://localhost:5173
+
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B0645367566B5970
+      JWT_EXPIRATION_MS: 86400000
+
+    depends_on:
+      - postgres
+
 
 volumes:
   postgres_data:
