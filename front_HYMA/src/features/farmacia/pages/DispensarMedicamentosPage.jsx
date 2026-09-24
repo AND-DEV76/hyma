@@ -10,12 +10,12 @@ import {
   Clock,
   FileText,
   Package,
-  Info,
+  Printer,
 } from 'lucide-react';
 import { useDispensacion } from '../hooks/useDispensacion';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
-import userImg from '../../../assets/images/user.png';
+import RecetaMedicaPrint, { getDosisTexto, getUnidadTexto } from '../components/RecetaMedicaPrint';
 
 export default function DispensarMedicamentosPage() {
   const navigate = useNavigate();
@@ -33,7 +33,9 @@ export default function DispensarMedicamentosPage() {
   } = useDispensacion();
 
   const [confirmandoEntrega, setConfirmandoEntrega] = useState(false);
+  const [entregaFinalizada, setEntregaFinalizada] = useState(false);
   const [noPagaConsulta, setNoPagaConsulta] = useState(false);
+  const [duplicarEnHoja, setDuplicarEnHoja] = useState(false);
 
   const precioConsultaOriginal = Number(receta?.precioConsulta || 0);
   const costoConsultaCobrar = noPagaConsulta ? 0 : precioConsultaOriginal;
@@ -65,8 +67,12 @@ export default function DispensarMedicamentosPage() {
       observaciones: noPagaConsulta ? 'Exonerado de consulta médica por caso especial' : null,
     });
     if (res.success) {
-      alert('Medicamentos entregados con éxito. El paciente ha finalizado su atención.');
-      navigate('/farmacia/dispensacion');
+      setConfirmandoEntrega(false);
+      setEntregaFinalizada(true);
+      // Abrir directamente la ventana para imprimir la receta médica en media carta
+      setTimeout(() => {
+        window.print();
+      }, 350);
     }
   };
 
@@ -103,48 +109,18 @@ export default function DispensarMedicamentosPage() {
     }
   };
 
-  const getDosisTexto = (m) => {
-    if (m.dosis && m.dosis.trim()) {
-      return m.dosis;
-    }
-    const pres = (m.presentacion || '').toLowerCase();
-    if (pres.includes('jarabe') || pres.includes('suspensi') || pres.includes('soluci')) {
-      return '1 cucharadita (5 ml)';
-    }
-    if (pres.includes('crema') || pres.includes('ung') || pres.includes('pomada') || pres.includes('gel') || pres.includes('vaginal')) {
-      return '1 aplicación tópica';
-    }
-    if (pres.includes('inhalad') || pres.includes('spray') || pres.includes('aerosol')) {
-      return '1-2 disparos';
-    }
-    return '1 unidad por toma';
-  };
-
-  const getUnidadTexto = (m) => {
-    const pres = (m.presentacion || '').toLowerCase();
-    if (pres.includes('jarabe') || pres.includes('suspensi') || pres.includes('soluci')) {
-      return Number(m.cantidad) === 1 ? 'frasco' : 'frascos';
-    }
-    if (pres.includes('crema') || pres.includes('ung') || pres.includes('pomada') || pres.includes('gel') || pres.includes('vaginal')) {
-      return Number(m.cantidad) === 1 ? 'tubo' : 'tubos';
-    }
-    if (pres.includes('inhalad') || pres.includes('spray') || pres.includes('aerosol')) {
-      return Number(m.cantidad) === 1 ? 'inhalador' : 'inhaladores';
-    }
-    return Number(m.cantidad) === 1 ? 'unidad' : 'unidades';
-  };
-
   return (
     <div style={styles.page}>
-      <AdminNavbar />
+      <div className="no-print-area" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: '100vh' }}>
+        <AdminNavbar />
 
-      <main style={styles.content}>
+        <main style={styles.content}>
         {/* Breadcrumb de navegación */}
         <Breadcrumb
           items={[
             { label: 'Farmacia', to: '/farmacia' },
             { label: 'Dispersión', to: '/farmacia/dispensacion' },
-            { label: `Dispensar a ${receta?.nombreCompletoPaciente || 'Paciente'}` }
+            { label: 'Dispensar Medicamentos' }
           ]}
         />
 
@@ -152,15 +128,15 @@ export default function DispensarMedicamentosPage() {
         <div style={styles.odooHeaderCard}>
           <div style={styles.headerLeft}>
             <div style={styles.avatarThumbWrapper}>
-              <img src={userImg} alt="Avatar" style={styles.avatarThumbImg} />
+              <Pill size={22} color="#0077b6" />
             </div>
 
             <div style={styles.verticalDivider}>|</div>
 
             <div>
-              <span style={styles.headerEyebrow}>DISPENSACIÓN DE FARMACIA</span>
+              <span style={styles.headerEyebrow}>MÓDULO DE FARMACIA</span>
               <h1 style={styles.headerTitle}>
-                Paciente: {receta?.nombreCompletoPaciente || 'Cargando...'}
+                Dispensación de Medicamentos
               </h1>
             </div>
           </div>
@@ -193,21 +169,8 @@ export default function DispensarMedicamentosPage() {
           </div>
         ) : (
           <div style={styles.layoutGrid}>
-            {/* Columna Izquierda: Tarjeta Gráfica y Botones de Acción (según boceto) */}
+            {/* Columna Izquierda: Resumen de Cobro y Acciones */}
             <aside style={styles.leftCol}>
-              <div style={styles.bigAvatarCard}>
-                <div style={styles.avatarGlowContainer}>
-                  <div style={styles.bigAvatarWrapper}>
-                    <img src={userImg} alt="Paciente" style={styles.bigAvatarImg} />
-                  </div>
-                </div>
-
-                <h3 style={styles.patientAvatarName}>
-                  {receta?.nombreCompletoPaciente || 'Paciente'}
-                </h3>
-                <span style={styles.avatarSubtag}>Entrega de Prescripción</span>
-              </div>
-
               {/* Tarjeta de Cobro / Resumen Financiero Dinámico */}
               <div style={styles.billingCard}>
                 <div style={styles.billingHeader}>
@@ -267,7 +230,7 @@ export default function DispensarMedicamentosPage() {
                 </div>
               </div>
 
-              {/* Botones DAR y CANCELAR (diseño de imagen) */}
+              {/* Botones DAR, IMPRIMIR y CANCELAR */}
               <div style={styles.actionButtonsStack}>
                 <button
                   type="button"
@@ -279,6 +242,29 @@ export default function DispensarMedicamentosPage() {
                   <CheckCircle2 size={18} />
                   <span>{entregando ? 'Entregando...' : 'Dar'}</span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  style={styles.btnPrintReceta}
+                  title="Imprimir receta médica (Media Carta)"
+                >
+                  <Printer size={16} />
+                  <span>Imprimir Receta</span>
+                </button>
+
+                {/* Opción para duplicar boleta en la misma hoja horizontal */}
+                <label style={styles.duplicarLabel}>
+                  <input
+                    type="checkbox"
+                    checked={duplicarEnHoja}
+                    onChange={(e) => setDuplicarEnHoja(e.target.checked)}
+                    style={styles.duplicarInput}
+                  />
+                  <span style={styles.duplicarText}>
+                    Imprimir 2 por hoja (2 pacientes / copias)
+                  </span>
+                </label>
 
                 <button
                   type="button"
@@ -303,16 +289,16 @@ export default function DispensarMedicamentosPage() {
 
                 <div style={styles.summaryGrid}>
                   <div style={styles.summaryItem}>
-                    <span style={styles.summaryLabel}>Médico Tratante</span>
+                    <span style={styles.summaryLabel}>Paciente</span>
                     <span style={styles.summaryVal}>
-                      {receta?.nombreMedico || 'No asignado'}
+                      {receta?.nombreCompletoPaciente || 'No especificado'}
                     </span>
                   </div>
 
                   <div style={styles.summaryItem}>
-                    <span style={styles.summaryLabel}>Fecha Consulta</span>
+                    <span style={styles.summaryLabel}>Médico Tratante</span>
                     <span style={styles.summaryVal}>
-                      {formatFecha(receta?.fechaConsulta)}
+                      {receta?.nombreMedico || 'No asignado'}
                     </span>
                   </div>
 
@@ -322,13 +308,6 @@ export default function DispensarMedicamentosPage() {
                       {receta?.edad !== null && receta?.edad !== undefined
                         ? `${receta.edad} años`
                         : 'No especificada'}
-                    </span>
-                  </div>
-
-                  <div style={styles.summaryItem}>
-                    <span style={styles.summaryLabel}>Comunidad</span>
-                    <span style={styles.summaryVal}>
-                      {receta?.comunidad || 'No especificada'}
                     </span>
                   </div>
                 </div>
@@ -457,11 +436,10 @@ export default function DispensarMedicamentosPage() {
                     <div>
                       <h3 style={styles.suggestionTitle}>Medicamentos sugeridos a dar</h3>
                       <p style={styles.suggestionSubtitle}>
-                        Lotes recomendados más próximos a vencer (FEFO). Al dar clic en <strong>Dar</strong>, el sistema descontará automáticamente de estos lotes.
+                        Lotes recomendados más próximos a vencer. Al dar clic en <strong>Dar</strong>, el sistema descontará automáticamente de estos lotes.
                       </p>
                     </div>
                   </div>
-                  <span style={styles.fefoBadge}>PEPS / FEFO</span>
                 </div>
 
                 {receta?.lotesSugeridos && receta.lotesSugeridos.length > 0 ? (
@@ -563,12 +541,6 @@ export default function DispensarMedicamentosPage() {
                   </div>
                 )}
 
-                <div style={styles.suggestionFooterNote}>
-                  <Info size={15} color="#0077b6" />
-                  <span>
-                    El inventario se actualizará automáticamente descontando de los lotes sugeridos y se guardará el registro formal en salida de medicamentos al hacer clic en <strong>Dar</strong>.
-                  </span>
-                </div>
               </div>
             </section>
           </div>
@@ -638,7 +610,69 @@ export default function DispensarMedicamentosPage() {
             </div>
           </div>
         )}
-      </main>
+
+        {/* Modal de Entrega Exitosa y Confirmación de Impresión */}
+        {entregaFinalizada && (
+          <div style={styles.modalOverlay}>
+            <div style={styles.modalCard}>
+              <div style={styles.modalHeader}>
+                <div style={styles.modalIconCheck}>
+                  <CheckCircle2 size={24} color="#059669" />
+                </div>
+                <div>
+                  <h3 style={styles.modalTitle}>¡Medicamentos Entregados con Éxito!</h3>
+                  <p style={styles.modalSub}>
+                    El inventario ha sido actualizado y el turno del paciente ha finalizado.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ padding: '16px 0', textAlign: 'center' }}>
+                <p style={{ margin: '0 0 12px', color: '#334155', fontSize: '14px', lineHeight: 1.5 }}>
+                  La receta médica se abrió para imprimir en formato <strong>Media Hoja Carta</strong>. Si no se abrió o necesitas otra copia, puedes volver a imprimirla.
+                </p>
+
+                <div style={{ marginBottom: '14px' }}>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={duplicarEnHoja}
+                      onChange={(e) => setDuplicarEnHoja(e.target.checked)}
+                      style={{ accentColor: '#0077b6', width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
+                    <span style={{ fontSize: '13px', color: '#1e293b', fontWeight: 600 }}>
+                      Imprimir 2 recetas por hoja (2 pacientes / copias)
+                    </span>
+                  </label>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    style={styles.btnPrintModal}
+                  >
+                    <Printer size={16} />
+                    <span>Volver a Imprimir Receta</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/farmacia/dispensacion')}
+                    style={styles.btnFinalizarModal}
+                  >
+                    <span>Finalizar y Salir</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        </main>
+      </div>
+
+      {/* Componente Modular de Impresión de Receta (Media Carta en Hoja Horizontal) */}
+      <RecetaMedicaPrint receta={receta} duplicar={duplicarEnHoja} />
     </div>
   );
 }
@@ -759,55 +793,6 @@ const styles = {
     flexDirection: 'column',
     gap: '16px',
   },
-  bigAvatarCard: {
-    background: 'linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%)',
-    borderRadius: '12px',
-    border: '1px solid #bae6fd',
-    padding: '28px 20px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    textAlign: 'center',
-    boxShadow: '0 4px 12px rgba(0, 119, 182, 0.05)',
-  },
-  avatarGlowContainer: {
-    width: '120px',
-    height: '120px',
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, #e0f2fe 0%, #ffffff 80%)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    border: '2px dashed #90e0ef',
-    marginBottom: '16px',
-  },
-  bigAvatarWrapper: {
-    width: '94px',
-    height: '94px',
-    borderRadius: '50%',
-    overflow: 'hidden',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: '#ffffff',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.06)',
-  },
-  bigAvatarImg: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-  },
-  patientAvatarName: {
-    margin: '0 0 4px',
-    color: '#03045e',
-    fontSize: '18px',
-    fontWeight: '800',
-  },
-  avatarSubtag: {
-    fontSize: '12px',
-    color: '#0077b6',
-    fontWeight: '600',
-  },
   billingCard: {
     background: 'white',
     borderRadius: '12px',
@@ -913,6 +898,44 @@ const styles = {
     cursor: 'pointer',
     boxShadow: '0 4px 10px rgba(0, 119, 182, 0.25)',
     transition: 'background 0.2s',
+  },
+  btnPrintReceta: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    background: '#0284c7',
+    color: 'white',
+    border: 'none',
+    padding: '12px 20px',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '700',
+    cursor: 'pointer',
+    boxShadow: '0 4px 10px rgba(2, 132, 199, 0.25)',
+    transition: 'all 0.2s',
+  },
+  duplicarLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    cursor: 'pointer',
+    background: '#f8fafc',
+    padding: '8px 12px',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
+  },
+  duplicarInput: {
+    width: '16px',
+    height: '16px',
+    accentColor: '#0077b6',
+    cursor: 'pointer',
+  },
+  duplicarText: {
+    fontSize: '12px',
+    fontWeight: '600',
+    color: '#334155',
+    userSelect: 'none',
   },
   btnCancelar: {
     display: 'inline-flex',
@@ -1298,6 +1321,32 @@ const styles = {
     padding: '8px 18px',
     borderRadius: '6px',
     fontSize: '13px',
+    fontWeight: '700',
+    cursor: 'pointer',
+  },
+  btnPrintModal: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#0284c7',
+    color: 'white',
+    border: 'none',
+    padding: '10px 18px',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '700',
+    cursor: 'pointer',
+    boxShadow: '0 2px 6px rgba(2, 132, 199, 0.2)',
+  },
+  btnFinalizarModal: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    background: '#059669',
+    color: 'white',
+    border: 'none',
+    padding: '10px 18px',
+    borderRadius: '8px',
+    fontSize: '14px',
     fontWeight: '700',
     cursor: 'pointer',
   },

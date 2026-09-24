@@ -1,29 +1,3 @@
-INSERT INTO rol (nombre) VALUES
-('ADMIN'),
-('MEDICO'),
-('ENFERMERA'),
-('FARMACIA');
-
-
-
-
-WITH nuevo_usuario AS (
-    INSERT INTO usuario (username, correo, password_hash, estado)
-    VALUES (
-        'superadmin',
-        'admin@clinica.com', -- Puedes ajustar o poner NULL si aún no tienes correo
-        '$argon2id$v=19$m=65536,t=3,p=1$MGyy2kxPjo6TCBSYF5MwNg$ozUBNRmbVBu1zUa5DZEybV/FU9U3VVZXubrMYySXwKI',
-        TRUE
-    )
-    RETURNING id_usuario
-)
-INSERT INTO usuario_rol (id_usuario, id_rol)
-SELECT 
-    nuevo_usuario.id_usuario,
-    rol.id_rol
-FROM nuevo_usuario, rol
-WHERE rol.nombre = 'ADMIN';
-
 
 
 -- ==========================================================
