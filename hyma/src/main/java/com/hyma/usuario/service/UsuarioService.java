@@ -112,7 +112,10 @@ public class UsuarioService {
         usuario.setEstado(request.getEstado());
 
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
-            usuario.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+            if (request.getPassword().trim().length() < 8) {
+                throw new RuntimeException("La contraseña debe tener al menos 8 caracteres");
+            }
+            usuario.setPasswordHash(passwordEncoder.encode(request.getPassword().trim()));
         }
 
         return usuarioMapper.toResponse(usuarioRepository.save(usuario));

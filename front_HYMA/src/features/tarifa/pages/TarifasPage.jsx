@@ -12,7 +12,8 @@ import tarifaService from '../../reportes/services/tarifaService';
 import '../styles/tarifas.css';
 
 export default function TarifasPage() {
-  const [precioConsulta, setPrecioConsulta] = useState('');
+  const [precioActual, setPrecioActual] = useState(50.0);
+  const [precioConsulta, setPrecioConsulta] = useState('50.00');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -23,7 +24,9 @@ export default function TarifasPage() {
     setErrorMsg('');
     try {
       const res = await tarifaService.obtenerPrecioConsultaGeneral();
-      setPrecioConsulta(res?.precio ?? 50.0);
+      const p = res?.precio ?? 50.0;
+      setPrecioActual(p);
+      setPrecioConsulta(Number(p).toFixed(2));
     } catch (err) {
       console.error('Error al cargar tarifa:', err);
       setErrorMsg('No se pudo cargar la tarifa desde el servidor.');
@@ -36,19 +39,57 @@ export default function TarifasPage() {
     cargarTarifa();
   }, []);
 
+  // Bloqueo estricto de teclas de signo negativo y notación exponencial
+  const handleKeyDownPrecio = (e) => {
+    if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+      e.preventDefault();
+    }
+  };
+
+  // Filtrado y sanitización en tiempo real: nunca permitir números negativos
+  const handlePrecioChange = (e) => {
+    let val = e.target.value;
+    // Eliminar cualquier signo negativo o caracter no numérico (excepto punto decimal)
+    val = val.replace(/[^0-9.]/g, '');
+
+    // Evitar múltiples puntos decimales
+    const partes = val.split('.');
+    if (partes.length > 2) {
+      val = partes[0] + '.' + partes.slice(1).join('');
+    }
+
+    // Limitar a máximo 2 decimales
+    if (partes.length === 2 && partes[1].length > 2) {
+      val = `${partes[0]}.${partes[1].slice(0, 2)}`;
+    }
+
+    setPrecioConsulta(val);
+    if (errorMsg) setErrorMsg('');
+  };
+
   const handleGuardarPrecioConsulta = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+    if (saving || loading) return;
     setSaving(true);
     setSuccessMsg('');
     setErrorMsg('');
 
     try {
+      if (precioConsulta === '' || precioConsulta === null) {
+        throw new Error('Debe ingresar un monto para la tarifa.');
+      }
+
       const num = parseFloat(precioConsulta);
-      if (isNaN(num) || num < 0) {
-        throw new Error('Ingrese un precio válido mayor o igual a 0');
+      if (isNaN(num)) {
+        throw new Error('Ingrese un precio numérico válido.');
+      }
+
+      if (num < 0) {
+        throw new Error('El precio no puede ser negativo. Debe ser un monto mayor o igual a 0.');
       }
 
       await tarifaService.actualizarPrecioConsultaGeneral(num);
+      setPrecioActual(num);
       setSuccessMsg(`Tarifa actualizada a Q ${num.toFixed(2)} correctamente.`);
       await cargarTarifa();
     } catch (err) {
@@ -105,7 +146,7 @@ export default function TarifasPage() {
             </div>
 
             <div className="tarifa-hero-badge">
-              Q {Number(precioConsulta || 0).toFixed(2)}
+              Q {Number(precioActual ?? 0).toFixed(2)}
             </div>
           </div>
 
@@ -121,14 +162,18 @@ export default function TarifasPage() {
                   <span className="tarifa-currency-prefix">Q</span>
                   <input
                     id="precioInput"
+                    name="precioInput"
                     type="number"
                     step="0.50"
                     min="0"
+                    max="99999.99"
                     value={precioConsulta}
-                    onChange={(e) => setPrecioConsulta(e.target.value)}
+                    onChange={handlePrecioChange}
+                    onKeyDown={handleKeyDownPrecio}
                     className="tarifa-input-field"
                     required
                     placeholder="0.00"
+                    title="El precio debe ser un monto mayor o igual a 0"
                   />
                 </div>
 

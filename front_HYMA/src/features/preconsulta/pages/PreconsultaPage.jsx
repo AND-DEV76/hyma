@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   X,
   UserCheck,
+  Loader2,
 } from 'lucide-react';
 import { usePreconsulta } from '../hooks/usePreconsulta';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
@@ -31,6 +32,7 @@ export default function PreconsultaPage() {
 
   const [pacienteAEliminar, setPacienteAEliminar] = useState(null);
   const [eliminando, setEliminando] = useState(false);
+  const [abriendoId, setAbriendoId] = useState(null);
 
   // Cargar colas al montar y sincronizar en tiempo real
   useEffect(() => {
@@ -65,18 +67,27 @@ export default function PreconsultaPage() {
   }, [colaPreconsulta, colaPendiente]);
 
   const handleAbrirPaciente = async (item) => {
-    if (item.estado === 'PENDIENTE') {
-      await atenderTurno(item.idCola);
+    if (abriendoId || eliminando) return;
+    setAbriendoId(item.idCola);
+    try {
+      if (item.estado === 'PENDIENTE') {
+        await atenderTurno(item.idCola);
+      }
+      navigate(`/preconsulta/signos?idPaciente=${item.idPaciente}&idCola=${item.idCola}`);
+    } finally {
+      setAbriendoId(null);
     }
-    navigate(`/preconsulta/signos?idPaciente=${item.idPaciente}&idCola=${item.idCola}`);
   };
 
   const handleConfirmarEliminar = async () => {
-    if (!pacienteAEliminar) return;
+    if (!pacienteAEliminar || eliminando) return;
     setEliminando(true);
-    await cancelarTurno(pacienteAEliminar.idCola);
-    setEliminando(false);
-    setPacienteAEliminar(null);
+    try {
+      await cancelarTurno(pacienteAEliminar.idCola);
+      setPacienteAEliminar(null);
+    } finally {
+      setEliminando(false);
+    }
   };
 
   const formatHora = (fecha) => {
@@ -210,9 +221,19 @@ export default function PreconsultaPage() {
                           onClick={() => handleAbrirPaciente(item)}
                           style={styles.btnAbrir}
                           title="Abrir formulario de signos vitales"
+                          disabled={abriendoId !== null || eliminando}
                         >
-                          <span>{isEnAtencion ? 'Continuar' : 'Abrir'}</span>
-                          <ArrowRight size={15} />
+                          {abriendoId === item.idCola ? (
+                            <>
+                              <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} />
+                              <span>Abriendo...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>{isEnAtencion ? 'Continuar' : 'Abrir'}</span>
+                              <ArrowRight size={15} />
+                            </>
+                          )}
                         </button>
 
                         <button
@@ -281,7 +302,14 @@ export default function PreconsultaPage() {
                   style={styles.btnModalConfirm}
                   disabled={eliminando}
                 >
-                  {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
+                  {eliminando ? (
+                    <>
+                      <Loader2 size={15} style={{ animation: 'spin 1s linear infinite', display: 'inline-block', marginRight: '6px' }} />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    'Sí, eliminar'
+                  )}
                 </button>
               </div>
             </div>

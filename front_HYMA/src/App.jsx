@@ -4,6 +4,7 @@ import AppRoutes from './routes/AppRoutes';
 import Navbar from './components/Navbar/Navbar';
 import Hero from './components/Hero/Hero';
 import LoginPage from './features/auth/pages/LoginPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function RedirectHome() {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -71,6 +72,7 @@ function App() {
             <Route path="/reportes" element={<ReportesPage />} />
             <Route path="/tarifas" element={<TarifasPage />} />
             <Route path="/configuracion" element={<ConfiguracionPage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </AppRoutes>
         } />
       </Routes>

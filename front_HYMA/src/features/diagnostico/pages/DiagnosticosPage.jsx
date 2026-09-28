@@ -113,6 +113,7 @@ export default function DiagnosticosPage() {
 
   const handleSaveDiag = async (e) => {
     e.preventDefault();
+    if (submittingDiag) return;
     setModalDiagError('');
 
     const cleanCodigo = diagForm.codigo.trim().toUpperCase();
@@ -194,6 +195,7 @@ export default function DiagnosticosPage() {
 
   const handleSaveCat = async (e) => {
     e.preventDefault();
+    if (submittingCat) return;
     setModalCatError('');
 
     const cleanNombre = catForm.nombre.trim();

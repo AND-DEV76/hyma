@@ -19,6 +19,7 @@ export const AlergiaForm = ({ isOpen, onClose, onSubmit, alergiaEditar }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const cleanNombre = nombre.trim();
     if (!cleanNombre) {
       setErrorMessage('El nombre de la alergia es obligatorio.');

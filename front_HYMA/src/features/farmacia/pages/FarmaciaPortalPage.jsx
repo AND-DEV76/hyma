@@ -18,8 +18,8 @@ export default function FarmaciaPortalPage() {
 
   const opciones = [
     {
-      id: 'dispersion',
-      titulo: 'Dispersión',
+      id: 'dispensacion',
+      titulo: 'Dispensación',
       descripcion: 'Dispensación y entrega de recetas médicas a pacientes en espera.',
       ruta: '/farmacia/dispensacion',
       icono: <Pill size={26} />,

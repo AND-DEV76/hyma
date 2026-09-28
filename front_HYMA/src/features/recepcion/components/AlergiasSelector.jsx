@@ -70,6 +70,7 @@ export default function AlergiasSelector({
   };
 
   const handleCreateNew = async () => {
+    if (isCreating) return;
     const nombreLimpio = query.trim();
     if (!nombreLimpio) return;
 
@@ -211,7 +212,7 @@ export default function AlergiasSelector({
           {/* Opción Odoo: Crear "X" */}
           {query.trim() !== '' && !exactMatchExists && (
             <div
-              onClick={handleCreateNew}
+              onClick={isCreating ? undefined : handleCreateNew}
               className={`odoo-dropdown-create-btn ${isCreating ? 'disabled' : ''}`}
             >
               {isCreating ? (

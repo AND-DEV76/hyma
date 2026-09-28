@@ -3,6 +3,7 @@ package com.hyma.recepcion.dto;
 import com.hyma.recepcion.model.Sexo;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -25,6 +26,7 @@ public class PacienteCreateRequest {
     private String apellidos;
 
     @NotNull(message = "La fecha de nacimiento es obligatoria")
+    @PastOrPresent(message = "La fecha de nacimiento no puede ser una fecha futura")
     private LocalDate fechaNacimiento;
 
     @NotNull(message = "El sexo es obligatorio")

@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   X,
   PackageCheck,
+  Loader2,
 } from 'lucide-react';
 import { useDispensacion } from '../hooks/useDispensacion';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
@@ -55,11 +56,14 @@ export default function DispensacionColaPage() {
   };
 
   const handleConfirmarEliminar = async () => {
-    if (!pacienteAEliminar) return;
+    if (!pacienteAEliminar || eliminando) return;
     setEliminando(true);
-    await cancelarTurno(pacienteAEliminar.idCola);
-    setEliminando(false);
-    setPacienteAEliminar(null);
+    try {
+      await cancelarTurno(pacienteAEliminar.idCola);
+      setPacienteAEliminar(null);
+    } finally {
+      setEliminando(false);
+    }
   };
 
   const formatHora = (fecha) => {
@@ -81,7 +85,7 @@ export default function DispensacionColaPage() {
         <Breadcrumb
           items={[
             { label: 'Farmacia', to: '/farmacia' },
-            { label: 'Dispersión' }
+            { label: 'Dispensación' }
           ]}
         />
 
@@ -266,7 +270,14 @@ export default function DispensacionColaPage() {
                   style={styles.btnModalConfirmDelete}
                   disabled={eliminando}
                 >
-                  {eliminando ? 'Cancelando...' : 'Confirmar Cancelación'}
+                  {eliminando ? (
+                    <>
+                      <Loader2 size={15} style={{ animation: 'spin 1s linear infinite', display: 'inline-block', marginRight: '6px' }} />
+                      <span>Cancelando...</span>
+                    </>
+                  ) : (
+                    'Confirmar Cancelación'
+                  )}
                 </button>
               </div>
             </div>

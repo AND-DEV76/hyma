@@ -31,6 +31,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -61,13 +63,83 @@ public class ClinicaService {
                 
         PacienteResponse pacienteResp = pacienteMapper.toResponse(paciente);
         SignoVitalResponse signoResp = ultimoSigno != null ? signoVitalMapper.toResponse(ultimoSigno) : null;
+
+        // Obtener última consulta completada si existe
+        UltimaConsultaResponse ultimaConsultaResp = null;
+        Optional<Consulta> ultimaConsultaOpt = consultaRepository.findTopByPacienteOrderByFechaConsultaDesc(paciente);
+        if (ultimaConsultaOpt.isPresent()) {
+            Consulta c = ultimaConsultaOpt.get();
+            
+            // Diagnósticos
+            List<Diagnostico> diags = diagnosticoRepository.findByConsulta_IdConsulta(c.getIdConsulta());
+            List<UltimaConsultaResponse.DiagnosticoItemResponse> diagList = diags.stream()
+                    .map(d -> UltimaConsultaResponse.DiagnosticoItemResponse.builder()
+                            .codigoCie10(d.getCodigoCie10())
+                            .descripcion(d.getDescripcion())
+                            .build())
+                    .toList();
+
+            // Tratamiento
+            Optional<Tratamiento> tratOpt = tratamientoRepository.findByConsultaIdWithDetalles(c.getIdConsulta());
+            String indicaciones = tratOpt.map(Tratamiento::getObservaciones).orElse(null);
+            List<UltimaConsultaResponse.MedicamentoRecetadoItemResponse> medsList = tratOpt
+                    .map(t -> t.getDetalles().stream()
+                            .map(det -> UltimaConsultaResponse.MedicamentoRecetadoItemResponse.builder()
+                                    .medicamento(det.getMedicamento() != null ? det.getMedicamento().getNombre() : "Medicamento")
+                                    .presentacion(det.getMedicamento() != null ? det.getMedicamento().getPresentacion() : null)
+                                    .concentracion(det.getMedicamento() != null ? det.getMedicamento().getConcentracion() : null)
+                                    .dosis(det.getDosis())
+                                    .frecuencia(det.getFrecuencia())
+                                    .duracion(det.getDuracion())
+                                    .cantidad(det.getCantidad())
+                                    .build())
+                            .toList())
+                    .orElse(List.of());
+
+            // Examen Físico
+            Optional<ExamenFisico> efOpt = examenFisicoRepository.findByConsulta_IdConsulta(c.getIdConsulta());
+            UltimaConsultaResponse.ExamenFisicoItemResponse efResp = efOpt
+                    .map(ef -> UltimaConsultaResponse.ExamenFisicoItemResponse.builder()
+                            .piel(ef.getPiel())
+                            .conciencia(ef.getConciencia())
+                            .cardiopulmonar(ef.getCardiopulmonar())
+                            .abdomen(ef.getAbdomen())
+                            .soma(ef.getSoma())
+                            .build())
+                    .orElse(null);
+
+            String medicoNombre = null;
+            String medicoEspecialidad = null;
+            if (c.getMedico() != null) {
+                medicoNombre = ((c.getMedico().getNombres() != null ? c.getMedico().getNombres() : "") + " " +
+                               (c.getMedico().getApellidos() != null ? c.getMedico().getApellidos() : "")).trim();
+                medicoEspecialidad = c.getMedico().getEspecialidad();
+            }
+
+            ultimaConsultaResp = UltimaConsultaResponse.builder()
+                    .idConsulta(c.getIdConsulta())
+                    .fechaConsulta(c.getFechaConsulta())
+                    .medico(medicoNombre)
+                    .especialidadMedico(medicoEspecialidad)
+                    .motivoConsulta(c.getMotivoConsulta())
+                    .historiaEnfermedadActual(c.getHistoriaEnfermedadActual())
+                    .impresionClinica(c.getImpresionClinica())
+                    .planMedico(c.getPlanMedico())
+                    .diagnosticos(diagList)
+                    .indicacionesTratamiento(indicaciones)
+                    .medicamentos(medsList)
+                    .examenFisico(efResp)
+                    .build();
+        }
         
         return PacienteConsultaResponse.builder()
                 .paciente(pacienteResp)
                 .ultimoSignoVital(signoResp)
                 .idCola(idCola)
+                .ultimaConsulta(ultimaConsultaResp)
                 .build();
     }
+
 
     @Transactional
     public ConsultaCompletaResponse finalizarConsulta(ConsultaCompletaRequest request, String username) {

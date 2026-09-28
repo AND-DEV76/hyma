@@ -34,6 +34,7 @@ export default function SignosVitalesPage() {
 
   const [paciente, setPaciente] = useState(null);
   const [cargandoPaciente, setCargandoPaciente] = useState(true);
+  const [enviando, setEnviando] = useState(false);
 
   // Estados del Formulario de Signos Vitales
   const [formData, setFormData] = useState({
@@ -92,25 +93,30 @@ export default function SignosVitalesPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!paciente) return;
+    if (!paciente || guardando || enviando) return;
 
-    const payload = {
-      idPaciente: paciente.idPaciente,
-      idCola: queryIdCola ? Number(queryIdCola) : null,
-      peso: formData.peso ? parseFloat(formData.peso) : null,
-      talla: formData.talla ? parseFloat(formData.talla) : null,
-      presionArterial: formData.presionArterial.trim() || null,
-      glicemia: formData.glicemia ? parseFloat(formData.glicemia) : null,
-      frecuenciaCardiaca: formData.frecuenciaCardiaca ? parseInt(formData.frecuenciaCardiaca) : null,
-      frecuenciaRespiratoria: formData.frecuenciaRespiratoria ? parseInt(formData.frecuenciaRespiratoria) : null,
-      saturacionOxigeno: formData.saturacionOxigeno ? parseFloat(formData.saturacionOxigeno) : null,
-      temperatura: formData.temperatura ? parseFloat(formData.temperatura) : null,
-    };
+    setEnviando(true);
+    try {
+      const payload = {
+        idPaciente: paciente.idPaciente,
+        idCola: queryIdCola ? Number(queryIdCola) : null,
+        peso: formData.peso ? parseFloat(formData.peso) : null,
+        talla: formData.talla ? parseFloat(formData.talla) : null,
+        presionArterial: formData.presionArterial.trim() || null,
+        glicemia: formData.glicemia ? parseFloat(formData.glicemia) : null,
+        frecuenciaCardiaca: formData.frecuenciaCardiaca ? parseInt(formData.frecuenciaCardiaca) : null,
+        frecuenciaRespiratoria: formData.frecuenciaRespiratoria ? parseInt(formData.frecuenciaRespiratoria) : null,
+        saturacionOxigeno: formData.saturacionOxigeno ? parseFloat(formData.saturacionOxigeno) : null,
+        temperatura: formData.temperatura ? parseFloat(formData.temperatura) : null,
+      };
 
-    const res = await guardarSignos(payload);
-    if (res.success) {
-      alert('Signos vitales registrados correctamente. El paciente fue enviado a consulta médica.');
-      navigate('/preconsulta');
+      const res = await guardarSignos(payload);
+      if (res.success) {
+        alert('Signos vitales registrados correctamente. El paciente fue enviado a consulta médica.');
+        navigate('/preconsulta');
+      }
+    } finally {
+      setEnviando(false);
     }
   };
 
@@ -379,17 +385,17 @@ export default function SignosVitalesPage() {
                 type="button"
                 onClick={handleCancelar}
                 style={styles.btnCancelar}
-                disabled={guardando}
+                disabled={guardando || enviando}
               >
                 Cancelar
               </button>
 
               <button
                 type="submit"
-                disabled={guardando}
+                disabled={guardando || enviando}
                 style={styles.btnGuardar}
               >
-                {guardando ? (
+                {guardando || enviando ? (
                   <>
                     <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
                     <span>Guardando...</span>

@@ -9,6 +9,7 @@ function ColaAtencion({ cola, quitarDeCola, cargando, guardando }) {
   const [errorPreconsulta, setErrorPreconsulta] = useState('');
 
   const handleAtenderPreconsulta = async (item) => {
+    if (atendiendoId !== null || guardando) return;
     setErrorPreconsulta('');
     setAtendiendoId(item.idCola);
 

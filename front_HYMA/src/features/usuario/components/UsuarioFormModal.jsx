@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, AlertCircle, Eye, EyeOff, Mail, Check, ShieldCheck } from 'lucide-react';
+import { X, AlertCircle, Eye, EyeOff, Mail, Check, ShieldCheck, Loader2 } from 'lucide-react';
 
 const ROLES = [
   { id: 1, nombre: 'ADMIN', color: '#6d28d9', bg: '#ede9fe', border: '#ddd6fe', desc: 'Acceso total y configuración del sistema' },
@@ -64,6 +64,7 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setValidationError('');
 
     if (selectedRoleIds.length === 0) {
@@ -86,6 +87,11 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
 
     if (!usuarioToEdit && password.length < 8) {
       setValidationError('La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+
+    if (usuarioToEdit && password.trim().length > 0 && password.trim().length < 8) {
+      setValidationError('La nueva contraseña debe tener al menos 8 caracteres.');
       return;
     }
 
@@ -229,10 +235,13 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
               <input
                 type="text"
                 required
+                minLength={3}
+                maxLength={50}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Ej: dr_martinez"
                 className="usuarios-form-input"
+                title="El nombre de usuario debe tener entre 3 y 50 caracteres"
               />
             </div>
 
@@ -298,9 +307,20 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
 
             {/* Campo Contraseña */}
             <div className="usuarios-form-group">
-              <div className="usuarios-form-label">
+              <div className="usuarios-form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>Contraseña</span>
-                {usuarioToEdit && (
+                {password.length > 0 && (
+                  <span
+                    style={{
+                      fontSize: '0.74rem',
+                      fontWeight: 600,
+                      color: password.length >= 8 ? '#10b981' : '#ef4444',
+                    }}
+                  >
+                    {password.length}/8 caracteres {password.length >= 8 ? '✓' : '(mínimo 8)'}
+                  </span>
+                )}
+                {usuarioToEdit && password.length === 0 && (
                   <span className="usuarios-form-hint">Opcional si no se cambia</span>
                 )}
               </div>
@@ -308,10 +328,12 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required={!usuarioToEdit}
+                  minLength={8}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={usuarioToEdit ? '••••••••' : 'Mínimo 8 caracteres'}
+                  placeholder={usuarioToEdit ? '•••••••• (dejar en blanco para conservar)' : 'Mínimo 8 caracteres'}
                   className="usuarios-form-input"
+                  title="La contraseña debe tener al menos 8 caracteres"
                 />
                 <button
                   type="button"
@@ -372,7 +394,16 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
               className="usuarios-btn-submit"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Guardando...' : usuarioToEdit ? 'Guardar Cambios' : 'Crear Usuario'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Guardando...</span>
+                </>
+              ) : usuarioToEdit ? (
+                'Guardar Cambios'
+              ) : (
+                'Crear Usuario'
+              )}
             </button>
           </div>
         </form>

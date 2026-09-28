@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, X, Plus, Edit2, Trash2, ChevronLeft, ChevronRight, Tag } from 'lucide-react';
+import { Search, X, Plus, Edit2, Trash2, ChevronLeft, ChevronRight, Tag, Loader2 } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -69,6 +69,7 @@ export default function CatalogoTablaView({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (saving) return;
     setModalError('');
 
     if (!nombre.trim()) {
@@ -77,14 +78,17 @@ export default function CatalogoTablaView({
     }
 
     setSaving(true);
-    const id = editingItem?.id;
-    const result = await onSave(id, { nombre: nombre.trim() });
-    setSaving(false);
+    try {
+      const id = editingItem?.id;
+      const result = await onSave(id, { nombre: nombre.trim() });
 
-    if (result && result.success) {
-      handleCloseModal();
-    } else {
-      setModalError(result?.error || `Error al guardar la ${singularLabel}.`);
+      if (result && result.success) {
+        handleCloseModal();
+      } else {
+        setModalError(result?.error || `Error al guardar la ${singularLabel}.`);
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -399,7 +403,16 @@ export default function CatalogoTablaView({
                   className="farmacia-btn-primary"
                   disabled={saving || !nombre.trim()}
                 >
-                  {saving ? 'Guardando...' : editingItem ? 'Guardar Cambios' : `Registrar ${singularLabel}`}
+                  {saving ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Guardando...</span>
+                    </>
+                  ) : editingItem ? (
+                    'Guardar Cambios'
+                  ) : (
+                    `Registrar ${singularLabel}`
+                  )}
                 </button>
               </div>
             </form>

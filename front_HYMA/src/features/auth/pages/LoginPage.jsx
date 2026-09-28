@@ -16,6 +16,7 @@ function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
     setErrorMessage('');
     setLoading(true);
 
@@ -122,7 +123,7 @@ function LoginPage() {
                     required
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Ej. medico1, enfermera1"
+                    placeholder="Ingresa tu usuario"
                     className="login-input"
                     autoComplete="username"
                   />

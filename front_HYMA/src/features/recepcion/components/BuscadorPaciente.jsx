@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, X, Plus, Phone, MapPin, UserCheck, Loader2 } from 'lucide-react';
 
 function BuscadorPaciente({
@@ -10,10 +10,22 @@ function BuscadorPaciente({
   cargando,
   guardando,
 }) {
+  const [agregandoId, setAgregandoId] = useState(null);
+
   useEffect(() => {
     const timer = setTimeout(() => buscar(busqueda), 350);
     return () => clearTimeout(timer);
   }, [busqueda, buscar]);
+
+  const handleAgregar = async (idPaciente) => {
+    if (guardando || agregandoId !== null) return;
+    setAgregandoId(idPaciente);
+    try {
+      await agregarPaciente(idPaciente);
+    } finally {
+      setAgregandoId(null);
+    }
+  };
 
   return (
     <section className="recepcion-box">
@@ -81,13 +93,22 @@ function BuscadorPaciente({
 
               <button
                 type="button"
-                onClick={() => agregarPaciente(paciente.idPaciente)}
-                disabled={guardando}
+                onClick={() => handleAgregar(paciente.idPaciente)}
+                disabled={guardando || agregandoId !== null}
                 className="recepcion-btn-add"
                 title="Poner en cola de espera"
               >
-                <Plus size={13} />
-                <span>Agregar a cola</span>
+                {agregandoId === paciente.idPaciente ? (
+                  <>
+                    <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
+                    <span>Agregando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus size={13} />
+                    <span>Agregar a cola</span>
+                  </>
+                )}
               </button>
             </div>
           ))}

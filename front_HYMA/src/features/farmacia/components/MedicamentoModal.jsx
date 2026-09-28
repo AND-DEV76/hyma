@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Pill } from 'lucide-react';
+import { X, Pill, Loader2 } from 'lucide-react';
 
 const initialMedicineState = {
   nombre: '',
@@ -45,6 +45,7 @@ function MedicamentoModal({ isOpen, onClose, onSave, medicineToEdit, categorias,
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     setErrorMessage('');
 
     if (!formData.nombre.trim()) {
@@ -53,23 +54,26 @@ function MedicamentoModal({ isOpen, onClose, onSave, medicineToEdit, categorias,
     }
 
     setSubmitting(true);
-    const payload = {
-      nombre: formData.nombre.trim(),
-      presentacion: formData.presentacion.trim() || null,
-      concentracion: formData.concentracion.trim() || null,
-      idCategoriaMedicamento: formData.idCategoriaMedicamento ? Number(formData.idCategoriaMedicamento) : null,
-      idCasaFarmaceutica: formData.idCasaFarmaceutica ? Number(formData.idCasaFarmaceutica) : null,
-      estado: formData.estado,
-    };
+    try {
+      const payload = {
+        nombre: formData.nombre.trim(),
+        presentacion: formData.presentacion.trim() || null,
+        concentracion: formData.concentracion.trim() || null,
+        idCategoriaMedicamento: formData.idCategoriaMedicamento ? Number(formData.idCategoriaMedicamento) : null,
+        idCasaFarmaceutica: formData.idCasaFarmaceutica ? Number(formData.idCasaFarmaceutica) : null,
+        estado: formData.estado,
+      };
 
-    const id = formData.idMedicamento || null;
-    const result = await onSave(id, payload);
+      const id = formData.idMedicamento || null;
+      const result = await onSave(id, payload);
 
-    setSubmitting(false);
-    if (result.success) {
-      onClose();
-    } else {
-      setErrorMessage(result.error || 'Ocurrió un error al guardar el medicamento.');
+      if (result.success) {
+        onClose();
+      } else {
+        setErrorMessage(result.error || 'Ocurrió un error al guardar el medicamento.');
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -225,11 +229,16 @@ function MedicamentoModal({ isOpen, onClose, onSave, medicineToEdit, categorias,
               className="farmacia-btn-primary"
               disabled={submitting}
             >
-              {submitting
-                ? 'Guardando...'
-                : formData.idMedicamento
-                ? 'Guardar Cambios'
-                : 'Registrar Medicamento'}
+              {submitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Guardando...</span>
+                </>
+              ) : formData.idMedicamento ? (
+                'Guardar Cambios'
+              ) : (
+                'Registrar Medicamento'
+              )}
             </button>
           </div>
         </form>

@@ -8,6 +8,8 @@ import com.hyma.usuario.mapper.UsuarioMapper;
 import com.hyma.usuario.model.Usuario;
 import com.hyma.usuario.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -40,16 +42,16 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) {
         // 1. Buscar usuario en la base de datos
         Usuario usuario = usuarioRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("Credenciales incorrectas"));
+                .orElseThrow(() -> new BadCredentialsException("Credenciales incorrectas"));
 
         // 2. Validar que la cuenta del usuario esté activa
         if (Boolean.FALSE.equals(usuario.getEstado())) {
-            throw new RuntimeException("El usuario se encuentra inactivo");
+            throw new DisabledException("El usuario se encuentra inactivo");
         }
 
         // 3. Verificar contraseña en texto plano contra el hash Argon2id almacenado
         if (!passwordEncoder.matches(request.getPassword(), usuario.getPasswordHash())) {
-            throw new RuntimeException("Credenciales incorrectas");
+            throw new BadCredentialsException("Credenciales incorrectas");
         }
 
         // 4. Cargar UserDetails para generar las autoridades correspondientes

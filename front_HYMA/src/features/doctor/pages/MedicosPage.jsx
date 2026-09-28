@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, AlertTriangle, Stethoscope, Phone, Mail, Pencil, Trash2, Plus } from 'lucide-react';
+import { Search, X, AlertTriangle, Stethoscope, Phone, Mail, Pencil, Trash2, Plus, Loader2 } from 'lucide-react';
 import { useMedicos } from '../hooks/useMedicos';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
@@ -94,6 +94,7 @@ export default function MedicosPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setFormError('');
 
     if (!formData.idUsuario) {
@@ -434,11 +435,16 @@ export default function MedicosPage() {
                   style={styles.btnSubmit}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting
-                    ? 'Guardando...'
-                    : editingId
-                    ? 'Guardar Cambios'
-                    : 'Registrar Médico'}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Guardando...</span>
+                    </>
+                  ) : editingId ? (
+                    'Guardar Cambios'
+                  ) : (
+                    'Registrar Médico'
+                  )}
                 </button>
               </div>
             </form>

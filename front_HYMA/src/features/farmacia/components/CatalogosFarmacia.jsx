@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, X, Pill, Tag, Building2, Check, AlertCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Pill, Tag, Building2, Check, AlertCircle, Loader2 } from 'lucide-react';
 
 const initialMedicine = {
   nombre: '',
@@ -58,6 +58,7 @@ function CatalogosFarmacia({
   // Manejo de guardado de medicamento
   const handleSaveMedicine = async (e) => {
     e.preventDefault();
+    if (savingMed) return;
     setMedicineError('');
     setMedicineSuccess('');
 
@@ -67,25 +68,28 @@ function CatalogosFarmacia({
     }
 
     setSavingMed(true);
-    const payload = {
-      nombre: medicine.nombre.trim(),
-      presentacion: medicine.presentacion.trim() || null,
-      concentracion: medicine.concentracion.trim() || null,
-      idCategoriaMedicamento: medicine.idCategoriaMedicamento ? Number(medicine.idCategoriaMedicamento) : null,
-      idCasaFarmaceutica: medicine.idCasaFarmaceutica ? Number(medicine.idCasaFarmaceutica) : null,
-      estado: medicine.estado,
-    };
+    try {
+      const payload = {
+        nombre: medicine.nombre.trim(),
+        presentacion: medicine.presentacion.trim() || null,
+        concentracion: medicine.concentracion.trim() || null,
+        idCategoriaMedicamento: medicine.idCategoriaMedicamento ? Number(medicine.idCategoriaMedicamento) : null,
+        idCasaFarmaceutica: medicine.idCasaFarmaceutica ? Number(medicine.idCasaFarmaceutica) : null,
+        estado: medicine.estado,
+      };
 
-    const result = await onSaveMedicamento(editingMedId, payload);
-    setSavingMed(false);
+      const result = await onSaveMedicamento(editingMedId, payload);
 
-    if (result.success) {
-      setMedicine(initialMedicine);
-      setEditingMedId(null);
-      setMedicineSuccess(editingMedId ? 'Medicamento actualizado correctamente.' : 'Medicamento registrado con éxito.');
-      setTimeout(() => setMedicineSuccess(''), 3500);
-    } else {
-      setMedicineError(result.error || 'Error al guardar el medicamento.');
+      if (result.success) {
+        setMedicine(initialMedicine);
+        setEditingMedId(null);
+        setMedicineSuccess(editingMedId ? 'Medicamento actualizado correctamente.' : 'Medicamento registrado con éxito.');
+        setTimeout(() => setMedicineSuccess(''), 3500);
+      } else {
+        setMedicineError(result.error || 'Error al guardar el medicamento.');
+      }
+    } finally {
+      setSavingMed(false);
     }
   };
 
@@ -98,26 +102,32 @@ function CatalogosFarmacia({
   // Manejo de Categoría
   const handleSaveCat = async (e) => {
     e.preventDefault();
-    if (!categoriaNombre.trim()) return;
+    if (savingCat || !categoriaNombre.trim()) return;
     setSavingCat(true);
-    const result = await onSaveCategoria(categoriaEditing?.id, { nombre: categoriaNombre.trim() });
-    setSavingCat(false);
-    if (result.success) {
-      setCategoriaEditing(null);
-      setCategoriaNombre('');
+    try {
+      const result = await onSaveCategoria(categoriaEditing?.id, { nombre: categoriaNombre.trim() });
+      if (result.success) {
+        setCategoriaEditing(null);
+        setCategoriaNombre('');
+      }
+    } finally {
+      setSavingCat(false);
     }
   };
 
   // Manejo de Casa Farmacéutica
   const handleSaveCasa = async (e) => {
     e.preventDefault();
-    if (!casaNombre.trim()) return;
+    if (savingCasa || !casaNombre.trim()) return;
     setSavingCasa(true);
-    const result = await onSaveCasa(casaEditing?.id, { nombre: casaNombre.trim() });
-    setSavingCasa(false);
-    if (result.success) {
-      setCasaEditing(null);
-      setCasaNombre('');
+    try {
+      const result = await onSaveCasa(casaEditing?.id, { nombre: casaNombre.trim() });
+      if (result.success) {
+        setCasaEditing(null);
+        setCasaNombre('');
+      }
+    } finally {
+      setSavingCasa(false);
     }
   };
 
@@ -267,7 +277,16 @@ function CatalogosFarmacia({
                 className="farmacia-btn-primary"
                 disabled={savingMed}
               >
-                {savingMed ? 'Guardando...' : editingMedId ? 'Guardar Cambios' : 'Registrar Medicamento'}
+                {savingMed ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Guardando...</span>
+                  </>
+                ) : editingMedId ? (
+                  'Guardar Cambios'
+                ) : (
+                  'Registrar Medicamento'
+                )}
               </button>
             </div>
           </form>
@@ -381,7 +400,13 @@ function CatalogoAuxiliarCard({
             type="submit"
             disabled={loading || !value.trim()}
           >
-            {editing ? 'Guardar' : <><Plus size={14} /> Agregar</>}
+            {loading ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : editing ? (
+              'Guardar'
+            ) : (
+              <><Plus size={14} /> Agregar</>
+            )}
           </button>
           {editing && (
             <button

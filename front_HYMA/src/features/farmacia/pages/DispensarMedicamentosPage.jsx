@@ -9,8 +9,8 @@ import {
   User,
   Clock,
   FileText,
-  Package,
   Printer,
+  Loader2,
 } from 'lucide-react';
 import { useDispensacion } from '../hooks/useDispensacion';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
@@ -36,6 +36,7 @@ export default function DispensarMedicamentosPage() {
   const [entregaFinalizada, setEntregaFinalizada] = useState(false);
   const [noPagaConsulta, setNoPagaConsulta] = useState(false);
   const [duplicarEnHoja, setDuplicarEnHoja] = useState(false);
+  const [procesandoEntrega, setProcesandoEntrega] = useState(false);
 
   const precioConsultaOriginal = Number(receta?.precioConsulta || 0);
   const costoConsultaCobrar = noPagaConsulta ? 0 : precioConsultaOriginal;
@@ -57,22 +58,28 @@ export default function DispensarMedicamentosPage() {
   }, [idCola, idPaciente, cargarReceta, navigate]);
 
   const handleDarMedicamentos = async () => {
+    if (entregando || procesandoEntrega) return;
     if (!idCola) {
       alert('No se cuenta con un identificador de cola para finalizar el turno.');
       return;
     }
 
-    const res = await entregarMedicamentos(Number(idCola), {
-      noPagaConsulta,
-      observaciones: noPagaConsulta ? 'Exonerado de consulta médica por caso especial' : null,
-    });
-    if (res.success) {
-      setConfirmandoEntrega(false);
-      setEntregaFinalizada(true);
-      // Abrir directamente la ventana para imprimir la receta médica en media carta
-      setTimeout(() => {
-        window.print();
-      }, 350);
+    setProcesandoEntrega(true);
+    try {
+      const res = await entregarMedicamentos(Number(idCola), {
+        noPagaConsulta,
+        observaciones: noPagaConsulta ? 'Exonerado de consulta médica por caso especial' : null,
+      });
+      if (res.success) {
+        setConfirmandoEntrega(false);
+        setEntregaFinalizada(true);
+        // Abrir directamente la ventana para imprimir la receta médica en media carta
+        setTimeout(() => {
+          window.print();
+        }, 350);
+      }
+    } finally {
+      setProcesandoEntrega(false);
     }
   };
 
@@ -119,7 +126,7 @@ export default function DispensarMedicamentosPage() {
         <Breadcrumb
           items={[
             { label: 'Farmacia', to: '/farmacia' },
-            { label: 'Dispersión', to: '/farmacia/dispensacion' },
+            { label: 'Dispensación', to: '/farmacia/dispensacion' },
             { label: 'Dispensar Medicamentos' }
           ]}
         />
@@ -235,12 +242,21 @@ export default function DispensarMedicamentosPage() {
                 <button
                   type="button"
                   onClick={() => setConfirmandoEntrega(true)}
-                  disabled={entregando}
+                  disabled={entregando || procesandoEntrega}
                   style={styles.btnDar}
                   title="Entregar medicamentos y finalizar atención"
                 >
-                  <CheckCircle2 size={18} />
-                  <span>{entregando ? 'Entregando...' : 'Dar'}</span>
+                  {entregando || procesandoEntrega ? (
+                    <>
+                      <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                      <span>Entregando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={18} />
+                      <span>Dar</span>
+                    </>
+                  )}
                 </button>
 
                 <button
@@ -602,9 +618,16 @@ export default function DispensarMedicamentosPage() {
                 <button
                   onClick={handleDarMedicamentos}
                   style={styles.btnModalConfirmDeliver}
-                  disabled={entregando}
+                  disabled={entregando || procesandoEntrega}
                 >
-                  {entregando ? 'Registrando entrega...' : 'Confirmar y Finalizar'}
+                  {entregando || procesandoEntrega ? (
+                    <>
+                      <Loader2 size={16} style={{ animation: 'spin 1s linear infinite', display: 'inline-block', marginRight: '6px' }} />
+                      <span>Registrando entrega...</span>
+                    </>
+                  ) : (
+                    'Confirmar y Finalizar'
+                  )}
                 </button>
               </div>
             </div>

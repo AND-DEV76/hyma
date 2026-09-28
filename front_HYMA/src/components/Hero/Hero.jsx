@@ -20,7 +20,7 @@ function Hero() {
             </span>
 
             <h1>
-              Hombre y Mujer
+              Hombres y Mujeres
               <br />
               <span>en Acción</span>
             </h1>

@@ -55,6 +55,9 @@ public class TarifaServicioService {
             t.setNombre(dto.getNombre().trim());
         }
         if (dto.getPrecio() != null) {
+            if (dto.getPrecio().compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("El precio no puede ser negativo");
+            }
             t.setPrecio(dto.getPrecio());
         }
         if (dto.getActivo() != null) {

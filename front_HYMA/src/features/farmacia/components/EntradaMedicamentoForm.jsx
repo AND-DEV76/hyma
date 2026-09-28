@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowDownToLine, Plus, Trash2, CheckCircle2, AlertCircle, PackagePlus, FileText } from 'lucide-react';
+import { ArrowDownToLine, Plus, Trash2, CheckCircle2, AlertCircle, PackagePlus, FileText, Loader2 } from 'lucide-react';
 import MedicamentoSearchInput from './MedicamentoSearchInput';
 import { listarLotes } from '../services/loteService';
 
@@ -96,6 +96,7 @@ function EntradaMedicamentoForm({ medicamentos, lotes = [], onSave, onNavigateHi
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (saving) return;
     setError('');
     setSuccessMsg('');
 
@@ -107,29 +108,31 @@ function EntradaMedicamentoForm({ medicamentos, lotes = [], onSave, onNavigateHi
     }
 
     setSaving(true);
-    const payload = {
-      tipoEntrada,
-      observaciones: observaciones.trim() || null,
-      detalles: detalles.map((d) => ({
-        idMedicamento: Number(d.idMedicamento),
-        numeroLote: d.numeroLote.trim() || null,
-        fechaExpiracion: d.fechaExpiracion,
-        cantidad: Number(d.cantidad),
-        precioUnitario: d.precioUnitario === '' ? null : Number(d.precioUnitario),
-      })),
-    };
+    try {
+      const payload = {
+        tipoEntrada,
+        observaciones: observaciones.trim() || null,
+        detalles: detalles.map((d) => ({
+          idMedicamento: Number(d.idMedicamento),
+          numeroLote: d.numeroLote.trim() || null,
+          fechaExpiracion: d.fechaExpiracion,
+          cantidad: Number(d.cantidad),
+          precioUnitario: d.precioUnitario === '' ? null : Number(d.precioUnitario),
+        })),
+      };
 
-    const result = await onSave(payload);
-    setSaving(false);
-
-    if (result.success) {
-      setSuccessMsg('¡Entrada de inventario registrada con éxito!');
-      setTipoEntrada('COMPRA');
-      setObservaciones('');
-      setDetalles([{ ...newDetail }]);
-      setTimeout(() => setSuccessMsg(''), 5000);
-    } else {
-      setError(result.error || 'Ocurrió un error al registrar la entrada.');
+      const result = await onSave(payload);
+      if (result.success) {
+        setSuccessMsg('¡Entrada de inventario registrada con éxito!');
+        setTipoEntrada('COMPRA');
+        setObservaciones('');
+        setDetalles([{ ...newDetail }]);
+        setTimeout(() => setSuccessMsg(''), 5000);
+      } else {
+        setError(result.error || 'Ocurrió un error al registrar la entrada.');
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -354,8 +357,17 @@ function EntradaMedicamentoForm({ medicamentos, lotes = [], onSave, onNavigateHi
                 className="farmacia-btn-primary"
                 disabled={saving || medicamentos.length === 0}
               >
-                <ArrowDownToLine size={16} />
-                {saving ? 'Guardando Entrada...' : 'Guardar Entrada'}
+                {saving ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Guardando Entrada...</span>
+                  </>
+                ) : (
+                  <>
+                    <ArrowDownToLine size={16} />
+                    <span>Guardar Entrada</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

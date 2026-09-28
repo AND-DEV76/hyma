@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Stethoscope, Trash2, AlertCircle, RefreshCw, AlertTriangle, X } from 'lucide-react';
+import { Clock, Stethoscope, Trash2, AlertCircle, RefreshCw, AlertTriangle, X, Loader2 } from 'lucide-react';
 import { useClinica } from '../hooks/useClinica';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import userImg from '../../../assets/images/user.png';
@@ -43,11 +43,14 @@ export default function ClinicaPage() {
   };
 
   const handleConfirmarEliminar = async () => {
-    if (!pacienteAEliminar) return;
+    if (!pacienteAEliminar || eliminando) return;
     setEliminando(true);
-    await cancelarAtencion(pacienteAEliminar.idCola);
-    setEliminando(false);
-    setPacienteAEliminar(null);
+    try {
+      await cancelarAtencion(pacienteAEliminar.idCola);
+      setPacienteAEliminar(null);
+    } finally {
+      setEliminando(false);
+    }
   };
 
   const formatHora = (fecha) => {
@@ -204,7 +207,14 @@ export default function ClinicaPage() {
                   style={styles.btnModalConfirm}
                   disabled={eliminando}
                 >
-                  {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
+                  {eliminando ? (
+                    <>
+                      <Loader2 size={15} style={{ animation: 'spin 1s linear infinite', display: 'inline-block', marginRight: '6px' }} />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    'Sí, eliminar'
+                  )}
                 </button>
               </div>
             </div>
