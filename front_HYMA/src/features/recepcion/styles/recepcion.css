@@ -17,6 +17,663 @@
 }
 
 /* ==========================================================
+   NUEVO DISEÑO: TARJETA UNIFICADA "LISTA DE ESPERA DE PACIENTE"
+   Basado en el bosquejo "VISTA RECEPCIÓN - VISTA 1"
+   ========================================================== */
+
+.recepcion-main-card {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(3, 4, 94, 0.05);
+  overflow: hidden;
+  margin-bottom: 30px;
+}
+
+/* 1. Header con Menú Hamburguesa y Título Centrado/Elegante */
+.recepcion-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: #ffffff;
+  border-bottom: 1.5px solid #e2e8f0;
+}
+
+.recepcion-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.recepcion-menu-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #03045e;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.recepcion-menu-icon-box:hover {
+  background: #e0f2fe;
+  color: #0077b6;
+  border-color: #bae6fd;
+}
+
+.recepcion-header-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #03045e;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  font-family: inherit;
+}
+
+.recepcion-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.recepcion-header-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #e0f2fe;
+  color: #0077b6;
+  border: 1px solid #bae6fd;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.recepcion-header-count strong {
+  font-weight: 800;
+  color: #03045e;
+}
+
+.recepcion-header-refresh {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #0077b6;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.recepcion-header-refresh:hover:not(:disabled) {
+  background: #f0f9ff;
+  border-color: #0077b6;
+}
+
+/* 2. Barra de Búsqueda y Botón [Nuevo] (Fila única) */
+.recepcion-search-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.recepcion-search-field-container {
+  flex: 1;
+  position: relative;
+}
+
+.recepcion-search-field {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0 14px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.recepcion-search-field:focus-within {
+  background: #ffffff;
+  border-color: #0077b6;
+  box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.12);
+}
+
+.recepcion-search-field-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: 10px;
+  color: #0077b6;
+  flex-shrink: 0;
+}
+
+.recepcion-search-field-icon {
+  position: static !important;
+  color: #0077b6;
+  display: block;
+}
+
+.recepcion-search-field-separator {
+  width: 1.5px;
+  height: 20px;
+  background: #cbd5e1;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.recepcion-search-field:focus-within .recepcion-search-field-separator {
+  background: #0077b6;
+}
+
+.recepcion-search-field-input {
+  flex: 1;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 12px 0 !important;
+  font-size: 0.95rem;
+  color: #0f172a;
+  font-family: inherit;
+  width: 100%;
+}
+
+.recepcion-search-field-input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.recepcion-search-field-input::placeholder {
+  color: #64748b;
+  font-style: normal;
+}
+
+.recepcion-search-clear {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.recepcion-search-clear:hover {
+  color: #03045e;
+  background: #e2e8f0;
+}
+
+/* Botón [Nuevo] al estilo bosquejo */
+.recepcion-btn-nuevo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0077b6;
+  color: #ffffff;
+  border: 1.5px solid #0077b6;
+  padding: 11px 24px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 119, 182, 0.2);
+}
+
+.recepcion-btn-nuevo:hover {
+  background: #03045e;
+  border-color: #03045e;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(3, 4, 94, 0.2);
+}
+
+/* Dropdown flotante de resultados */
+.recepcion-search-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(3, 4, 94, 0.14);
+  z-index: 100;
+  max-height: 380px;
+  overflow-y: auto;
+  animation: fadeInDown 0.15s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.recepcion-dropdown-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  color: #0077b6;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.recepcion-dropdown-header {
+  padding: 10px 16px 8px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #f8fafc;
+}
+
+.recepcion-dropdown-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.recepcion-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease;
+}
+
+.recepcion-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.recepcion-dropdown-item:hover {
+  background: #f0fdf4;
+}
+
+.recepcion-dropdown-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.recepcion-dropdown-item-name {
+  color: #03045e;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.recepcion-dropdown-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.recepcion-dropdown-btn-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #e0f2fe;
+  color: #0077b6;
+  border: 1px solid #bae6fd;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.recepcion-dropdown-btn-add:hover:not(:disabled) {
+  background: #0077b6;
+  color: #ffffff;
+  border-color: #0077b6;
+}
+
+.recepcion-dropdown-empty {
+  padding: 24px;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.88rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.recepcion-dropdown-btn-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #0077b6;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.recepcion-dropdown-btn-new:hover {
+  background: #03045e;
+}
+
+/* 3. Lista de Pacientes en Espera (Tarjetas según bosquejo) */
+.recepcion-queue-section {
+  padding: 24px;
+  background: #f8fafc;
+  min-height: 280px;
+}
+
+.recepcion-queue-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px;
+  color: #0077b6;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.recepcion-queue-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px 20px;
+  text-align: center;
+  background: #ffffff;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+}
+
+.recepcion-empty-title {
+  margin: 14px 0 6px;
+  color: #03045e;
+  font-size: 1.1rem;
+  font-weight: 750;
+}
+
+.recepcion-empty-desc {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.88rem;
+  max-width: 480px;
+}
+
+/* Pila de Tarjetas de Pacientes */
+.recepcion-cards-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recepcion-patient-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 16px 20px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 4px rgba(3, 4, 94, 0.03);
+}
+
+.recepcion-patient-card:hover {
+  border-color: #0077b6;
+  box-shadow: 0 4px 16px rgba(0, 119, 182, 0.08);
+  transform: translateY(-1px);
+}
+
+.recepcion-card-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.recepcion-card-turn {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #0077b6;
+  font-weight: 850;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid #e2e8f0;
+}
+
+.recepcion-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.recepcion-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.recepcion-card-patient-name {
+  color: #03045e;
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.2px;
+}
+
+.recepcion-card-status-badge {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.recepcion-card-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.recepcion-card-meta-row strong {
+  color: #0f172a;
+}
+
+.recepcion-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Botón [Preconsulta] */
+.recepcion-btn-preconsulta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #0077b6;
+  color: #ffffff;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.recepcion-btn-preconsulta:hover:not(:disabled) {
+  background: #03045e;
+}
+
+/* Botón [Eliminar] fiel al bosquejo */
+.recepcion-btn-eliminar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  color: #e11d48;
+  border: 1.5px solid #fecdd3;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.recepcion-btn-eliminar:hover:not(:disabled) {
+  background: #e11d48;
+  color: #ffffff;
+  border-color: #e11d48;
+  box-shadow: 0 2px 8px rgba(225, 29, 72, 0.25);
+}
+
+/* Modal de Confirmación Eliminar */
+.recepcion-confirm-modal {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 28px;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(3, 4, 94, 0.2);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: modalScale 0.15s ease-out;
+}
+
+@keyframes modalScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.recepcion-confirm-icon-box {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #ffe4e6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.recepcion-confirm-title {
+  margin: 0 0 8px;
+  color: #03045e;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.recepcion-confirm-text {
+  margin: 0 0 24px;
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.recepcion-confirm-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.recepcion-confirm-btn-cancel {
+  flex: 1;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.recepcion-confirm-btn-cancel:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.recepcion-confirm-btn-delete {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #e11d48;
+  color: #ffffff;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.recepcion-confirm-btn-delete:hover:not(:disabled) {
+  background: #be123c;
+}
+
+/* ==========================================================
    CONTROL PANEL / ODOO-STYLE HEADER
 ========================================================== */
 .recepcion-control-panel {
@@ -1022,5 +1679,149 @@
   .recepcion-btn-primary {
     width: 100%;
     justify-content: center;
+  }
+
+  /* Nuevo diseño: Tablets */
+  .recepcion-card-header {
+    padding: 14px 18px;
+  }
+
+  .recepcion-header-title {
+    font-size: 1.15rem;
+  }
+
+  .recepcion-search-bar-row {
+    padding: 16px 18px;
+  }
+
+  .recepcion-queue-section {
+    padding: 16px 18px;
+  }
+
+  .recepcion-patient-card {
+    padding: 14px 16px;
+  }
+}
+
+/* Teléfonos móviles */
+@media (max-width: 640px) {
+  .recepcion-container {
+    padding: 10px 12px 28px;
+  }
+
+  .recepcion-main-card {
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+
+  /* Cabecera móvil */
+  .recepcion-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .recepcion-header-left {
+    width: 100%;
+  }
+
+  .recepcion-header-title {
+    font-size: 1.05rem;
+    letter-spacing: 0.3px;
+  }
+
+  .recepcion-header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  /* Fila de búsqueda y botón Nuevo en móvil */
+  .recepcion-search-bar-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .recepcion-search-field-container {
+    width: 100%;
+  }
+
+  .recepcion-btn-nuevo {
+    width: 100%;
+    justify-content: center;
+    padding: 11px;
+    font-size: 0.92rem;
+  }
+
+  .recepcion-search-dropdown {
+    max-height: 280px;
+  }
+
+  .recepcion-dropdown-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .recepcion-dropdown-btn-add {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Lista de espera móvil */
+  .recepcion-queue-section {
+    padding: 12px;
+  }
+
+  .recepcion-patient-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .recepcion-card-left {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .recepcion-card-turn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+  }
+
+  .recepcion-card-details {
+    width: 100%;
+  }
+
+  .recepcion-card-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .recepcion-card-patient-name {
+    font-size: 0.95rem;
+    word-break: break-word;
+  }
+
+  .recepcion-card-actions {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .recepcion-btn-preconsulta,
+  .recepcion-btn-eliminar {
+    flex: 1;
+    justify-content: center;
+    padding: 9px 10px;
+    font-size: 0.82rem;
   }
 }

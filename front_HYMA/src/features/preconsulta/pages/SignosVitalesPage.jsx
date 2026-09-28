@@ -11,11 +11,14 @@ import {
   Activity,
   Save,
   X,
+  Check,
+  Award,
 } from 'lucide-react';
 import { usePreconsulta } from '../hooks/usePreconsulta';
 import { obtenerPaciente } from '../../recepcion/services/recepcionService';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import userImg from '../../../assets/images/user.png';
+import '../styles/preconsulta.css';
 
 export default function SignosVitalesPage() {
   const navigate = useNavigate();
@@ -35,6 +38,8 @@ export default function SignosVitalesPage() {
   const [paciente, setPaciente] = useState(null);
   const [cargandoPaciente, setCargandoPaciente] = useState(true);
   const [enviando, setEnviando] = useState(false);
+  const [errorLocal, setErrorLocal] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Estados del Formulario de Signos Vitales
   const [formData, setFormData] = useState({
@@ -68,8 +73,25 @@ export default function SignosVitalesPage() {
     fetchDatos();
   }, [queryIdPaciente, cargarUltimoSigno, navigate]);
 
+  // Bloqueo de signo negativo y caracteres inválidos en números
+  const preventNegativeKeyDown = (e) => {
+    if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') {
+      e.preventDefault();
+    }
+  };
+
+  const handlePresionKeyDown = (e) => {
+    if (e.key === '-') {
+      e.preventDefault();
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (value.includes('-')) {
+      return;
+    }
+    setErrorLocal('');
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -94,6 +116,44 @@ export default function SignosVitalesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!paciente || guardando || enviando) return;
+    setErrorLocal('');
+
+    // Validación estricta contra valores negativos
+    if (formData.peso !== '' && (parseFloat(formData.peso) < 0 || isNaN(formData.peso))) {
+      setErrorLocal('El peso no puede ser un valor negativo.');
+      return;
+    }
+    if (formData.talla !== '' && (parseFloat(formData.talla) < 0 || isNaN(formData.talla))) {
+      setErrorLocal('La talla no puede ser un valor negativo.');
+      return;
+    }
+    if (formData.presionArterial && formData.presionArterial.includes('-')) {
+      setErrorLocal('La presión arterial no puede contener valores negativos.');
+      return;
+    }
+    if (formData.frecuenciaCardiaca !== '' && (parseInt(formData.frecuenciaCardiaca, 10) < 0 || isNaN(formData.frecuenciaCardiaca))) {
+      setErrorLocal('La frecuencia cardíaca no puede ser un valor negativo.');
+      return;
+    }
+    if (formData.frecuenciaRespiratoria !== '' && (parseInt(formData.frecuenciaRespiratoria, 10) < 0 || isNaN(formData.frecuenciaRespiratoria))) {
+      setErrorLocal('La frecuencia respiratoria no puede ser un valor negativo.');
+      return;
+    }
+    if (formData.temperatura !== '' && (parseFloat(formData.temperatura) < 0 || isNaN(formData.temperatura))) {
+      setErrorLocal('La temperatura no puede ser un valor negativo.');
+      return;
+    }
+    if (formData.saturacionOxigeno !== '') {
+      const sat = parseFloat(formData.saturacionOxigeno);
+      if (sat < 0 || sat > 100 || isNaN(sat)) {
+        setErrorLocal('La saturación de oxígeno (SpO2) debe ser un valor positivo entre 0 y 100%.');
+        return;
+      }
+    }
+    if (formData.glicemia !== '' && (parseFloat(formData.glicemia) < 0 || isNaN(formData.glicemia))) {
+      setErrorLocal('La glucosa / glicemia no puede ser un valor negativo.');
+      return;
+    }
 
     setEnviando(true);
     try {
@@ -112,12 +172,16 @@ export default function SignosVitalesPage() {
 
       const res = await guardarSignos(payload);
       if (res.success) {
-        alert('Signos vitales registrados correctamente. El paciente fue enviado a consulta médica.');
-        navigate('/preconsulta');
+        setShowSuccessModal(true);
       }
     } finally {
       setEnviando(false);
     }
+  };
+
+  const handleAceptarExito = () => {
+    setShowSuccessModal(false);
+    navigate('/preconsulta');
   };
 
   const handleCancelar = () => {
@@ -143,13 +207,13 @@ export default function SignosVitalesPage() {
   }
 
   return (
-    <div style={styles.page}>
+    <div className="signos-vitales-page" style={styles.page}>
       <AdminNavbar />
 
-      <main style={styles.content}>
+      <main className="signos-vitales-content" style={styles.content}>
         {/* Cabecera Odoo: USER.PNG | Paciente X */}
-        <div style={styles.headerCard}>
-          <div style={styles.headerLeft}>
+        <div className="signos-vitales-header-card" style={styles.headerCard}>
+          <div className="signos-vitales-header-left" style={styles.headerLeft}>
             <div style={styles.avatarBox}>
               <img src={userImg} alt="Avatar Paciente" style={styles.avatarImg} />
             </div>
@@ -164,7 +228,7 @@ export default function SignosVitalesPage() {
             </div>
           </div>
 
-          <div style={styles.headerRight}>
+          <div className="signos-vitales-header-right" style={styles.headerRight}>
             <button
               type="button"
               onClick={handleCancelar}
@@ -177,21 +241,17 @@ export default function SignosVitalesPage() {
           </div>
         </div>
 
-        {hookError && (
-          <div style={styles.errorAlert}>
+        {(hookError || errorLocal) && (
+          <div style={styles.errorAlert} role="alert">
             <AlertCircle size={18} />
-            <span>{hookError}</span>
+            <span>{errorLocal || hookError}</span>
           </div>
         )}
 
-        {/* Ficha resumen del Paciente */}
+        {/* Ficha resumen del Paciente (Comunidad y Alergias removidas según solicitud) */}
         {paciente && (
-          <section style={styles.patientSummaryCard}>
-            <div style={styles.summaryGrid}>
-              <div style={styles.summaryItem}>
-                <span style={styles.summaryLabel}>Comunidad</span>
-                <span style={styles.summaryVal}>{paciente.comunidad || 'No especificada'}</span>
-              </div>
+          <section className="signos-vitales-summary-card" style={styles.patientSummaryCard}>
+            <div className="signos-vitales-summary-grid" style={styles.summaryGrid}>
               <div style={styles.summaryItem}>
                 <span style={styles.summaryLabel}>Edad</span>
                 <span style={styles.summaryVal}>
@@ -209,27 +269,18 @@ export default function SignosVitalesPage() {
                 <span style={styles.summaryVal}>{paciente.telefono || 'N/A'}</span>
               </div>
             </div>
-
-            {paciente.alergiaIds && paciente.alergiaIds.length > 0 && (
-              <div style={styles.alertAlergias}>
-                <AlertTriangle size={16} color="#dc2626" />
-                <span>
-                  <strong>Atención:</strong> El paciente tiene registradas {paciente.alergiaIds.length} alergia(s).
-                </span>
-              </div>
-            )}
           </section>
         )}
 
         {/* Formulario de Signos Vitales (Tabla signo_vital) */}
-        <section style={styles.formCard}>
+        <section className="signos-vitales-form-card" style={styles.formCard}>
           <div style={styles.cardHeader}>
             <HeartPulse size={18} color="#0077b6" />
             <h2 style={styles.cardTitle}>Datos de Signos Vitales</h2>
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div style={styles.vitalsGrid}>
+            <div className="signos-vitales-grid" style={styles.vitalsGrid}>
               {/* Peso */}
               <div style={styles.fieldGroup}>
                 <label style={styles.label}>
@@ -239,10 +290,12 @@ export default function SignosVitalesPage() {
                 <input
                   type="number"
                   step="0.1"
+                  min="0"
                   name="peso"
                   placeholder="Ej. 68.5"
                   value={formData.peso}
                   onChange={handleChange}
+                  onKeyDown={preventNegativeKeyDown}
                   style={styles.input}
                 />
               </div>
@@ -256,10 +309,12 @@ export default function SignosVitalesPage() {
                 <input
                   type="number"
                   step="0.5"
+                  min="0"
                   name="talla"
                   placeholder="Ej. 170"
                   value={formData.talla}
                   onChange={handleChange}
+                  onKeyDown={preventNegativeKeyDown}
                   style={styles.input}
                 />
               </div>
@@ -291,6 +346,7 @@ export default function SignosVitalesPage() {
                   placeholder="Ej. 120/80"
                   value={formData.presionArterial}
                   onChange={handleChange}
+                  onKeyDown={handlePresionKeyDown}
                   style={styles.input}
                 />
               </div>
@@ -303,10 +359,13 @@ export default function SignosVitalesPage() {
                 </label>
                 <input
                   type="number"
+                  min="0"
+                  step="1"
                   name="frecuenciaCardiaca"
                   placeholder="Ej. 75"
                   value={formData.frecuenciaCardiaca}
                   onChange={handleChange}
+                  onKeyDown={preventNegativeKeyDown}
                   style={styles.input}
                 />
               </div>
@@ -319,10 +378,13 @@ export default function SignosVitalesPage() {
                 </label>
                 <input
                   type="number"
+                  min="0"
+                  step="1"
                   name="frecuenciaRespiratoria"
                   placeholder="Ej. 18"
                   value={formData.frecuenciaRespiratoria}
                   onChange={handleChange}
+                  onKeyDown={preventNegativeKeyDown}
                   style={styles.input}
                 />
               </div>
@@ -336,10 +398,12 @@ export default function SignosVitalesPage() {
                 <input
                   type="number"
                   step="0.1"
+                  min="0"
                   name="temperatura"
                   placeholder="Ej. 36.5"
                   value={formData.temperatura}
                   onChange={handleChange}
+                  onKeyDown={preventNegativeKeyDown}
                   style={styles.input}
                 />
               </div>
@@ -353,10 +417,13 @@ export default function SignosVitalesPage() {
                 <input
                   type="number"
                   step="0.5"
+                  min="0"
+                  max="100"
                   name="saturacionOxigeno"
                   placeholder="Ej. 98"
                   value={formData.saturacionOxigeno}
                   onChange={handleChange}
+                  onKeyDown={preventNegativeKeyDown}
                   style={styles.input}
                 />
               </div>
@@ -370,17 +437,19 @@ export default function SignosVitalesPage() {
                 <input
                   type="number"
                   step="1"
+                  min="0"
                   name="glicemia"
                   placeholder="Ej. 90"
                   value={formData.glicemia}
                   onChange={handleChange}
+                  onKeyDown={preventNegativeKeyDown}
                   style={styles.input}
                 />
               </div>
             </div>
 
             {/* Acciones del Formulario */}
-            <div style={styles.footerActions}>
+            <div className="signos-vitales-footer-actions" style={styles.footerActions}>
               <button
                 type="button"
                 onClick={handleCancelar}
@@ -411,6 +480,48 @@ export default function SignosVitalesPage() {
           </form>
         </section>
       </main>
+
+      {/* Modal de Éxito Tipo Logro al Registrar Signos Vitales */}
+      {showSuccessModal && (
+        <div className="signos-modal-overlay" role="dialog" aria-modal="true">
+          <div className="logro-card">
+            {/* Efecto de barrido de luz */}
+            <div className="logro-shimmer" />
+
+            {/* Emblema central con anillos tipo sonar */}
+            <div className="logro-emblem-container">
+              <div className="logro-pulse-ring ring-1" />
+              <div className="logro-pulse-ring ring-2" />
+              <div className="logro-emblem-circle">
+                <Award size={42} color="#ffffff" strokeWidth={2.2} />
+              </div>
+            </div>
+
+            <h3 className="logro-title">¡Preconsulta Completada!</h3>
+
+            {nombreCompleto && (
+              <div className="logro-patient-chip">
+                <User size={13} />
+                <span>Paciente: <strong>{nombreCompleto}</strong></span>
+              </div>
+            )}
+
+            <p className="logro-desc">
+              Signos vitales registrados correctamente. El paciente fue enviado a consulta médica.
+            </p>
+
+            <button
+              type="button"
+              autoFocus
+              onClick={handleAceptarExito}
+              className="logro-btn-confirm"
+            >
+              <Check size={18} strokeWidth={2.5} />
+              <span>Aceptar</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

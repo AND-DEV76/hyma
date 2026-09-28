@@ -378,7 +378,8 @@ function FormularioPaciente({ onGuardar, onCerrar, guardando }) {
                         name="telefonoLocal"
                         type="tel"
                         inputMode="numeric"
-                        pattern="[0-9]*"
+                        pattern="[0-9\- ]*"
+                        title="Ingrese un número de teléfono válido (ej. 5555-1234)"
                         value={telefonoLocal}
                         onChange={handleTelefonoChange}
                         onKeyDown={handleKeyDownTelefono}

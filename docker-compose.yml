@@ -7,6 +7,8 @@ services:
     restart: "no"
 
     environment:
+      TZ: America/Guatemala
+      PGTZ: America/Guatemala
       POSTGRES_DB: hyma_db
       POSTGRES_USER: hyma_user
       POSTGRES_PASSWORD: hyma_pass
@@ -32,6 +34,8 @@ services:
       - "8080:8080"
 
     environment:
+      TZ: America/Guatemala
+      JAVA_TOOL_OPTIONS: "-Duser.timezone=America/Guatemala"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/hyma_db
       SPRING_DATASOURCE_USERNAME: hyma_user
       SPRING_DATASOURCE_PASSWORD: hyma_pass

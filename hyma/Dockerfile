@@ -1,17 +1,11 @@
-FROM gradle:9-jdk21 AS build
-
-WORKDIR /app
-
-COPY . .
-
-RUN chmod +x gradlew && ./gradlew bootJar --no-daemon
-
 FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-COPY --from=build /app/build/libs/*.jar app.jar
+COPY build/libs/hyma-0.0.1-SNAPSHOT.jar app.jar
+
+ENV TZ=America/Guatemala
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Duser.timezone=America/Guatemala", "-jar", "app.jar"]

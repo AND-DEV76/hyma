@@ -16,6 +16,7 @@ import {
 import { usePreconsulta } from '../hooks/usePreconsulta';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import userImg from '../../../assets/images/user.png';
+import '../styles/preconsulta.css';
 
 export default function PreconsultaPage() {
   const navigate = useNavigate();
@@ -101,17 +102,17 @@ export default function PreconsultaPage() {
   };
 
   return (
-    <div style={styles.page}>
+    <div className="preconsulta-page" style={styles.page}>
       <AdminNavbar />
 
-      <main style={styles.content}>
+      <main className="preconsulta-container" style={styles.content}>
         {/* Panel Superior estilo Odoo */}
-        <header style={styles.headerBar}>
+        <header className="preconsulta-header-bar" style={styles.headerBar}>
           <div>
             <span style={styles.eyebrow}>MÓDULO DE ENFERMERÍA</span>
             <h1 style={styles.title}>Lista de Preconsulta</h1>
           </div>
-          <div style={styles.headerActions}>
+          <div className="preconsulta-header-actions" style={styles.headerActions}>
             <span style={styles.countBadge}>
               <Users size={14} />
               <span>{todosLosPacientes.length} en espera</span>
@@ -136,9 +137,9 @@ export default function PreconsultaPage() {
         )}
 
         {/* Espacio de Trabajo en 2 Columnas (según diseño bosquejado) */}
-        <div style={styles.workspaceGrid}>
+        <div className="preconsulta-workspace-grid-layout" style={styles.workspaceGrid}>
           {/* Columna Izquierda: Tarjeta Gráfica con USER.PNG */}
-          <aside style={styles.brandCard}>
+          <aside className="preconsulta-brand-aside" style={styles.brandCard}>
             <div style={styles.avatarGlowContainer}>
               <div style={styles.bigAvatarWrapper}>
                 <img src={userImg} alt="Ilustración Preconsulta" style={styles.bigAvatarImg} />
@@ -188,9 +189,9 @@ export default function PreconsultaPage() {
                   const isEnAtencion = item.estado === 'EN_PRECONSULTA';
 
                   return (
-                    <div key={item.idCola} style={styles.patientRowCard}>
+                    <div key={item.idCola} className="preconsulta-patient-row-card" style={styles.patientRowCard}>
                       {/* Información del Paciente */}
-                      <div style={styles.patientInfoCol}>
+                      <div className="preconsulta-patient-info-col" style={styles.patientInfoCol}>
                         <div style={styles.nameRow}>
                           <h3 style={styles.patientName}>
                             {item.nombresPaciente} {item.apellidosPaciente}
@@ -215,10 +216,11 @@ export default function PreconsultaPage() {
                       </div>
 
                       {/* Botones de Acción: [Abrir] y [Eliminar] */}
-                      <div style={styles.actionsCol}>
+                      <div className="preconsulta-actions-col" style={styles.actionsCol}>
                         <button
                           type="button"
                           onClick={() => handleAbrirPaciente(item)}
+                          className="preconsulta-btn-abrir"
                           style={styles.btnAbrir}
                           title="Abrir formulario de signos vitales"
                           disabled={abriendoId !== null || eliminando}
@@ -239,6 +241,7 @@ export default function PreconsultaPage() {
                         <button
                           type="button"
                           onClick={() => setPacienteAEliminar(item)}
+                          className="preconsulta-btn-eliminar"
                           style={styles.btnEliminar}
                           title="Eliminar paciente de la cola"
                         >

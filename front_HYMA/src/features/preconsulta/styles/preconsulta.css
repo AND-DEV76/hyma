@@ -470,18 +470,411 @@
 }
 
 /* Responsive */
-@media (max-width: 960px) {
-  .preconsulta-workspace-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 992px) {
+  .preconsulta-workspace-grid,
+  .preconsulta-workspace-grid-layout {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
   }
 
-  .preconsulta-container {
-    padding: 16px;
+  .preconsulta-container,
+  .signos-vitales-content {
+    padding: 16px 20px 36px !important;
   }
 
   .preconsulta-control-panel {
     flex-direction: column;
     align-items: flex-start;
   }
+
+  .preconsulta-brand-aside {
+    padding: 20px !important;
+  }
+
+  .signos-vitales-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  }
 }
+
+/* Teléfonos móviles */
+@media (max-width: 640px) {
+  .preconsulta-container,
+  .signos-vitales-content {
+    padding: 12px 14px 28px !important;
+  }
+
+  /* Preconsulta Header */
+  .preconsulta-header-bar {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 14px 16px !important;
+  }
+
+  .preconsulta-header-actions {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  /* Preconsulta Patient Cards */
+  .preconsulta-patient-row-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+    padding: 14px !important;
+  }
+
+  .preconsulta-patient-info-col {
+    width: 100% !important;
+  }
+
+  .preconsulta-actions-col {
+    width: 100% !important;
+    display: flex !important;
+    gap: 8px !important;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 10px;
+  }
+
+  .preconsulta-btn-abrir,
+  .preconsulta-btn-eliminar {
+    flex: 1 !important;
+    justify-content: center !important;
+    padding: 10px 12px !important;
+  }
+
+  /* Signos Vitales Header */
+  .signos-vitales-header-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+    padding: 16px !important;
+  }
+
+  .signos-vitales-header-left {
+    width: 100% !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+
+  .signos-vitales-header-right {
+    width: 100% !important;
+  }
+
+  .signos-vitales-header-right button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Signos Vitales Resumen del Paciente */
+  .signos-vitales-summary-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Formulario Datos de Signos Vitales */
+  .signos-vitales-form-card {
+    padding: 16px !important;
+  }
+
+  .signos-vitales-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .signos-vitales-footer-actions {
+    flex-direction: column-reverse !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+
+  .signos-vitales-footer-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
+/* ==========================================================
+   MODAL DE ÉXITO TIPO LOGRO (ACHIEVEMENT) - SIGNOS VITALES
+   ========================================================== */
+.signos-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 4, 94, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1200;
+  animation: logroFadeIn 0.2s ease-out;
+}
+
+.logro-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 34px 28px 28px;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 25px 60px -10px rgba(3, 4, 94, 0.35), 0 0 35px rgba(0, 180, 216, 0.22);
+  border: 2px solid rgba(0, 180, 216, 0.35);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  animation: logroCardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Efecto de barrido de luz (Shimmer) */
+.logro-shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 65%;
+  height: 100%;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.65) 50%,
+    transparent 100%
+  );
+  transform: translateX(-150%) skewX(-20deg);
+  animation: logroShimmerPass 0.9s 0.25s ease-out forwards;
+  pointer-events: none;
+}
+
+/* Estrellas decorativas */
+.logro-sparkle {
+  position: absolute;
+  font-size: 20px;
+  pointer-events: none;
+  animation: logroSparkleFloat 1.8s ease-in-out infinite alternate;
+}
+
+.sparkle-left {
+  top: 22px;
+  left: 22px;
+  animation-delay: 0.15s;
+}
+
+.sparkle-right {
+  top: 26px;
+  right: 22px;
+  animation-delay: 0.45s;
+}
+
+/* Cinta de logro superior */
+.logro-ribbon {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: linear-gradient(135deg, #0077b6 0%, #00b4d8 100%);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 5px 14px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 119, 182, 0.28);
+  animation: logroRibbonGlow 2s ease-in-out infinite alternate;
+}
+
+.logro-ribbon-icon {
+  animation: logroSpinSlow 4s linear infinite;
+}
+
+/* Contenedor del emblema y anillos tipo sonar */
+.logro-emblem-container {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 6px;
+  margin-bottom: 20px;
+}
+
+.logro-pulse-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #00b4d8;
+  animation: logroSonar 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+.ring-1 {
+  animation-delay: 0s;
+}
+
+.ring-2 {
+  animation-delay: 0.65s;
+}
+
+.logro-emblem-circle {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0077b6 0%, #0096c7 50%, #48cae4 100%);
+  border: 3px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(0, 119, 182, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  animation: logroMedalSpin 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  z-index: 2;
+}
+
+/* Textos informativos */
+.logro-title {
+  margin: 0 0 10px;
+  color: #03045e;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.logro-patient-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+}
+
+.logro-desc {
+  margin: 0 0 24px;
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  max-width: 360px;
+}
+
+/* Botón de Aceptar */
+.logro-btn-confirm {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #0077b6 0%, #023e8a 100%);
+  color: #ffffff;
+  border: none;
+  padding: 13px 24px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 119, 182, 0.35);
+  transition: all 0.2s ease;
+}
+
+.logro-btn-confirm:hover {
+  background: linear-gradient(135deg, #0096c7 0%, #0077b6 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 119, 182, 0.45);
+}
+
+.logro-btn-confirm:active {
+  transform: translateY(0);
+}
+
+/* Keyframes Optimizados por GPU */
+@keyframes logroFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes logroCardPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.65) translateY(35px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.05) translateY(-6px);
+  }
+  80% {
+    transform: scale(0.98) translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes logroMedalSpin {
+  0% {
+    transform: scale(0) rotate(-60deg);
+    opacity: 0;
+  }
+  75% {
+    transform: scale(1.15) rotate(10deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes logroSonar {
+  0% {
+    transform: scale(0.75);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes logroShimmerPass {
+  0% {
+    transform: translateX(-160%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(280%) skewX(-20deg);
+  }
+}
+
+@keyframes logroSparkleFloat {
+  0% {
+    transform: translateY(0) scale(0.9) rotate(0deg);
+  }
+  100% {
+    transform: translateY(-8px) scale(1.2) rotate(15deg);
+  }
+}
+
+@keyframes logroRibbonGlow {
+  0% {
+    box-shadow: 0 4px 12px rgba(0, 119, 182, 0.25);
+  }
+  100% {
+    box-shadow: 0 4px 18px rgba(0, 180, 216, 0.5);
+  }
+}
+
+@keyframes logroSpinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
 
