@@ -12,6 +12,7 @@ public interface ColaAtencionRepository extends JpaRepository<ColaAtencion, Long
     List<ColaAtencion> findAllByOrderByFechaIngresoAsc();
 
     List<ColaAtencion> findByEstadoOrderByFechaIngresoAsc(EstadoCola estado);
+    List<ColaAtencion> findByEstadoInOrderByFechaIngresoAsc(Collection<EstadoCola> estados);
 
     @org.springframework.data.jpa.repository.Query("SELECT c FROM ColaAtencion c WHERE c.estado = :estado ORDER BY COALESCE(c.fechaAtencion, c.fechaIngreso) ASC")
     List<ColaAtencion> findByEstadoOrdenadoPorSalida(@org.springframework.data.repository.query.Param("estado") EstadoCola estado);

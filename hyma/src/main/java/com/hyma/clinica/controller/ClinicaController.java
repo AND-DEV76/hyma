@@ -7,7 +7,7 @@ import com.hyma.clinica.service.ClinicaService;
 import com.hyma.farmacia.dto.MedicamentoResponse;
 import com.hyma.farmacia.service.FarmaciaService;
 import com.hyma.recepcion.dto.ColaAtencionResponse;
-import com.hyma.recepcion.model.EstadoCola;
+
 import com.hyma.recepcion.service.ColaAtencionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,7 @@ public class ClinicaController {
 
     @GetMapping("/cola")
     public ResponseEntity<List<ColaAtencionResponse>> obtenerColaConsulta() {
-        return ResponseEntity.ok(colaAtencionService.obtenerCola(EstadoCola.EN_CONSULTA));
+        return ResponseEntity.ok(colaAtencionService.obtenerColaConsulta());
     }
 
     @GetMapping("/pacientes/{idPaciente}")

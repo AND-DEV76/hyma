@@ -39,6 +39,33 @@ export const reporteService = {
     link.parentNode.removeChild(link);
     window.URL.revokeObjectURL(url);
   },
+
+  /**
+   * Descarga el archivo Excel (.xlsx) con el Top N de diagnósticos más comunes del mes.
+   */
+  descargarExcelTopDiagnosticos: async (anio, mes, limite = 10) => {
+    const params = { limite };
+    if (anio) params.anio = anio;
+    if (mes) params.mes = mes;
+
+    const response = await api.get('/reportes/diagnosticos/excel', {
+      params,
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const padMes = String(mes).padStart(2, '0');
+    link.setAttribute('download', `Top_${limite}_Diagnosticos_${padMes}_${anio}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  },
 };
 
 export default reporteService;

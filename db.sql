@@ -429,3 +429,23 @@ CREATE TABLE inventario_semanal (
         UNIQUE (id_inventario, numero_semana)
 );
 
+
+
+-- 1. Eliminar la restricción actual
+ALTER TABLE cola_atencion DROP CONSTRAINT IF EXISTS chk_cola_estado;
+
+-- 2. Volver a crearla incluyendo 'ESPERA_CONSULTA'
+ALTER TABLE cola_atencion ADD CONSTRAINT chk_cola_estado CHECK (
+    estado IN (
+        'PENDIENTE', 
+        'EN_PRECONSULTA', 
+        'ESPERA_CONSULTA',   -- <--- Nuevo estado
+        'EN_CONSULTA', 
+        'EN_FARMACIA', 
+        'FINALIZADO', 
+        'CANCELADO'
+    )
+);
+
+-- 3. (Opcional) Migrar pacientes actuales que estaban esperando médico:
+-- UPDATE cola_atencion SET estado = 'ESPERA_CONSULTA' WHERE estado = 'EN_CONSULTA';

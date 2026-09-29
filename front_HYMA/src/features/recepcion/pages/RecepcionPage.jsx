@@ -331,7 +331,13 @@ function RecepcionPage() {
                               {item.nombresPaciente} {item.apellidosPaciente}
                             </span>
                             <span className="recepcion-card-status-badge">
-                              {isEnPreconsulta ? 'EN PRECONSULTA' : 'EN ESPERA'}
+                              {item.estado === 'EN_PRECONSULTA'
+                                ? 'EN PRECONSULTA'
+                                : item.estado === 'ESPERA_CONSULTA'
+                                ? 'ESPERA CONSULTA'
+                                : item.estado === 'EN_CONSULTA'
+                                ? 'EN CONSULTA'
+                                : 'EN ESPERA'}
                             </span>
                           </div>
 

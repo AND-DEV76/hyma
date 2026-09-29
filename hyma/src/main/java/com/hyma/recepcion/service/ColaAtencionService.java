@@ -29,6 +29,7 @@ public class ColaAtencionService {
     private static final List<EstadoCola> ESTADOS_ACTIVOS = List.of(
             EstadoCola.PENDIENTE,
             EstadoCola.EN_PRECONSULTA,
+            EstadoCola.ESPERA_CONSULTA,
             EstadoCola.EN_CONSULTA,
             EstadoCola.EN_FARMACIA
     );
@@ -94,6 +95,16 @@ public class ColaAtencionService {
             cola = colaAtencionRepository
                     .findByEstadoOrderByFechaIngresoAsc(estado);
         }
+
+        return cola.stream()
+                .map(colaAtencionMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ColaAtencionResponse> obtenerColaConsulta() {
+        List<ColaAtencion> cola = colaAtencionRepository
+                .findByEstadoOrderByFechaIngresoAsc(EstadoCola.ESPERA_CONSULTA);
 
         return cola.stream()
                 .map(colaAtencionMapper::toResponse)

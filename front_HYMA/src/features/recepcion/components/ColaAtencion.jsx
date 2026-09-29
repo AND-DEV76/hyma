@@ -31,6 +31,16 @@ function ColaAtencion({ cola, quitarDeCola, cargando, guardando }) {
         return 'Pendiente';
       case 'EN_PRECONSULTA':
         return 'En Preconsulta';
+      case 'ESPERA_CONSULTA':
+        return 'Espera Consulta';
+      case 'EN_CONSULTA':
+        return 'En Consulta';
+      case 'EN_FARMACIA':
+        return 'En Farmacia';
+      case 'FINALIZADO':
+        return 'Finalizado';
+      case 'CANCELADO':
+        return 'Cancelado';
       default:
         return estado;
     }

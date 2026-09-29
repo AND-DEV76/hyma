@@ -30,3 +30,10 @@ export const cancelarCola = async (idCola) => {
   const response = await api.patch(`/recepcion/cola/${idCola}/estado`, { estado: 'CANCELADO' });
   return response.data;
 };
+
+export const reanudarEsperaConsulta = async (idCola) => {
+  if (!idCola) return null;
+  const response = await api.patch(`/recepcion/cola/${idCola}/estado`, { estado: 'ESPERA_CONSULTA' });
+  return response.data;
+};
+

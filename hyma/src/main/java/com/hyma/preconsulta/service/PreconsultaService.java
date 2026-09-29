@@ -94,11 +94,11 @@ public class PreconsultaService {
         SignoVital signoVital = signoVitalMapper.toEntity(request, paciente);
         SignoVital guardado = signoVitalRepository.save(signoVital);
 
-        // 3. Transicionar el turno de atención a 'EN_CONSULTA'
+        // 3. Transicionar el turno de atención a 'ESPERA_CONSULTA'
         if (request.getIdCola() != null) {
             colaAtencionRepository.findById(request.getIdCola())
                     .ifPresent(cola -> {
-                        cola.setEstado(EstadoCola.EN_CONSULTA);
+                        cola.setEstado(EstadoCola.ESPERA_CONSULTA);
                         colaAtencionRepository.save(cola);
                     });
         } else {
@@ -108,7 +108,7 @@ public class PreconsultaService {
                     .filter(c -> c.getPaciente().getIdPaciente().equals(paciente.getIdPaciente()))
                     .findFirst()
                     .ifPresent(cola -> {
-                        cola.setEstado(EstadoCola.EN_CONSULTA);
+                        cola.setEstado(EstadoCola.ESPERA_CONSULTA);
                         colaAtencionRepository.save(cola);
                     });
         }

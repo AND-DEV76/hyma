@@ -53,8 +53,17 @@ public class ClinicaService {
     private final PacienteMapper pacienteMapper;
     private final TarifaServicioService tarifaServicioService;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public PacienteConsultaResponse obtenerDatosPacienteParaConsulta(Long idPaciente, Long idCola) {
+        if (idCola != null) {
+            colaAtencionRepository.findById(idCola).ifPresent(cola -> {
+                if (cola.getEstado() == EstadoCola.ESPERA_CONSULTA) {
+                    cola.setEstado(EstadoCola.EN_CONSULTA);
+                    colaAtencionRepository.save(cola);
+                }
+            });
+        }
+
         Paciente paciente = pacienteRepository.findById(idPaciente)
                 .orElseThrow(() -> new PacienteNotFoundException(idPaciente));
         

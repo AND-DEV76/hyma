@@ -79,6 +79,61 @@
   border-color: #94a3b8;
 }
 
+.grupo-exportar-diagnosticos {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 0.2rem 0.3rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  gap: 0.35rem;
+}
+
+.selector-top-diag {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.85rem;
+  color: #334155;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.selector-top-diag:hover {
+  border-color: #94a3b8;
+}
+
+.btn-diagnosticos-excel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background-color: #0284c7;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-diagnosticos-excel:hover:not(:disabled) {
+  background-color: #0369a1;
+  box-shadow: 0 4px 6px rgba(2, 132, 199, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-diagnosticos-excel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .btn-excel {
   display: inline-flex;
   align-items: center;

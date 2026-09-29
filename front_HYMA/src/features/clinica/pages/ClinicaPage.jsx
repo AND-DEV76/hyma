@@ -4,6 +4,7 @@ import { Clock, Stethoscope, Trash2, AlertCircle, RefreshCw, AlertTriangle, X, L
 import { useClinica } from '../hooks/useClinica';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import userImg from '../../../assets/images/user.png';
+import '../styles/clinica.css';
 
 export default function ClinicaPage() {
   const navigate = useNavigate();
@@ -66,14 +67,14 @@ export default function ClinicaPage() {
   return (
     <div style={styles.page}>
       <AdminNavbar />
-      <main style={styles.content}>
+      <main className="clinica-content" style={styles.content}>
         {/* Odoo Control Panel / Header */}
-        <section style={styles.headerBar}>
+        <section className="clinica-header-bar" style={styles.headerBar}>
           <div>
             <span style={styles.eyebrow}>MÓDULO MÉDICO</span>
             <h1 style={styles.title}>Pacientes en Espera de Consulta</h1>
           </div>
-          <div style={styles.headerActions}>
+          <div className="clinica-header-bar-actions" style={styles.headerActions}>
             <span style={styles.countBadge}>
               {cola.length} {cola.length === 1 ? 'paciente' : 'pacientes'} en espera
             </span>
@@ -112,30 +113,47 @@ export default function ClinicaPage() {
         ) : (
           <div style={styles.patientList}>
             {cola.map((item) => (
-              <div key={item.idCola} style={styles.patientCard}>
-                {/* Avatar USER.PNG */}
-                <div style={styles.avatarContainer}>
-                  <img src={userImg} alt="Avatar Paciente" style={styles.avatarImg} />
-                </div>
+              <div key={item.idCola} className="clinica-patient-card" style={styles.patientCard}>
+                <div className="clinica-card-top-row" style={styles.cardTopRow}>
+                  {/* Avatar USER.PNG */}
+                  <div style={styles.avatarContainer}>
+                    <img src={userImg} alt="Avatar Paciente" style={styles.avatarImg} />
+                  </div>
 
-                {/* Separator | */}
-                <div style={styles.divider} />
+                  {/* Separator | */}
+                  <div className="clinica-card-divider" style={styles.divider} />
 
-                {/* Paciente: Nombre y Hora */}
-                <div style={styles.infoCol}>
-                  <h3 style={styles.patientName}>
-                    {item.nombresPaciente} {item.apellidosPaciente}
-                  </h3>
-                  <div style={styles.horaBadge}>
-                    <Clock size={15} color="#0077b6" />
-                    <span style={styles.horaText}>
-                      Hora: <strong>{formatHora(item.fechaIngreso)}</strong>
-                    </span>
+                  {/* Paciente: Nombre y Hora */}
+                  <div className="clinica-card-info" style={styles.infoCol}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <h3 style={styles.patientName}>
+                        {item.nombresPaciente} {item.apellidosPaciente}
+                      </h3>
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          backgroundColor: item.estado === 'EN_CONSULTA' ? '#dcfce7' : '#e0f2fe',
+                          color: item.estado === 'EN_CONSULTA' ? '#166534' : '#0369a1',
+                          border: `1px solid ${item.estado === 'EN_CONSULTA' ? '#bbf7d0' : '#bae6fd'}`,
+                        }}
+                      >
+                        {item.estado === 'EN_CONSULTA' ? 'EN CONSULTA' : 'ESPERA CONSULTA'}
+                      </span>
+                    </div>
+                    <div style={styles.horaBadge}>
+                      <Clock size={15} color="#0077b6" />
+                      <span style={styles.horaText}>
+                        Hora: <strong>{formatHora(item.fechaIngreso)}</strong>
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Opciones: Atender y Eliminar */}
-                <div style={styles.actionsCol}>
+                <div className="clinica-card-actions" style={styles.actionsCol}>
                   <button
                     onClick={() => handleAtender(item.idPaciente, item.idCola)}
                     style={styles.btnAtender}
@@ -336,8 +354,15 @@ const styles = {
     padding: '16px 22px',
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'space-between',
     boxShadow: '0 2px 5px rgba(0, 0, 0, 0.03)',
     transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
+  },
+  cardTopRow: {
+    display: 'flex',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
   },
   avatarContainer: {
     width: '52px',

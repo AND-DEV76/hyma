@@ -927,6 +927,205 @@ public class ReporteService {
         }
     }
 
+    /**
+     * Genera el archivo Excel (.xlsx) con el Top N de diagnósticos más comunes
+     * para el mes y año seleccionados.
+     */
+    @Transactional(readOnly = true)
+    public byte[] generarExcelTopDiagnosticos(int anio, int mes, int limite) throws IOException {
+        YearMonth ym = YearMonth.of(anio, mes);
+        LocalDateTime inicioMes = ym.atDay(1).atStartOfDay();
+        LocalDateTime finMes = ym.atEndOfMonth().atTime(23, 59, 59, 999999999);
+
+        List<Consulta> consultasMes = consultaRepository.findByFechaConsultaBetweenOrderByFechaConsultaAsc(inicioMes, finMes);
+        List<Long> idsConsultasMes = consultasMes.stream()
+                .map(Consulta::getIdConsulta)
+                .filter(Objects::nonNull)
+                .toList();
+
+        List<DashboardHospitalarioResponse.ItemTopDiagnostico> topDiagnosticos = Collections.emptyList();
+        if (!idsConsultasMes.isEmpty()) {
+            List<Diagnostico> todosDiag = diagnosticoRepository.findByConsulta_IdConsultaIn(idsConsultasMes);
+
+            Map<String, List<Diagnostico>> diagPorClave = todosDiag.stream()
+                    .filter(d -> (d.getCodigoCie10() != null && !d.getCodigoCie10().isBlank()) || (d.getDescripcion() != null && !d.getDescripcion().isBlank()))
+                    .collect(Collectors.groupingBy(d -> {
+                        if (d.getCodigoCie10() != null && !d.getCodigoCie10().isBlank()) {
+                            return d.getCodigoCie10().trim().toUpperCase();
+                        }
+                        return d.getDescripcion().trim().toUpperCase();
+                    }));
+
+            topDiagnosticos = diagPorClave.entrySet().stream()
+                    .sorted((a, b) -> Integer.compare(b.getValue().size(), a.getValue().size()))
+                    .limit(limite)
+                    .map(entry -> {
+                        List<Diagnostico> lista = entry.getValue();
+                        Diagnostico primer = lista.get(0);
+                        String cod = (primer.getCodigoCie10() != null && !primer.getCodigoCie10().isBlank())
+                                ? primer.getCodigoCie10()
+                                : "S/C";
+                        String desc = (primer.getDescripcion() != null && !primer.getDescripcion().isBlank())
+                                ? primer.getDescripcion()
+                                : "Sin descripción";
+                        long cant = lista.size();
+
+                        return DashboardHospitalarioResponse.ItemTopDiagnostico.builder()
+                                .codigo(cod)
+                                .descripcion(desc)
+                                .cantidad(cant)
+                                .build();
+                    })
+                    .toList();
+        }
+
+        String[] nombresMeses = {
+                "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        };
+        String nombreMes = (mes >= 1 && mes <= 12) ? nombresMeses[mes - 1] : String.valueOf(mes);
+
+        try (Workbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("Top Diagnósticos");
+            sheet.setDisplayGridlines(true);
+
+            // Fuente Negrita
+            Font fontBold = wb.createFont();
+            fontBold.setBold(true);
+
+            // Fuente Título Principal
+            Font fontHeaderTitle = wb.createFont();
+            fontHeaderTitle.setBold(true);
+            fontHeaderTitle.setFontHeightInPoints((short) 12);
+            fontHeaderTitle.setColor(IndexedColors.WHITE.getIndex());
+
+            // Fuente Subtítulo
+            Font fontSubTitle = wb.createFont();
+            fontSubTitle.setFontHeightInPoints((short) 10);
+            fontSubTitle.setColor(IndexedColors.BLACK.getIndex());
+            fontSubTitle.setBold(true);
+
+            // Fuente Cabecera Columnas
+            Font fontColHeader = wb.createFont();
+            fontColHeader.setBold(true);
+            fontColHeader.setFontHeightInPoints((short) 11);
+            fontColHeader.setColor(IndexedColors.WHITE.getIndex());
+
+            // Fuente Normal
+            Font fontRegular = wb.createFont();
+            fontRegular.setFontHeightInPoints((short) 10);
+
+            // Estilo Título Principal
+            CellStyle styleMainTitle = wb.createCellStyle();
+            styleMainTitle.setFont(fontHeaderTitle);
+            styleMainTitle.setAlignment(HorizontalAlignment.CENTER);
+            styleMainTitle.setVerticalAlignment(VerticalAlignment.CENTER);
+            styleMainTitle.setFillForegroundColor(IndexedColors.ROYAL_BLUE.getIndex());
+            styleMainTitle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            setBorders(styleMainTitle);
+
+            // Estilo Subtítulo
+            CellStyle styleSubTitle = wb.createCellStyle();
+            styleSubTitle.setFont(fontSubTitle);
+            styleSubTitle.setAlignment(HorizontalAlignment.CENTER);
+            styleSubTitle.setVerticalAlignment(VerticalAlignment.CENTER);
+            styleSubTitle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            styleSubTitle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            setBorders(styleSubTitle);
+
+            // Estilo Encabezado Columnas
+            CellStyle styleColHeader = wb.createCellStyle();
+            styleColHeader.setFont(fontColHeader);
+            styleColHeader.setAlignment(HorizontalAlignment.CENTER);
+            styleColHeader.setVerticalAlignment(VerticalAlignment.CENTER);
+            styleColHeader.setFillForegroundColor(IndexedColors.DARK_TEAL.getIndex());
+            styleColHeader.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            setBorders(styleColHeader);
+
+            // Estilos Celdas de Datos
+            CellStyle styleTextLeft = wb.createCellStyle();
+            styleTextLeft.setFont(fontRegular);
+            styleTextLeft.setAlignment(HorizontalAlignment.LEFT);
+            styleTextLeft.setVerticalAlignment(VerticalAlignment.CENTER);
+            setBorders(styleTextLeft);
+
+            CellStyle styleNumCenter = wb.createCellStyle();
+            styleNumCenter.setFont(fontRegular);
+            styleNumCenter.setAlignment(HorizontalAlignment.CENTER);
+            styleNumCenter.setVerticalAlignment(VerticalAlignment.CENTER);
+            setBorders(styleNumCenter);
+
+            // Estilos Fila Total
+            CellStyle styleTotalText = wb.createCellStyle();
+            styleTotalText.setFont(fontBold);
+            styleTotalText.setAlignment(HorizontalAlignment.RIGHT);
+            styleTotalText.setVerticalAlignment(VerticalAlignment.CENTER);
+            styleTotalText.setFillForegroundColor(IndexedColors.LIGHT_TURQUOISE.getIndex());
+            styleTotalText.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            setBorders(styleTotalText);
+
+            CellStyle styleTotalNum = wb.createCellStyle();
+            styleTotalNum.setFont(fontBold);
+            styleTotalNum.setAlignment(HorizontalAlignment.CENTER);
+            styleTotalNum.setVerticalAlignment(VerticalAlignment.CENTER);
+            styleTotalNum.setFillForegroundColor(IndexedColors.LIGHT_TURQUOISE.getIndex());
+            styleTotalNum.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            setBorders(styleTotalNum);
+
+            // Fila 0: Título Principal
+            Row row0 = sheet.createRow(0);
+            row0.setHeightInPoints(32);
+            crearCeldaConBorde(row0, 0, "Diagnósticos Más Comunes del Programa de salud HYMA", styleMainTitle);
+            crearCeldaConBorde(row0, 1, "", styleMainTitle);
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 1));
+
+            // Fila 1: Subtítulo de Período
+            Row row1 = sheet.createRow(1);
+            row1.setHeightInPoints(22);
+            crearCeldaConBorde(row1, 0, "Período: " + nombreMes + " " + anio, styleSubTitle);
+            crearCeldaConBorde(row1, 1, "", styleSubTitle);
+            sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 1));
+
+            // Fila 2: Encabezados de Tabla
+            Row row2 = sheet.createRow(2);
+            row2.setHeightInPoints(26);
+            crearCeldaConBorde(row2, 0, "Diagnósticos", styleColHeader);
+            crearCeldaConBorde(row2, 1, "Pacientes", styleColHeader);
+
+            int currentRowIdx = 3;
+            long totalPacientes = 0;
+
+            if (topDiagnosticos.isEmpty()) {
+                Row rowEmpty = sheet.createRow(currentRowIdx++);
+                rowEmpty.setHeightInPoints(22);
+                crearCeldaConBorde(rowEmpty, 0, "No se registraron diagnósticos en este mes", styleTextLeft);
+                crearCeldaNumerica(rowEmpty, 1, 0, styleNumCenter);
+            } else {
+                for (DashboardHospitalarioResponse.ItemTopDiagnostico item : topDiagnosticos) {
+                    Row rowData = sheet.createRow(currentRowIdx++);
+                    rowData.setHeightInPoints(22);
+                    crearCeldaConBorde(rowData, 0, item.getDescripcion(), styleTextLeft);
+                    crearCeldaNumerica(rowData, 1, (int) item.getCantidad(), styleNumCenter);
+                    totalPacientes += item.getCantidad();
+                }
+
+                // Fila Total
+                Row rowTotal = sheet.createRow(currentRowIdx);
+                rowTotal.setHeightInPoints(24);
+                crearCeldaConBorde(rowTotal, 0, "TOTAL", styleTotalText);
+                crearCeldaNumerica(rowTotal, 1, (int) totalPacientes, styleTotalNum);
+            }
+
+            // Anchos de Columna
+            sheet.setColumnWidth(0, 16000); // Diagnósticos con suficiente espacio
+            sheet.setColumnWidth(1, 4500);  // Pacientes
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            wb.write(baos);
+            return baos.toByteArray();
+        }
+    }
+
     private byte[] hexToRgb(String hex) {
         if (hex == null || !hex.startsWith("#") || hex.length() < 7) {
             return new byte[]{(byte) 252, (byte) 228, (byte) 214};
@@ -1038,7 +1237,7 @@ public class ReporteService {
                 .count();
 
         long enEsperaClinica = todasCola.stream()
-                .filter(c -> c.getEstado() == EstadoCola.EN_CONSULTA)
+                .filter(c -> c.getEstado() == EstadoCola.ESPERA_CONSULTA || c.getEstado() == EstadoCola.EN_CONSULTA)
                 .count();
 
         long enEsperaFarmacia = todasCola.stream()

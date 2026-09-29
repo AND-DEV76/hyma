@@ -43,6 +43,8 @@ export default function ReportesPage() {
   const [error, setError] = useState('');
   const [data, setData] = useState(null);
   const [downloading, setDownloading] = useState(false);
+  const [limiteDiagnosticos, setLimiteDiagnosticos] = useState(10);
+  const [downloadingDiag, setDownloadingDiag] = useState(false);
   const [filtroSoloAtendidos, setFiltroSoloAtendidos] = useState(false);
   const [searchDiag, setSearchDiag] = useState('');
 
@@ -74,6 +76,18 @@ export default function ReportesPage() {
       alert('Error al descargar el archivo Excel.');
     } finally {
       setDownloading(false);
+    }
+  };
+
+  const handleDescargarExcelDiagnosticos = async () => {
+    setDownloadingDiag(true);
+    try {
+      await reporteService.descargarExcelTopDiagnosticos(selectedYear, selectedMonth, limiteDiagnosticos);
+    } catch (err) {
+      console.error('Error descargando Excel de Diagnósticos:', err);
+      alert('Error al descargar el reporte de diagnósticos.');
+    } finally {
+      setDownloadingDiag(false);
     }
   };
 
@@ -177,6 +191,33 @@ export default function ReportesPage() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Exportar Top Diagnósticos */}
+            <div className="grupo-exportar-diagnosticos">
+              <select
+                className="selector-top-diag"
+                value={limiteDiagnosticos}
+                onChange={(e) => setLimiteDiagnosticos(Number(e.target.value))}
+                title="Cantidad de diagnósticos a exportar"
+              >
+                <option value={5}>Top 5</option>
+                <option value={10}>Top 10</option>
+                <option value={15}>Top 15</option>
+                <option value={20}>Top 20</option>
+                <option value={25}>Top 25</option>
+                <option value={30}>Top 30</option>
+              </select>
+
+              <button
+                className="btn-diagnosticos-excel"
+                onClick={handleDescargarExcelDiagnosticos}
+                disabled={downloadingDiag || loading}
+                title={`Exportar Top ${limiteDiagnosticos} Diagnósticos en Excel`}
+              >
+                <Download size={18} />
+                {downloadingDiag ? 'Generando...' : 'Diagnósticos'}
+              </button>
             </div>
 
             {/* Botón Descargar Excel */}

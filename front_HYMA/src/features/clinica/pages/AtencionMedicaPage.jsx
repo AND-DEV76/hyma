@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Trash2,
@@ -27,6 +27,7 @@ import * as clinicaService from '../services/clinicaService';
 import { calcularIMC } from '../../preconsulta/hooks/usePreconsulta';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import userImg from '../../../assets/images/user.png';
+import '../styles/clinica.css';
 
 const PASOS = [
   { id: 1, label: 'Paciente & Signos', icon: User },
@@ -240,6 +241,14 @@ export default function AtencionMedicaPage() {
   const [pasoActual, setPasoActual] = useState(1);
   const [mostrarUltimaConsulta, setMostrarUltimaConsulta] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const stepBodyRef = useRef(null);
+
+  // Al cambiar de paso, restaurar el scroll del cuerpo del wizard arriba
+  useEffect(() => {
+    if (stepBodyRef.current) {
+      stepBodyRef.current.scrollTop = 0;
+    }
+  }, [pasoActual]);
 
   // Cálculo en tiempo real de IMC para el médico
   const imcInfoSignos = useMemo(() => {
@@ -448,6 +457,17 @@ export default function AtencionMedicaPage() {
     }
   };
 
+  const handleCancelar = async () => {
+    if (idCola) {
+      try {
+        await clinicaService.reanudarEsperaConsulta(idCola);
+      } catch (err) {
+        console.error('Error al retornar paciente a espera de consulta', err);
+      }
+    }
+    navigate('/clinica');
+  };
+
   if (loadingDatos) {
     return (
       <div style={styles.page}>
@@ -470,15 +490,15 @@ export default function AtencionMedicaPage() {
   return (
     <div style={styles.page}>
       <AdminNavbar />
-      <main style={styles.content}>
+      <main className="clinica-content" style={styles.content}>
         {/* Header Odoo: USER.PNG | Paciente X */}
-        <div style={styles.odooHeaderCard}>
-          <div style={styles.headerLeft}>
+        <div className="clinica-odoo-header" style={styles.odooHeaderCard}>
+          <div className="clinica-odoo-header-left" style={styles.headerLeft}>
             <div style={styles.avatarContainer}>
               <img src={userImg} alt="Avatar Paciente" style={styles.avatarImg} />
             </div>
 
-            <div style={styles.verticalDivider}>|</div>
+            <div className="clinica-odoo-divider" style={styles.verticalDivider}>|</div>
 
             <div>
               <span style={styles.headerEyebrow}>ATENCIÓN MÉDICA EN CONSULTA</span>
@@ -488,13 +508,13 @@ export default function AtencionMedicaPage() {
             </div>
           </div>
 
-          <div style={styles.headerRight}>
+          <div className="clinica-odoo-header-right" style={styles.headerRight}>
             <span style={styles.stepCounterBadge}>
               Paso {pasoActual} de {PASOS.length}
             </span>
             <button
               type="button"
-              onClick={() => navigate('/clinica')}
+              onClick={handleCancelar}
               style={styles.btnVolver}
               title="Volver a la cola"
             >
@@ -512,7 +532,7 @@ export default function AtencionMedicaPage() {
         )}
 
         {/* Wizard / Stepper Navigation Bar */}
-        <nav style={styles.stepperNav}>
+        <nav className="clinica-stepper-nav" style={styles.stepperNav}>
           {PASOS.map((paso) => {
             const Icon = paso.icon;
             const isActivo = pasoActual === paso.id;
@@ -522,6 +542,7 @@ export default function AtencionMedicaPage() {
               <button
                 key={paso.id}
                 type="button"
+                className="clinica-step-tab"
                 onClick={() => setPasoActual(paso.id)}
                 style={{
                   ...styles.stepTab,
@@ -549,50 +570,58 @@ export default function AtencionMedicaPage() {
                   )}
                 </div>
                 <Icon size={16} />
-                <span style={styles.stepTabLabel}>{paso.label}</span>
+                <span className="clinica-step-tab-label" style={styles.stepTabLabel}>{paso.label}</span>
               </button>
             );
           })}
         </nav>
 
         {/* Wizard Step Content Container */}
-        <div style={styles.wizardCard}>
-          {/* PASO 1: Datos del Paciente y Signos Vitales */}
-          {pasoActual === 1 && (
-            <div style={styles.stepContentFade}>
-              <div style={styles.stepTitleBar}>
-                <div style={styles.stepIconWrap}>
-                  <User size={20} color="#0077b6" />
-                </div>
-                <div>
-                  <h2 style={styles.stepHeading}>Datos del Paciente y Signos Vitales</h2>
-                  <p style={styles.stepSubheading}>
-                    Información de identificación y constantes vitales registradas en preconsulta.
-                  </p>
-                </div>
-              </div>
-
-              <div style={styles.patientGrid}>
-                <div style={styles.patientDetailBox}>
-                  <div style={styles.infoRow}>
-                    <span style={styles.infoLabel}>Nombre Completo:</span>
-                    <span style={styles.infoValue}>{nombreCompleto}</span>
+        <div className="clinica-wizard-card" style={styles.wizardCard}>
+          <div
+            ref={stepBodyRef}
+            className="wizard-step-scroll-body clinica-wizard-step-body"
+            style={{
+              ...styles.wizardStepBody,
+              overflowY: pasoActual === 1 && mostrarUltimaConsulta ? 'auto' : 'visible',
+            }}
+          >
+            {/* PASO 1: Datos del Paciente y Signos Vitales */}
+            {pasoActual === 1 && (
+              <div style={styles.stepContentFade}>
+                <div style={styles.stepTitleBar}>
+                  <div style={styles.stepIconWrap}>
+                    <User size={20} color="#0077b6" />
                   </div>
-                  <div style={styles.infoRow}>
-                    <span style={styles.infoLabel}>Antecedentes Patológicos:</span>
-                    <span style={styles.infoValue}>
-                      {pacienteData?.paciente?.antecedentesPersonalesPatologicos || 'Sin registrar / Ninguno'}
-                    </span>
+                  <div>
+                    <h2 style={styles.stepHeading}>Datos del Paciente y Signos Vitales</h2>
+                    <p style={styles.stepSubheading}>
+                      Información de identificación y constantes vitales registradas en preconsulta.
+                    </p>
                   </div>
                 </div>
 
-                {pacienteData?.ultimoSignoVital ? (
-                  <div style={styles.vitalsBox}>
-                    <div style={styles.vitalsHeader}>
-                      <HeartPulse size={16} color="#0077b6" />
-                      <span style={styles.vitalsTitle}>Signos Vitales de Preconsulta</span>
+                <div className="clinica-patient-grid" style={styles.patientGrid}>
+                  <div style={styles.patientDetailBox}>
+                    <div style={styles.infoRow}>
+                      <span style={styles.infoLabel}>Nombre Completo:</span>
+                      <span style={styles.infoValue}>{nombreCompleto}</span>
                     </div>
-                    <div style={styles.vitalsGrid}>
+                    <div style={styles.infoRow}>
+                      <span style={styles.infoLabel}>Antecedentes Patológicos:</span>
+                      <span style={styles.infoValue}>
+                        {pacienteData?.paciente?.antecedentesPersonalesPatologicos || 'Sin registrar / Ninguno'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {pacienteData?.ultimoSignoVital ? (
+                    <div style={styles.vitalsBox}>
+                      <div style={styles.vitalsHeader}>
+                        <HeartPulse size={16} color="#0077b6" />
+                        <span style={styles.vitalsTitle}>Signos Vitales de Preconsulta</span>
+                      </div>
+                      <div className="clinica-vitals-grid" style={styles.vitalsGrid}>
                       <div style={styles.vitalItem}>
                         <span style={styles.vitalLabel}>Presión Art.</span>
                         <span style={styles.vitalVal}>
@@ -814,7 +843,6 @@ export default function AtencionMedicaPage() {
                             <div style={styles.ucDiagList}>
                               {pacienteData.ultimaConsulta.diagnosticos.map((d, idx) => (
                                 <div key={idx} style={styles.ucDiagTag}>
-                                  <span style={styles.ucDiagCode}>{d.codigoCie10 || 'CIE-10'}</span>
                                   <span style={styles.ucDiagDesc}>{d.descripcion}</span>
                                 </div>
                               ))}
@@ -939,7 +967,7 @@ export default function AtencionMedicaPage() {
                 </div>
               </div>
 
-              <div style={styles.formGrid}>
+              <div className="clinica-two-col-grid" style={styles.twoColGrid}>
                 <div style={styles.inputGroup}>
                   <label style={styles.label}>Motivo de Consulta</label>
                   <textarea
@@ -947,6 +975,7 @@ export default function AtencionMedicaPage() {
                     value={motivoConsulta}
                     onChange={(e) => setMotivoConsulta(e.target.value)}
                     style={styles.textarea}
+                    rows={3}
                   />
                 </div>
 
@@ -957,29 +986,30 @@ export default function AtencionMedicaPage() {
                     value={historiaEnfermedad}
                     onChange={(e) => setHistoriaEnfermedad(e.target.value)}
                     style={styles.textarea}
+                    rows={3}
                   />
                 </div>
 
-                <div style={styles.twoColGrid}>
-                  <div style={styles.inputGroup}>
-                    <label style={styles.label}>Impresión Clínica</label>
-                    <textarea
-                      placeholder="Conclusiones diagnósticas preliminares..."
-                      value={impresionClinica}
-                      onChange={(e) => setImpresionClinica(e.target.value)}
-                      style={styles.textarea}
-                    />
-                  </div>
+                <div style={styles.inputGroup}>
+                  <label style={styles.label}>Impresión Clínica</label>
+                  <textarea
+                    placeholder="Conclusiones diagnósticas preliminares..."
+                    value={impresionClinica}
+                    onChange={(e) => setImpresionClinica(e.target.value)}
+                    style={styles.textarea}
+                    rows={3}
+                  />
+                </div>
 
-                  <div style={styles.inputGroup}>
-                    <label style={styles.label}>Plan Médico</label>
-                    <textarea
-                      placeholder="Plan de acción, estudios complementarios, cuidados..."
-                      value={planMedico}
-                      onChange={(e) => setPlanMedico(e.target.value)}
-                      style={styles.textarea}
-                    />
-                  </div>
+                <div style={styles.inputGroup}>
+                  <label style={styles.label}>Plan Médico</label>
+                  <textarea
+                    placeholder="Plan de acción, estudios complementarios, cuidados..."
+                    value={planMedico}
+                    onChange={(e) => setPlanMedico(e.target.value)}
+                    style={styles.textarea}
+                    rows={3}
+                  />
                 </div>
               </div>
             </div>
@@ -1000,7 +1030,7 @@ export default function AtencionMedicaPage() {
                 </div>
               </div>
 
-              <div style={styles.twoColGrid}>
+              <div className="clinica-two-col-grid" style={styles.twoColGrid}>
                 <div style={styles.inputGroup}>
                   <label style={styles.label}>Piel y Faneras</label>
                   <input
@@ -1077,7 +1107,7 @@ export default function AtencionMedicaPage() {
                 <div>
                   <h2 style={styles.stepHeading}>Diagnósticos Clínicos</h2>
                   <p style={styles.stepSubheading}>
-                    Búsqueda de diagnósticos.
+                    Búsqueda y selección de diagnósticos clínicos.
                   </p>
                 </div>
               </div>
@@ -1087,7 +1117,7 @@ export default function AtencionMedicaPage() {
                   <Search size={16} color="#64748b" style={styles.searchIcon} />
                   <input
                     type="text"
-                    placeholder="Escriba código o nombre de la patología..."
+                    placeholder="Buscar diagnóstico por descripción o patología..."
                     value={searchDiag}
                     onChange={handleSearchDiag}
                     style={styles.searchInput}
@@ -1102,8 +1132,7 @@ export default function AtencionMedicaPage() {
                         onClick={() => addDiagnostico(d)}
                         style={styles.autocompleteItem}
                       >
-                        <span style={styles.codePill}>{d.codigo}</span>
-                        <span style={{ color: '#03045e', fontWeight: '500' }}>
+                        <span style={{ color: '#03045e', fontWeight: '600', fontSize: '14px' }}>
                           {d.descripcion}
                         </span>
                       </li>
@@ -1113,21 +1142,49 @@ export default function AtencionMedicaPage() {
               </div>
 
               {diagnosticos.length > 0 ? (
-                <div style={styles.tagGrid}>
-                  {diagnosticos.map((d) => (
-                    <div key={d.codigoCie10} style={styles.diagBadge}>
-                      <span style={styles.diagCode}>{d.codigoCie10}</span>
-                      <span style={styles.diagDesc}>{d.descripcion}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeDiagnostico(d.codigoCie10)}
-                        style={styles.btnRemoveTag}
-                        title="Eliminar diagnóstico"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
+                <div className="clinica-table-responsive" style={{ overflowX: 'auto', marginTop: '16px' }}>
+                  <table style={styles.table}>
+                    <thead>
+                      <tr>
+                        <th style={{ ...styles.th, width: '60px', textAlign: 'center' }}>#</th>
+                        <th style={styles.th}>Descripción del Diagnóstico</th>
+                        <th style={{ ...styles.th, width: '70px', textAlign: 'center' }}>Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {diagnosticos.map((d, index) => (
+                        <tr key={d.codigoCie10} style={styles.tr}>
+                          <td style={{ ...styles.td, textAlign: 'center', color: '#64748b', fontWeight: '600' }}>
+                            {index + 1}
+                          </td>
+                          <td style={{ ...styles.td, color: '#03045e', fontWeight: '500' }}>
+                            {d.descripcion}
+                          </td>
+                          <td style={{ ...styles.td, textAlign: 'center' }}>
+                            <button
+                              type="button"
+                              onClick={() => removeDiagnostico(d.codigoCie10)}
+                              style={{
+                                background: '#fff1f2',
+                                border: '1px solid #fecdd3',
+                                color: '#e11d48',
+                                padding: '6px 10px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.15s ease',
+                              }}
+                              title="Eliminar diagnóstico"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               ) : (
                 <div style={styles.emptyDiagBox}>
@@ -1162,10 +1219,11 @@ export default function AtencionMedicaPage() {
                   value={observacionesTratamiento}
                   onChange={(e) => setObservacionesTratamiento(e.target.value)}
                   style={styles.textarea}
+                  rows={3}
                 />
               </div>
 
-              <div style={{ ...styles.searchContainer, marginTop: '20px' }}>
+              <div style={{ ...styles.searchContainer, marginTop: '16px' }}>
                 <label style={styles.label}>Agregar Medicamento a la Receta</label>
                 <div style={styles.searchInputWrapper}>
                   <Search size={16} color="#64748b" style={styles.searchIcon} />
@@ -1211,7 +1269,7 @@ export default function AtencionMedicaPage() {
               </div>
 
               {detallesTratamiento.length > 0 ? (
-                <div style={styles.tableContainer}>
+                <div className="clinica-table-responsive" style={styles.tableContainer}>
                   <datalist id="frecuencia-options">
                     <option value="Cada 4 hrs" label="Cada 4 horas (6 al día)" />
                     <option value="Cada 5 hrs" label="Cada 5 horas (4.8 al día)" />
@@ -1386,20 +1444,21 @@ export default function AtencionMedicaPage() {
               )}
             </div>
           )}
+          </div>
 
           {/* Wizard Navigation / Footer Bar */}
-          <div style={styles.wizardFooter}>
-            <div style={styles.wizardFooterLeft}>
+          <div className="clinica-wizard-footer" style={styles.wizardFooter}>
+            <div className="clinica-wizard-footer-left" style={styles.wizardFooterLeft}>
               <button
                 type="button"
-                onClick={() => navigate('/clinica')}
+                onClick={handleCancelar}
                 style={styles.btnCancelFooter}
               >
                 Cancelar
               </button>
             </div>
 
-            <div style={styles.wizardFooterRight}>
+            <div className="clinica-wizard-footer-right" style={styles.wizardFooterRight}>
               {pasoActual > 1 && (
                 <button
                   type="button"
@@ -1457,32 +1516,32 @@ const styles = {
     fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   },
   content: {
-    maxWidth: '1100px',
+    maxWidth: '1150px',
     margin: '0 auto',
-    padding: '32px 24px',
+    padding: '12px 20px 14px',
   },
   odooHeaderCard: {
     background: 'white',
     borderRadius: '12px',
     border: '1px solid #e2e8f0',
-    padding: '18px 24px',
+    padding: '10px 18px',
     boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: '20px',
+    marginBottom: '10px',
     flexWrap: 'wrap',
-    gap: '16px',
+    gap: '14px',
   },
   headerLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '16px',
+    gap: '14px',
     flexWrap: 'wrap',
   },
   avatarContainer: {
-    width: '54px',
-    height: '54px',
+    width: '42px',
+    height: '42px',
     borderRadius: '50%',
     background: '#caf0f8',
     border: '2px solid #90e0ef',
@@ -1499,23 +1558,23 @@ const styles = {
   },
   verticalDivider: {
     color: '#cbd5e1',
-    fontSize: '28px',
+    fontSize: '22px',
     fontWeight: '300',
     lineHeight: 1,
   },
   headerEyebrow: {
     color: '#0077b6',
-    fontSize: '11px',
+    fontSize: '10px',
     fontWeight: '700',
     letterSpacing: '0.08em',
     textTransform: 'uppercase',
     display: 'block',
-    marginBottom: '3px',
+    marginBottom: '1px',
   },
   headerTitle: {
     color: '#03045e',
     margin: 0,
-    fontSize: '21px',
+    fontSize: '17px',
     fontWeight: '700',
     letterSpacing: '-0.02em',
   },
@@ -1529,20 +1588,20 @@ const styles = {
     color: '#0077b6',
     fontSize: '12px',
     fontWeight: '700',
-    padding: '6px 14px',
+    padding: '4px 12px',
     borderRadius: '20px',
     border: '1px solid #bae6fd',
   },
   btnVolver: {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '8px',
+    gap: '6px',
     background: '#f1f5f9',
     color: '#475569',
     border: '1px solid #cbd5e1',
-    padding: '8px 16px',
+    padding: '6px 14px',
     borderRadius: '8px',
-    fontSize: '13px',
+    fontSize: '12px',
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.2s',
@@ -1553,35 +1612,35 @@ const styles = {
     gap: '10px',
     background: '#fee2e2',
     color: '#991b1b',
-    padding: '14px 18px',
+    padding: '10px 14px',
     borderRadius: '8px',
-    marginBottom: '20px',
-    fontSize: '14px',
+    marginBottom: '12px',
+    fontSize: '13px',
     border: '1px solid #fecaca',
   },
   loadingBox: {
     background: 'white',
     borderRadius: '10px',
     border: '1px solid #e2e8f0',
-    padding: '40px',
+    padding: '30px',
     textAlign: 'center',
   },
   // Wizard Stepper Tabs
   stepperNav: {
     display: 'grid',
     gridTemplateColumns: 'repeat(5, 1fr)',
-    gap: '8px',
-    marginBottom: '20px',
+    gap: '6px',
+    marginBottom: '10px',
   },
   stepTab: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '8px',
-    padding: '12px 14px',
-    borderRadius: '10px',
+    gap: '6px',
+    padding: '7px 10px',
+    borderRadius: '8px',
     border: '1px solid transparent',
-    fontSize: '13px',
+    fontSize: '12px',
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
@@ -1603,13 +1662,13 @@ const styles = {
     border: '1px solid #e2e8f0',
   },
   stepNumberBadge: {
-    width: '22px',
-    height: '22px',
+    width: '20px',
+    height: '20px',
     borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '11px',
+    fontSize: '10px',
     fontWeight: '800',
     flexShrink: 0,
   },
@@ -1635,12 +1694,17 @@ const styles = {
     background: 'white',
     borderRadius: '12px',
     border: '1px solid #e2e8f0',
-    padding: '28px',
+    padding: '24px 28px 20px',
     boxShadow: '0 2px 6px rgba(0, 0, 0, 0.03)',
-    minHeight: '440px',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
+    boxSizing: 'border-box',
+  },
+  wizardStepBody: {
+    flex: 1,
+    paddingRight: '4px',
+    paddingBottom: '4px',
   },
   stepContentFade: {
     animation: 'fadeIn 0.2s ease-in-out',
@@ -1650,8 +1714,8 @@ const styles = {
     alignItems: 'flex-start',
     gap: '14px',
     borderBottom: '1px solid #f1f5f9',
-    paddingBottom: '16px',
-    marginBottom: '24px',
+    paddingBottom: '14px',
+    marginBottom: '18px',
   },
   stepIconWrap: {
     width: '42px',
@@ -1671,7 +1735,7 @@ const styles = {
   },
   stepSubheading: {
     margin: '3px 0 0',
-    fontSize: '13px',
+    fontSize: '13.5px',
     color: '#64748b',
   },
   // Step 1: Patient Grid
@@ -1840,9 +1904,11 @@ const styles = {
     justifyContent: 'center',
   },
   ultimaConsultaBody: {
-    padding: '18px 20px',
+    padding: '14px 18px',
     borderTop: '1px solid #f1f5f9',
     backgroundColor: '#f8fafc',
+    maxHeight: '360px',
+    overflowY: 'auto',
   },
   ultimaConsultaEmptyState: {
     display: 'flex',
@@ -2023,7 +2089,7 @@ const styles = {
   twoColGrid: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: '16px',
+    gap: '18px',
   },
   inputGroup: {
     display: 'flex',
@@ -2031,29 +2097,32 @@ const styles = {
     gap: '6px',
   },
   label: {
-    fontSize: '13px',
+    fontSize: '14.5px',
     fontWeight: '600',
-    color: '#334155',
+    color: '#1e293b',
   },
   input: {
-    padding: '10px 14px',
+    padding: '12px 16px',
     borderRadius: '8px',
     border: '1px solid #cbd5e1',
-    fontSize: '14px',
+    fontSize: '15px',
     color: '#03045e',
     outline: 'none',
     transition: 'border-color 0.2s',
   },
   textarea: {
-    padding: '10px 14px',
+    padding: '12px 16px',
     borderRadius: '8px',
     border: '1px solid #cbd5e1',
-    fontSize: '14px',
+    fontSize: '15px',
     color: '#03045e',
-    minHeight: '85px',
+    height: '110px',
+    minHeight: '95px',
+    maxHeight: '160px',
     fontFamily: 'inherit',
     outline: 'none',
     resize: 'vertical',
+    boxSizing: 'border-box',
   },
   // Step 4: Search & Diagnósticos
   searchContainer: {
@@ -2067,14 +2136,14 @@ const styles = {
   },
   searchIcon: {
     position: 'absolute',
-    left: '14px',
+    left: '16px',
   },
   searchInput: {
     width: '100%',
-    padding: '11px 14px 11px 40px',
+    padding: '13px 18px 13px 46px',
     borderRadius: '8px',
     border: '1px solid #cbd5e1',
-    fontSize: '14px',
+    fontSize: '15px',
     color: '#03045e',
     outline: 'none',
   },
@@ -2179,26 +2248,26 @@ const styles = {
     background: '#f8fafc',
     color: '#475569',
     fontWeight: '700',
-    fontSize: '12px',
+    fontSize: '13px',
     textTransform: 'uppercase',
     letterSpacing: '0.04em',
-    padding: '12px 16px',
+    padding: '14px 18px',
     borderBottom: '2px solid #e2e8f0',
   },
   tr: {
     borderBottom: '1px solid #f1f5f9',
   },
   td: {
-    padding: '14px 16px',
+    padding: '16px 18px',
     verticalAlign: 'middle',
     borderBottom: '1px solid #f1f5f9',
   },
   tableInput: {
     width: '100%',
-    padding: '8px 12px',
+    padding: '10px 14px',
     borderRadius: '6px',
     border: '1px solid #cbd5e1',
-    fontSize: '13px',
+    fontSize: '14px',
     color: '#0f172a',
     outline: 'none',
     background: '#ffffff',
@@ -2206,11 +2275,11 @@ const styles = {
     transition: 'border-color 0.2s',
   },
   quantityInput: {
-    width: '64px',
-    padding: '7px 8px',
+    width: '74px',
+    padding: '9px 8px',
     borderRadius: '6px',
     border: '1px solid #cbd5e1',
-    fontSize: '14px',
+    fontSize: '15px',
     fontWeight: '700',
     color: '#0077b6',
     textAlign: 'center',
@@ -2219,7 +2288,7 @@ const styles = {
     boxSizing: 'border-box',
   },
   unitLabel: {
-    fontSize: '13px',
+    fontSize: '14px',
     fontWeight: '600',
     color: '#475569',
   },
@@ -2294,11 +2363,12 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: '14px',
-    marginTop: '36px',
-    paddingTop: '20px',
+    gap: '16px',
+    marginTop: '20px',
+    paddingTop: '16px',
     borderTop: '1px solid #f1f5f9',
     flexWrap: 'wrap',
+    flexShrink: 0,
   },
   wizardFooterLeft: {
     display: 'flex',
@@ -2307,15 +2377,15 @@ const styles = {
   wizardFooterRight: {
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
+    gap: '14px',
   },
   btnCancelFooter: {
     background: '#f1f5f9',
     color: '#475569',
     border: '1px solid #cbd5e1',
-    padding: '10px 20px',
+    padding: '11px 22px',
     borderRadius: '8px',
-    fontSize: '14px',
+    fontSize: '14.5px',
     fontWeight: '600',
     cursor: 'pointer',
   },
@@ -2326,9 +2396,9 @@ const styles = {
     background: 'white',
     color: '#0077b6',
     border: '1px solid #0077b6',
-    padding: '10px 20px',
+    padding: '11px 22px',
     borderRadius: '8px',
-    fontSize: '14px',
+    fontSize: '14.5px',
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.2s',
@@ -2340,9 +2410,9 @@ const styles = {
     background: '#0077b6',
     color: 'white',
     border: 'none',
-    padding: '10px 22px',
+    padding: '11px 26px',
     borderRadius: '8px',
-    fontSize: '14px',
+    fontSize: '14.5px',
     fontWeight: '600',
     cursor: 'pointer',
     boxShadow: '0 2px 6px rgba(0, 119, 182, 0.25)',
@@ -2355,9 +2425,9 @@ const styles = {
     background: '#0077b6',
     color: 'white',
     border: 'none',
-    padding: '11px 26px',
+    padding: '12px 28px',
     borderRadius: '8px',
-    fontSize: '14px',
+    fontSize: '15px',
     fontWeight: '700',
     cursor: 'pointer',
     boxShadow: '0 3px 8px rgba(0, 119, 182, 0.35)',
