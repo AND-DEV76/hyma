@@ -36,6 +36,7 @@ import DiagnosticosPage from './features/diagnostico/pages/DiagnosticosPage';
 import InformesHubPage from './features/reportes/pages/InformesHubPage';
 import EstadisticaMensualPage from './features/reportes/pages/EstadisticaMensualPage';
 import CasosEspecialesPage from './features/reportes/pages/CasosEspecialesPage';
+import InventarioFarmaciaReportePage from './features/reportes/pages/InventarioFarmaciaReportePage';
 import HospitalDashboardPage from './features/reportes/pages/HospitalDashboardPage';
 import TarifasPage from './features/tarifa/pages/TarifasPage';
 import ConfiguracionPage from './features/configuracion/pages/ConfiguracionPage';
@@ -65,6 +66,7 @@ function App() {
             <Route path="/farmacia/medicamentos/catalogo" element={<CatalogoMedicamentosPage />} />
             <Route path="/farmacia/informes" element={<InformesHubPage />} />
             <Route path="/farmacia/informes/estadistica" element={<EstadisticaMensualPage />} />
+            <Route path="/farmacia/informes/inventario-farmacia" element={<InventarioFarmaciaReportePage />} />
             <Route path="/farmacia/informes/casos-especiales" element={<CasosEspecialesPage />} />
             <Route path="/farmacia/inventario/*" element={<FarmaciaPage />} />
             <Route path="/farmacia/inventario" element={<FarmaciaPage />} />
@@ -80,6 +82,7 @@ function App() {
             <Route path="/diagnosticos" element={<DiagnosticosPage />} />
             <Route path="/reportes" element={<InformesHubPage />} />
             <Route path="/reportes/estadistica" element={<EstadisticaMensualPage />} />
+            <Route path="/reportes/inventario-farmacia" element={<InventarioFarmaciaReportePage />} />
             <Route path="/reportes/casos-especiales" element={<CasosEspecialesPage />} />
             <Route path="/tarifas" element={<TarifasPage />} />
             <Route path="/configuracion" element={<ConfiguracionPage />} />

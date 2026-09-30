@@ -5,7 +5,8 @@ import {
   HeartHandshake,
   ChevronRight,
   TrendingUp,
-  Award
+  Award,
+  Boxes
 } from 'lucide-react';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
@@ -21,6 +22,13 @@ export default function InformesHubPage() {
       descripcion: 'Matriz mensual de morbilidad, grupos de edades, diagnósticos y recaudación médica.',
       ruta: '/reportes/estadistica',
       icono: <FileSpreadsheet size={26} />,
+    },
+    {
+      id: 'inventario-farmacia',
+      titulo: 'Inventario Farmacia',
+      descripcion: 'Control mensual de stock físico, pedidos, donaciones, salidas semanales y saldos.',
+      ruta: '/reportes/inventario-farmacia',
+      icono: <Boxes size={26} />,
     },
     {
       id: 'casos-especiales',

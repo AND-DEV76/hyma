@@ -16,6 +16,10 @@ import com.hyma.recepcion.model.ColaAtencion;
 import com.hyma.recepcion.model.EstadoCola;
 import com.hyma.recepcion.model.Sexo;
 import com.hyma.recepcion.repository.ColaAtencionRepository;
+import com.hyma.farmacia.model.DetalleEntradaMedicamento;
+import com.hyma.farmacia.model.EntradaMedicamento;
+import com.hyma.farmacia.model.TipoEntrada;
+import com.hyma.farmacia.repository.EntradaMedicamentoRepository;
 import com.hyma.farmacia.model.EstadoLote;
 import com.hyma.farmacia.model.LoteMedicamento;
 import com.hyma.farmacia.model.Medicamento;
@@ -59,6 +63,7 @@ public class ReporteService {
     private final ColaAtencionRepository colaAtencionRepository;
     private final LoteMedicamentoRepository loteMedicamentoRepository;
     private final MedicamentoRepository medicamentoRepository;
+    private final EntradaMedicamentoRepository entradaMedicamentoRepository;
 
 
     // Paleta base institucional de colores pastel para categorías
@@ -1805,4 +1810,439 @@ public class ReporteService {
             return baos.toByteArray();
         }
     }
+
+    // ==========================================
+    // REPORTE DE INVENTARIO FARMACIA (MENSUAL)
+    // ==========================================
+
+    @Transactional(readOnly = true)
+    public ReporteInventarioFarmaciaResponse generarReporteInventarioFarmacia(int anio, int mes) {
+        YearMonth ym = YearMonth.of(anio, mes);
+        LocalDateTime inicioMes = ym.atDay(1).atStartOfDay();
+        LocalDateTime finMes = ym.atEndOfMonth().atTime(23, 59, 59);
+
+        // 1. Cargar entradas del mes por lote
+        List<EntradaMedicamento> entradas = entradaMedicamentoRepository.buscarPorRango(inicioMes, finMes.plusSeconds(1));
+        Map<Long, Integer> pedidosComprasPorLote = new HashMap<>();
+        Map<Long, Integer> donacionesPorLote = new HashMap<>();
+
+        if (entradas != null) {
+            for (EntradaMedicamento e : entradas) {
+                if (e.getDetalles() == null) continue;
+                boolean esDonacion = e.getTipoEntrada() == TipoEntrada.DONACION;
+                for (DetalleEntradaMedicamento det : e.getDetalles()) {
+                    if (det != null && det.getLote() != null && det.getLote().getIdLote() != null) {
+                        int cant = det.getCantidad() != null ? det.getCantidad() : 0;
+                        if (esDonacion) {
+                            donacionesPorLote.merge(det.getLote().getIdLote(), cant, Integer::sum);
+                        } else {
+                            pedidosComprasPorLote.merge(det.getLote().getIdLote(), cant, Integer::sum);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Cargar salidas del mes por semana y por lote
+        List<SalidaMedicamento> salidas = salidaMedicamentoRepository.findByFechaSalidaBetweenOrderByFechaSalidaDesc(inicioMes, finMes);
+        Map<Long, Integer> s1PorLote = new HashMap<>();
+        Map<Long, Integer> s2PorLote = new HashMap<>();
+        Map<Long, Integer> s3PorLote = new HashMap<>();
+        Map<Long, Integer> s4PorLote = new HashMap<>();
+
+        if (salidas != null && !salidas.isEmpty()) {
+            List<Long> idsSalidas = salidas.stream().map(SalidaMedicamento::getIdSalida).filter(Objects::nonNull).toList();
+            if (!idsSalidas.isEmpty()) {
+                List<DetalleSalidaMedicamento> detallesSalida = detalleSalidaMedicamentoRepository.findBySalida_IdSalidaIn(idsSalidas);
+                for (DetalleSalidaMedicamento det : detallesSalida) {
+                    if (det != null && det.getLote() != null && det.getLote().getIdLote() != null && det.getSalida() != null) {
+                        LocalDateTime fSal = det.getSalida().getFechaSalida();
+                        if (fSal != null) {
+                            int dia = fSal.getDayOfMonth();
+                            int cant = det.getCantidad() != null ? det.getCantidad() : 0;
+                            long idLote = det.getLote().getIdLote();
+                            if (dia <= 7) {
+                                s1PorLote.merge(idLote, cant, Integer::sum);
+                            } else if (dia <= 14) {
+                                s2PorLote.merge(idLote, cant, Integer::sum);
+                            } else if (dia <= 21) {
+                                s3PorLote.merge(idLote, cant, Integer::sum);
+                            } else {
+                                s4PorLote.merge(idLote, cant, Integer::sum);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Obtener todos los lotes de medicamentos
+        List<LoteMedicamento> lotes = loteMedicamentoRepository.findAll().stream()
+                .sorted(Comparator
+                        .comparing((LoteMedicamento l) -> l.getMedicamento() != null && l.getMedicamento().getNombre() != null ? l.getMedicamento().getNombre().toLowerCase() : "")
+                        .thenComparing(l -> l.getFechaExpiracion() != null ? l.getFechaExpiracion() : LocalDate.MAX))
+                .toList();
+
+        DateTimeFormatter dtfExp = DateTimeFormatter.ofPattern("MMM-yy", Locale.forLanguageTag("es-GT"));
+        DateTimeFormatter dtfCompleta = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        List<FilaReporteInventarioFarmacia> filas = new ArrayList<>();
+
+        for (LoteMedicamento lote : lotes) {
+            if (lote == null) continue;
+            Medicamento m = lote.getMedicamento();
+            if (m == null) continue;
+
+            long idLote = lote.getIdLote();
+            int pedidos = pedidosComprasPorLote.getOrDefault(idLote, 0);
+            int donaciones = donacionesPorLote.getOrDefault(idLote, 0);
+            int s1 = s1PorLote.getOrDefault(idLote, 0);
+            int s2 = s2PorLote.getOrDefault(idLote, 0);
+            int s3 = s3PorLote.getOrDefault(idLote, 0);
+            int s4 = s4PorLote.getOrDefault(idLote, 0);
+            int totalEntregado = s1 + s2 + s3 + s4;
+            int vencido = 0;
+            int saldoActual = lote.getCantidadInicial() != null ? lote.getCantidadInicial() : 0;
+
+            int mesAnterior = Math.max(0, saldoActual - pedidos - donaciones + totalEntregado + vencido);
+            int totalFisicoMes = mesAnterior + pedidos + donaciones;
+            int inventarioFisico = saldoActual;
+            int diferencia = saldoActual - inventarioFisico; // 0
+            BigDecimal precioUnit = lote.getPrecioUnitario() != null ? lote.getPrecioUnitario() : BigDecimal.ZERO;
+            BigDecimal total = BigDecimal.valueOf(diferencia).multiply(precioUnit);
+            BigDecimal valorSaldoActual = BigDecimal.valueOf(saldoActual).multiply(precioUnit);
+
+            String fechaExp = lote.getFechaExpiracion() != null ? lote.getFechaExpiracion().format(dtfExp).toLowerCase() : "S/F";
+            String fechaExpComp = lote.getFechaExpiracion() != null ? lote.getFechaExpiracion().format(dtfCompleta) : "—";
+
+            String nombreMed = m.getNombre() != null ? m.getNombre() : "—";
+            if (m.getConcentracion() != null && !m.getConcentracion().isBlank() && !nombreMed.contains(m.getConcentracion())) {
+                nombreMed = nombreMed + " " + m.getConcentracion();
+            }
+
+            String presentacion = m.getPresentacion() != null ? m.getPresentacion() : "—";
+            String casa = m.getCasaFarmaceutica() != null && m.getCasaFarmaceutica().getNombre() != null
+                    ? m.getCasaFarmaceutica().getNombre()
+                    : "—";
+
+            filas.add(FilaReporteInventarioFarmacia.builder()
+                    .idMedicamento(m.getIdMedicamento())
+                    .idLote(lote.getIdLote())
+                    .numeroLote(lote.getNumeroLote())
+                    .fechaExpiracion(fechaExp)
+                    .fechaExpiracionCompleta(fechaExpComp)
+                    .nombre(nombreMed)
+                    .presentacion(presentacion)
+                    .casaFarmaceutica(casa)
+                    .totalFisicoMesAnterior(mesAnterior)
+                    .pedidosCompras(pedidos)
+                    .donaciones(donaciones)
+                    .totalFisicoParaElMes(totalFisicoMes)
+                    .semana1(s1)
+                    .semana2(s2)
+                    .semana3(s3)
+                    .semana4(s4)
+                    .medicamentoVencido(vencido)
+                    .totalEntregado(totalEntregado)
+                    .saldoActual(saldoActual)
+                    .inventarioFisico(inventarioFisico)
+                    .diferencia(diferencia)
+                    .precioPorUnidad(precioUnit)
+                    .total(total)
+                    .valorSaldoActual(valorSaldoActual)
+                    .build());
+        }
+
+        // Totales consolidados
+        int sumFisicoMesAnt = filas.stream().mapToInt(FilaReporteInventarioFarmacia::getTotalFisicoMesAnterior).sum();
+        int sumPedidos = filas.stream().mapToInt(FilaReporteInventarioFarmacia::getPedidosCompras).sum();
+        int sumDonaciones = filas.stream().mapToInt(FilaReporteInventarioFarmacia::getDonaciones).sum();
+        int sumTotalFisico = filas.stream().mapToInt(FilaReporteInventarioFarmacia::getTotalFisicoParaElMes).sum();
+        int sumS1 = filas.stream().mapToInt(FilaReporteInventarioFarmacia::getSemana1).sum();
+        int sumS2 = filas.stream().mapToInt(FilaReporteInventarioFarmacia::getSemana2).sum();
+        int sumS3 = filas.stream().mapToInt(FilaReporteInventarioFarmacia::getSemana3).sum();
+        int sumS4 = filas.stream().mapToInt(FilaReporteInventarioFarmacia::getSemana4).sum();
+        int sumVenc = filas.stream().mapToInt(FilaReporteInventarioFarmacia::getMedicamentoVencido).sum();
+        int sumEntregado = filas.stream().mapToInt(FilaReporteInventarioFarmacia::getTotalEntregado).sum();
+        int sumSaldo = filas.stream().mapToInt(FilaReporteInventarioFarmacia::getSaldoActual).sum();
+        int sumInvFisico = filas.stream().mapToInt(FilaReporteInventarioFarmacia::getInventarioFisico).sum();
+        int sumDif = filas.stream().mapToInt(FilaReporteInventarioFarmacia::getDiferencia).sum();
+        BigDecimal sumTot = filas.stream().map(FilaReporteInventarioFarmacia::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal sumValorInv = filas.stream().map(FilaReporteInventarioFarmacia::getValorSaldoActual).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        TotalesReporteInventarioFarmacia totales = TotalesReporteInventarioFarmacia.builder()
+                .totalMedicamentos(filas.size())
+                .sumFisicoMesAnterior(sumFisicoMesAnt)
+                .sumPedidosCompras(sumPedidos)
+                .sumDonaciones(sumDonaciones)
+                .sumFisicoParaElMes(sumTotalFisico)
+                .sumSemana1(sumS1)
+                .sumSemana2(sumS2)
+                .sumSemana3(sumS3)
+                .sumSemana4(sumS4)
+                .sumMedicamentoVencido(sumVenc)
+                .sumTotalEntregado(sumEntregado)
+                .sumSaldoActual(sumSaldo)
+                .sumInventarioFisico(sumInvFisico)
+                .sumDiferencia(sumDif)
+                .sumTotal(sumTot)
+                .sumValorTotalInventario(sumValorInv)
+                .build();
+
+        return ReporteInventarioFarmaciaResponse.builder()
+                .anio(anio)
+                .mes(mes)
+                .nombreMes(obtenerNombreMes(mes))
+                .filas(filas)
+                .totales(totales)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] generarExcelInventarioFarmacia(int anio, int mes) throws IOException {
+        ReporteInventarioFarmaciaResponse data = generarReporteInventarioFarmacia(anio, mes);
+
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("Inventario Farmacia " + data.getNombreMes() + " " + anio);
+            sheet.setDisplayGridlines(true);
+
+            // Colores Institucionales Exactos de la Plantilla
+            byte[] colorRojo = new byte[]{(byte) 220, (byte) 38, (byte) 38};         // #DC2626
+            byte[] colorVerdeOsc = new byte[]{(byte) 5, (byte) 150, (byte) 105};     // #059669
+            byte[] colorNaranja = new byte[]{(byte) 217, (byte) 119, (byte) 6};      // #D97706
+            byte[] colorRosa = new byte[]{(byte) 219, (byte) 39, (byte) 119};        // #DB2777
+            byte[] colorVerde = new byte[]{(byte) 22, (byte) 163, (byte) 74};        // #16A34A
+            byte[] colorMorado = new byte[]{(byte) 124, (byte) 58, (byte) 237};      // #7C3AED
+            byte[] colorRojoOsc = new byte[]{(byte) 185, (byte) 28, (byte) 28};      // #B91C1C
+            byte[] colorAzul = new byte[]{(byte) 37, (byte) 99, (byte) 235};         // #2563EB
+            byte[] colorDorado = new byte[]{(byte) 202, (byte) 138, (byte) 4};       // #CA8A04
+            byte[] colorTeal = new byte[]{(byte) 13, (byte) 148, (byte) 136};        // #0D9488
+            byte[] colorCeleste = new byte[]{(byte) 79, (byte) 70, (byte) 229};      // #4F46E5
+
+            XSSFCellStyle hRojo = crearEstiloEncabezadoColor(wb, colorRojo);
+            XSSFCellStyle hVerdeOsc = crearEstiloEncabezadoColor(wb, colorVerdeOsc);
+            XSSFCellStyle hNaranja = crearEstiloEncabezadoColor(wb, colorNaranja);
+            XSSFCellStyle hRosa = crearEstiloEncabezadoColor(wb, colorRosa);
+            XSSFCellStyle hVerde = crearEstiloEncabezadoColor(wb, colorVerde);
+            XSSFCellStyle hMorado = crearEstiloEncabezadoColor(wb, colorMorado);
+            XSSFCellStyle hRojoOsc = crearEstiloEncabezadoColor(wb, colorRojoOsc);
+            XSSFCellStyle hAzul = crearEstiloEncabezadoColor(wb, colorAzul);
+            XSSFCellStyle hDorado = crearEstiloEncabezadoColor(wb, colorDorado);
+            XSSFCellStyle hTeal = crearEstiloEncabezadoColor(wb, colorTeal);
+            XSSFCellStyle hCeleste = crearEstiloEncabezadoColor(wb, colorCeleste);
+
+            // Estilos de Celdas de Datos
+            XSSFCellStyle cellTextLeft = crearEstiloDato(wb, HorizontalAlignment.LEFT, false, null);
+            XSSFCellStyle cellTextCenter = crearEstiloDato(wb, HorizontalAlignment.CENTER, false, null);
+            XSSFCellStyle cellNumber = crearEstiloDato(wb, HorizontalAlignment.CENTER, false, "#,##0");
+            XSSFCellStyle cellCurrency = crearEstiloDato(wb, HorizontalAlignment.RIGHT, false, "\"Q\"#,##0.00");
+
+            // Estilos Totales
+            XSSFCellStyle totalLabel = crearEstiloDato(wb, HorizontalAlignment.RIGHT, true, null);
+            XSSFCellStyle totalNumber = crearEstiloDato(wb, HorizontalAlignment.CENTER, true, "#,##0");
+            XSSFCellStyle totalCurrency = crearEstiloDato(wb, HorizontalAlignment.RIGHT, true, "\"Q\"#,##0.00");
+
+            // Encabezado institucional de la hoja
+            Row r0 = sheet.createRow(0);
+            r0.setHeightInPoints(24);
+            Cell cTitle = r0.createCell(0);
+            cTitle.setCellValue("OBRAS SOCIALES SAN MARTÍN - CONTROL MENSUAL DE INVENTARIO FARMACÉUTICO");
+            XSSFCellStyle styleBanner = wb.createCellStyle();
+            Font fb = wb.createFont();
+            fb.setBold(true);
+            fb.setFontHeightInPoints((short) 13);
+            fb.setColor(IndexedColors.DARK_BLUE.getIndex());
+            styleBanner.setFont(fb);
+            cTitle.setCellStyle(styleBanner);
+
+            Row r1 = sheet.createRow(1);
+            r1.setHeightInPoints(18);
+            Cell cSub = r1.createCell(0);
+            cSub.setCellValue("Mes: " + data.getNombreMes().toUpperCase() + " " + anio);
+            XSSFCellStyle styleSub = wb.createCellStyle();
+            Font fs = wb.createFont();
+            fs.setItalic(true);
+            fs.setFontHeightInPoints((short) 10);
+            styleSub.setFont(fs);
+            cSub.setCellStyle(styleSub);
+
+            // Fila de Encabezados de Columnas (Fila 3)
+            int headerRowIdx = 3;
+            Row headerRow = sheet.createRow(headerRowIdx);
+            headerRow.setHeightInPoints(34);
+
+            String[] titulos = {
+                    "FECHA EXPIRACION", "NOMBRE", "PRESENTACION", "CASA FARMACEUTICA",
+                    "TOTAL FISICO DEL MES ANTERIOR", "PEDIDOS / COMPRAS", "DONACIÓN",
+                    "TOTAL FISICO PARA EL MES", "SEMANA 1", "SEMANA 2", "SEMANA 3", "SEMANA 4",
+                    "MEDICAMENTO VENCIDO", "TOTAL ENTREGADO", "SALDO ACTUAL",
+                    "INVENTARIO FÍSICO", "DIFERENCIA", "PRECIO POR UNIDAD", "TOTAL"
+            };
+
+            XSSFCellStyle[] estilosH = {
+                    hRojo, hRojo, hRojo, hRojo,
+                    hVerdeOsc, hNaranja, hRosa,
+                    hVerde, hMorado, hMorado, hMorado, hMorado,
+                    hRojoOsc, hRojoOsc, hAzul,
+                    hDorado, hTeal, hCeleste, hCeleste
+            };
+
+            for (int i = 0; i < titulos.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(titulos[i]);
+                cell.setCellStyle(estilosH[i]);
+            }
+
+            // Datos
+            int rowIdx = 4;
+            for (FilaReporteInventarioFarmacia f : data.getFilas()) {
+                Row row = sheet.createRow(rowIdx++);
+                row.setHeightInPoints(20);
+
+                crearCeldaDato(row, 0, f.getFechaExpiracion(), cellTextCenter);
+                crearCeldaDato(row, 1, f.getNombre(), cellTextLeft);
+                crearCeldaDato(row, 2, f.getPresentacion(), cellTextLeft);
+                crearCeldaDato(row, 3, f.getCasaFarmaceutica(), cellTextLeft);
+
+                crearCeldaNum(row, 4, f.getTotalFisicoMesAnterior(), cellNumber);
+                crearCeldaNum(row, 5, f.getPedidosCompras() > 0 ? f.getPedidosCompras() : null, cellNumber);
+                crearCeldaNum(row, 6, f.getDonaciones() > 0 ? f.getDonaciones() : null, cellNumber);
+                crearCeldaNum(row, 7, f.getTotalFisicoParaElMes(), cellNumber);
+
+                crearCeldaNum(row, 8, f.getSemana1() > 0 ? f.getSemana1() : null, cellNumber);
+                crearCeldaNum(row, 9, f.getSemana2() > 0 ? f.getSemana2() : null, cellNumber);
+                crearCeldaNum(row, 10, f.getSemana3() > 0 ? f.getSemana3() : null, cellNumber);
+                crearCeldaNum(row, 11, f.getSemana4() > 0 ? f.getSemana4() : null, cellNumber);
+
+                crearCeldaNum(row, 12, f.getMedicamentoVencido() > 0 ? f.getMedicamentoVencido() : null, cellNumber);
+                crearCeldaNum(row, 13, f.getTotalEntregado(), cellNumber);
+                crearCeldaNum(row, 14, f.getSaldoActual(), cellNumber);
+                crearCeldaNum(row, 15, f.getInventarioFisico(), cellNumber);
+                crearCeldaNum(row, 16, f.getDiferencia(), cellNumber);
+
+                crearCeldaMoney(row, 17, f.getPrecioPorUnidad(), cellCurrency);
+                crearCeldaMoney(row, 18, f.getTotal(), cellCurrency);
+            }
+
+            // Fila de Totales
+            Row rowTot = sheet.createRow(rowIdx);
+            rowTot.setHeightInPoints(24);
+
+            for (int i = 0; i < 4; i++) {
+                Cell c = rowTot.createCell(i);
+                c.setCellStyle(totalLabel);
+                if (i == 3) c.setCellValue("TOTALES:");
+            }
+
+            TotalesReporteInventarioFarmacia t = data.getTotales();
+            crearCeldaNum(rowTot, 4, t.getSumFisicoMesAnterior(), totalNumber);
+            crearCeldaNum(rowTot, 5, t.getSumPedidosCompras(), totalNumber);
+            crearCeldaNum(rowTot, 6, t.getSumDonaciones(), totalNumber);
+            crearCeldaNum(rowTot, 7, t.getSumFisicoParaElMes(), totalNumber);
+
+            crearCeldaNum(rowTot, 8, t.getSumSemana1(), totalNumber);
+            crearCeldaNum(rowTot, 9, t.getSumSemana2(), totalNumber);
+            crearCeldaNum(rowTot, 10, t.getSumSemana3(), totalNumber);
+            crearCeldaNum(rowTot, 11, t.getSumSemana4(), totalNumber);
+
+            crearCeldaNum(rowTot, 12, t.getSumMedicamentoVencido(), totalNumber);
+            crearCeldaNum(rowTot, 13, t.getSumTotalEntregado(), totalNumber);
+            crearCeldaNum(rowTot, 14, t.getSumSaldoActual(), totalNumber);
+            crearCeldaNum(rowTot, 15, t.getSumInventarioFisico(), totalNumber);
+            crearCeldaNum(rowTot, 16, t.getSumDiferencia(), totalNumber);
+
+            Cell cVacio = rowTot.createCell(17);
+            cVacio.setCellStyle(totalLabel);
+
+            crearCeldaMoney(rowTot, 18, t.getSumTotal(), totalCurrency);
+
+            // Ajustar anchos de columnas
+            int[] anchos = {
+                    2800, 7500, 5500, 4800,
+                    3800, 3600, 3400,
+                    3800, 2600, 2600, 2600, 2600,
+                    3500, 3600, 3400,
+                    3600, 2800, 3600, 3600
+            };
+            for (int i = 0; i < anchos.length; i++) {
+                sheet.setColumnWidth(i, anchos[i]);
+            }
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            wb.write(baos);
+            return baos.toByteArray();
+        }
+    }
+
+    private XSSFCellStyle crearEstiloEncabezadoColor(XSSFWorkbook wb, byte[] rgb) {
+        XSSFCellStyle style = wb.createCellStyle();
+        XSSFColor color = new XSSFColor(rgb, new DefaultIndexedColorMap());
+        style.setFillForegroundColor(color);
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        Font font = wb.createFont();
+        font.setBold(true);
+        font.setColor(IndexedColors.WHITE.getIndex());
+        font.setFontHeightInPoints((short) 9);
+        font.setFontName("Calibri");
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setWrapText(true);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        return style;
+    }
+
+    private XSSFCellStyle crearEstiloDato(XSSFWorkbook wb, HorizontalAlignment align, boolean bold, String formatPattern) {
+        XSSFCellStyle style = wb.createCellStyle();
+        Font font = wb.createFont();
+        font.setBold(bold);
+        font.setFontHeightInPoints((short) 9);
+        font.setFontName("Calibri");
+        style.setFont(font);
+        style.setAlignment(align);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        if (formatPattern != null) {
+            DataFormat format = wb.createDataFormat();
+            style.setDataFormat(format.getFormat(formatPattern));
+        }
+        return style;
+    }
+
+    private void crearCeldaDato(Row row, int col, String val, CellStyle style) {
+        Cell c = row.createCell(col);
+        c.setCellValue(val != null ? val : "—");
+        c.setCellStyle(style);
+    }
+
+    private void crearCeldaNum(Row row, int col, Integer val, CellStyle style) {
+        Cell c = row.createCell(col);
+        if (val != null) {
+            c.setCellValue(val);
+        } else {
+            c.setCellValue("");
+        }
+        c.setCellStyle(style);
+    }
+
+    private void crearCeldaMoney(Row row, int col, BigDecimal val, CellStyle style) {
+        Cell c = row.createCell(col);
+        c.setCellValue(val != null ? val.doubleValue() : 0.0);
+        c.setCellStyle(style);
+    }
+
+    private String obtenerNombreMes(int mes) {
+        String[] nombresMeses = {
+                "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        };
+        return (mes >= 1 && mes <= 12) ? nombresMeses[mes - 1] : String.valueOf(mes);
+    }
 }
+

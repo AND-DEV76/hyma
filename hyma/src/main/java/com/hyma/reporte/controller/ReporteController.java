@@ -118,4 +118,36 @@ public class ReporteController {
                 .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .body(excelBytes);
     }
+
+    @GetMapping("/inventario-farmacia")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA')")
+    public ResponseEntity<com.hyma.reporte.dto.ReporteInventarioFarmaciaResponse> obtenerInventarioFarmacia(
+            @RequestParam(name = "anio", required = false) Integer anio,
+            @RequestParam(name = "mes", required = false) Integer mes) {
+
+        LocalDate now = LocalDate.now();
+        int a = (anio != null && anio > 2000) ? anio : now.getYear();
+        int m = (mes != null && mes >= 1 && mes <= 12) ? mes : now.getMonthValue();
+
+        return ResponseEntity.ok(reporteService.generarReporteInventarioFarmacia(a, m));
+    }
+
+    @GetMapping("/inventario-farmacia/excel")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA')")
+    public ResponseEntity<byte[]> descargarExcelInventarioFarmacia(
+            @RequestParam(name = "anio", required = false) Integer anio,
+            @RequestParam(name = "mes", required = false) Integer mes) throws IOException {
+
+        LocalDate now = LocalDate.now();
+        int a = (anio != null && anio > 2000) ? anio : now.getYear();
+        int m = (mes != null && mes >= 1 && mes <= 12) ? mes : now.getMonthValue();
+
+        byte[] excelBytes = reporteService.generarExcelInventarioFarmacia(a, m);
+        String filename = String.format("inventario_farmacia_%02d_%d.xlsx", m, a);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(excelBytes);
+    }
 }
