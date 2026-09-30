@@ -21,7 +21,8 @@ export default function SalidasList() {
     setError(null);
     try {
       const data = await listarSalidas();
-      setSalidas(data || []);
+      const validData = (data || []).filter((s) => s.detalles && s.detalles.length > 0);
+      setSalidas(validData);
     } catch (err) {
       setError(err.response?.data?.message || 'Error al cargar las salidas de inventario.');
     } finally {

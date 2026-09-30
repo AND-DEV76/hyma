@@ -60,7 +60,44 @@ export const reporteService = {
     const link = document.createElement('a');
     link.href = url;
     const padMes = String(mes).padStart(2, '0');
-    link.setAttribute('download', `Top_${limite}_Diagnosticos_${padMes}_${anio}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  },
+
+  /**
+   * Obtiene el listado de casos especiales (exoneraciones) del mes.
+   */
+  obtenerCasosEspeciales: async (anio, mes) => {
+    const params = {};
+    if (anio) params.anio = anio;
+    if (mes) params.mes = mes;
+    const response = await api.get('/reportes/casos-especiales', { params });
+    return response.data;
+  },
+
+  /**
+   * Descarga el Excel (.xlsx) con los casos especiales del mes.
+   */
+  descargarExcelCasosEspeciales: async (anio, mes) => {
+    const params = {};
+    if (anio) params.anio = anio;
+    if (mes) params.mes = mes;
+
+    const response = await api.get('/reportes/casos-especiales/excel', {
+      params,
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const padMes = String(mes).padStart(2, '0');
+    link.setAttribute('download', `Casos_Especiales_${padMes}_${anio}.xlsx`);
     document.body.appendChild(link);
     link.click();
     link.parentNode.removeChild(link);

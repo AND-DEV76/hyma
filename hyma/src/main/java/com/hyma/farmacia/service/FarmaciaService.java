@@ -597,7 +597,8 @@ public class FarmaciaService {
                     usuario = usuarioRepository.findByUsername(username).orElse(null);
                 }
 
-                boolean noPagaConsulta = request != null && request.isNoPagaConsulta();
+                boolean noPagaConsulta = request != null && (request.isNoPagaConsulta() || request.isEsCasoEspecial());
+                boolean esCasoEspecial = request != null && request.isEsCasoEspecial();
                 BigDecimal costoConsulta = noPagaConsulta
                         ? BigDecimal.ZERO
                         : (consulta.getPrecioConsulta() != null ? consulta.getPrecioConsulta() : BigDecimal.ZERO);
@@ -607,25 +608,30 @@ public class FarmaciaService {
                     consultaRepository.save(consulta);
                 }
 
-                String observaciones = request != null && request.getObservaciones() != null && !request.getObservaciones().isBlank()
-                        ? request.getObservaciones()
-                        : "Dispensación de medicamentos de consulta médica";
-                if (noPagaConsulta && !observaciones.contains("Exonerada")) {
-                    observaciones += " [Consulta Exonerada]";
-                }
-
-                SalidaMedicamento salida = SalidaMedicamento.builder()
-                        .consulta(consulta)
-                        .usuario(usuario)
-                        .fechaSalida(LocalDateTime.now())
-                        .tipoSalida("DISPENSACION")
-                        .observaciones(observaciones)
-                        .costoConsulta(costoConsulta)
-                        .build();
-                salida = salidaMedicamentoRepository.save(salida);
-
                 Tratamiento tratamiento = tratamientoRepository.findByConsultaIdWithDetalles(consulta.getIdConsulta()).orElse(null);
-                if (tratamiento != null && tratamiento.getDetalles() != null) {
+                boolean tieneMedicamentos = tratamiento != null && tratamiento.getDetalles() != null
+                        && tratamiento.getDetalles().stream().anyMatch(d -> d.getMedicamento() != null && d.getCantidad() != null && d.getCantidad() > 0);
+
+                if (tieneMedicamentos) {
+                    String tipoSalida = esCasoEspecial ? "CASO_ESPECIAL" : "DISPENSACION";
+                    String observaciones = request != null && request.getObservaciones() != null && !request.getObservaciones().isBlank()
+                            ? request.getObservaciones()
+                            : (esCasoEspecial ? "Dispensación de caso especial (Exoneración total)" : "Dispensación de medicamentos de consulta médica");
+                    if (noPagaConsulta && !esCasoEspecial && !observaciones.contains("Exonerada")) {
+                        observaciones += " [Consulta Exonerada]";
+                    }
+
+                    SalidaMedicamento salida = SalidaMedicamento.builder()
+                            .consulta(consulta)
+                            .usuario(usuario)
+                            .fechaSalida(LocalDateTime.now())
+                            .tipoSalida(tipoSalida)
+                            .observaciones(observaciones)
+                            .costoConsulta(costoConsulta)
+                            .build();
+                    salida = salidaMedicamentoRepository.save(salida);
+
+                    int totalUnidadesDescontadas = 0;
                     for (DetalleTratamiento d : tratamiento.getDetalles()) {
                         int cantidadRestante = d.getCantidad() != null ? d.getCantidad() : 1;
                         Medicamento m = d.getMedicamento();
@@ -658,8 +664,14 @@ public class FarmaciaService {
                                 detalleSalidaMedicamentoRepository.save(detalleSalida);
 
                                 cantidadRestante -= aDescontar;
+                                totalUnidadesDescontadas += aDescontar;
                             }
                         }
+                    }
+
+                    // Si no se pudo descontar ninguna unidad del stock, no dejar registro fantasma
+                    if (totalUnidadesDescontadas == 0) {
+                        salidaMedicamentoRepository.delete(salida);
                     }
                 }
             }
@@ -693,7 +705,12 @@ public class FarmaciaService {
                 .filter(d -> d.getSalida() != null && d.getSalida().getIdSalida() != null)
                 .collect(Collectors.groupingBy(d -> d.getSalida().getIdSalida()));
 
-        return salidas.stream().map(salida -> {
+        return salidas.stream()
+                .filter(salida -> {
+                    List<DetalleSalidaMedicamento> dList = detallesPorSalida.getOrDefault(salida.getIdSalida(), Collections.emptyList());
+                    return !dList.isEmpty();
+                })
+                .map(salida -> {
             List<DetalleSalidaMedicamento> dList = detallesPorSalida.getOrDefault(salida.getIdSalida(), Collections.emptyList());
 
             BigDecimal totalMed = BigDecimal.ZERO;
@@ -755,5 +772,112 @@ public class FarmaciaService {
                     .detalles(detalleResponses)
                     .build();
         }).toList();
+    }
+
+    @Transactional
+    public VentaExternaResponse registrarVentaExterna(VentaExternaRequest request, String username) {
+        if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
+            throw new IllegalArgumentException("Debe incluir al menos un medicamento para la venta");
+        }
+
+        Usuario usuario = null;
+        if (username != null && !username.isBlank()) {
+            usuario = usuarioRepository.findByUsername(username).orElse(null);
+        }
+
+        String cliente = request.getCliente() != null ? request.getCliente().trim() : null;
+        String obs = "Venta externa en mostrador";
+        if (cliente != null && !cliente.isBlank()) {
+            obs += " - Cliente: " + cliente;
+        }
+        if (request.getObservaciones() != null && !request.getObservaciones().isBlank()) {
+            obs += " (" + request.getObservaciones().trim() + ")";
+        }
+
+        SalidaMedicamento salida = SalidaMedicamento.builder()
+                .consulta(null)
+                .usuario(usuario)
+                .fechaSalida(LocalDateTime.now())
+                .tipoSalida("VENTA_EXTERNA")
+                .observaciones(obs)
+                .costoConsulta(BigDecimal.ZERO)
+                .build();
+        salida = salidaMedicamentoRepository.save(salida);
+
+        BigDecimal totalVenta = BigDecimal.ZERO;
+        List<VentaExternaResponse.ItemVentaExternaResponse> detallesResponse = new ArrayList<>();
+
+        for (VentaExternaRequest.ItemVentaExternaRequest itemReq : request.getItems()) {
+            if (itemReq.getIdMedicamento() == null || itemReq.getCantidad() == null || itemReq.getCantidad() <= 0) {
+                continue;
+            }
+
+            Medicamento m = medicamentoRepository.findById(itemReq.getIdMedicamento())
+                    .orElseThrow(() -> new IllegalArgumentException("Medicamento no encontrado con id: " + itemReq.getIdMedicamento()));
+
+            int cantidadRestante = itemReq.getCantidad();
+
+            // Buscar lotes activos con stock ordenados por fecha de expiración ascendente (FEFO)
+            List<LoteMedicamento> lotesActivos = loteRepository.buscar(EstadoLote.ACTIVO, m.getIdMedicamento(), null).stream()
+                    .filter(l -> l.getCantidadInicial() != null && l.getCantidadInicial() > 0)
+                    .sorted(Comparator.comparing(LoteMedicamento::getFechaExpiracion))
+                    .toList();
+
+            int stockTotalDisponible = lotesActivos.stream().mapToInt(LoteMedicamento::getCantidadInicial).sum();
+            if (stockTotalDisponible < cantidadRestante) {
+                throw new IllegalArgumentException("Stock insuficiente para '" + m.getNombre() + "'. Solicitado: " + cantidadRestante + ", disponible: " + stockTotalDisponible);
+            }
+
+            for (LoteMedicamento lote : lotesActivos) {
+                if (cantidadRestante <= 0) break;
+                int stockActual = lote.getCantidadInicial();
+                int aDescontar = Math.min(stockActual, cantidadRestante);
+                int nuevoStock = stockActual - aDescontar;
+                lote.setCantidadInicial(nuevoStock);
+                if (nuevoStock == 0) {
+                    lote.setEstado(EstadoLote.INACTIVO);
+                }
+                loteRepository.save(lote);
+
+                // Precio unitario: si se envió en la petición se usa, de lo contrario el del lote
+                BigDecimal precioUnit = itemReq.getPrecioUnitario() != null
+                        ? itemReq.getPrecioUnitario()
+                        : (lote.getPrecioUnitario() != null ? lote.getPrecioUnitario() : BigDecimal.ZERO);
+                BigDecimal subtotal = precioUnit.multiply(BigDecimal.valueOf(aDescontar));
+
+                DetalleSalidaMedicamento detalleSalida = DetalleSalidaMedicamento.builder()
+                        .salida(salida)
+                        .lote(lote)
+                        .cantidad(aDescontar)
+                        .precioUnitario(precioUnit)
+                        .build();
+                detalleSalida = detalleSalidaMedicamentoRepository.save(detalleSalida);
+
+                totalVenta = totalVenta.add(subtotal);
+                cantidadRestante -= aDescontar;
+
+                detallesResponse.add(VentaExternaResponse.ItemVentaExternaResponse.builder()
+                        .idDetalleSalida(detalleSalida.getIdDetalleSalida())
+                        .idMedicamento(m.getIdMedicamento())
+                        .nombreMedicamento(m.getNombre())
+                        .presentacion(m.getPresentacion())
+                        .concentracion(m.getConcentracion())
+                        .numeroLote(lote.getNumeroLote())
+                        .cantidad(aDescontar)
+                        .precioUnitario(precioUnit)
+                        .subtotal(subtotal)
+                        .build());
+            }
+        }
+
+        return VentaExternaResponse.builder()
+                .idSalida(salida.getIdSalida())
+                .fechaSalida(salida.getFechaSalida())
+                .tipoSalida(salida.getTipoSalida())
+                .cliente(cliente)
+                .observaciones(salida.getObservaciones())
+                .totalVenta(totalVenta)
+                .detalles(detallesResponse)
+                .build();
     }
 }

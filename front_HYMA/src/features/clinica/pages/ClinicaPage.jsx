@@ -71,7 +71,7 @@ export default function ClinicaPage() {
         {/* Odoo Control Panel / Header */}
         <section className="clinica-header-bar" style={styles.headerBar}>
           <div>
-            <span style={styles.eyebrow}>MÓDULO MÉDICO</span>
+            <span style={styles.eyebrow}>CLINICA MEDICA</span>
             <h1 style={styles.title}>Pacientes en Espera de Consulta</h1>
           </div>
           <div className="clinica-header-bar-actions" style={styles.headerActions}>

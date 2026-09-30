@@ -1,35 +1,33 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  HeartPulse,
   FileSpreadsheet,
-  Package,
+  HeartHandshake,
   ChevronRight,
-  Pill,
-  Sparkles
+  TrendingUp,
+  Award
 } from 'lucide-react';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
-import farmaciaLogo from '../../../assets/images/farmacia.png';
-import '../styles/farmaciaPortal.css';
+import '../../farmacia/styles/farmaciaPortal.css';
 
-export default function FarmaciaPortalPage() {
+export default function InformesHubPage() {
   const navigate = useNavigate();
 
   const opciones = [
     {
-      id: 'dispensacion',
-      titulo: 'Dispensación',
-      descripcion: 'Dispensación y entrega de recetas médicas a pacientes en espera.',
-      ruta: '/farmacia/dispensacion',
-      icono: <Pill size={26} />,
+      id: 'estadistica',
+      titulo: 'Estadística Mensual',
+      descripcion: 'Matriz mensual de morbilidad, grupos de edades, diagnósticos y recaudación médica.',
+      ruta: '/reportes/estadistica',
+      icono: <FileSpreadsheet size={26} />,
     },
     {
-      id: 'medicamentos',
-      titulo: 'Medicamentos',
-      descripcion: 'Inventario de farmacia, control de stock, lotes activos y catálogos.',
-      ruta: '/farmacia/medicamentos',
-      icono: <Package size={26} />,
+      id: 'casos-especiales',
+      titulo: 'Casos Especiales',
+      descripcion: 'Registro y control de atenciones y medicamentos 100% donados / exonerados.',
+      ruta: '/reportes/casos-especiales',
+      icono: <HeartHandshake size={26} />,
     },
   ];
 
@@ -38,35 +36,37 @@ export default function FarmaciaPortalPage() {
       <AdminNavbar />
 
       <main className="farmacia-portal-container">
-        {/* Breadcrumbs */}
-        <Breadcrumb items={[{ label: 'Farmacia' }]} showHome={true} />
+        {/* Breadcrumb */}
+        <Breadcrumb
+          items={[
+            { label: 'Reportes' },
+          ]}
+        />
 
         {/* Encabezado */}
         <div className="portal-header">
-          <span className="portal-eyebrow">PORTAL PRINCIPAL</span>
-          <h1 className="portal-title">Farmacia</h1>
+          <span className="portal-eyebrow">MÓDULO DE REPORTES E INFORMES</span>
+          <h1 className="portal-title">Informes y Estadísticas</h1>
           <p className="portal-subtitle">
-            Seleccione el módulo o servicio al que desea ingresar
+            Seleccione el área o reporte al que desea ingresar
           </p>
         </div>
 
-        {/* Grilla: Logo a la izquierda + 3 Opciones a la derecha */}
+        {/* Grilla: Logo a la izquierda + Opciones a la derecha */}
         <div className="portal-grid">
-          {/* Tarjeta Izquierda con el Logo de Farmacia */}
+          {/* Tarjeta Izquierda */}
           <div className="portal-logo-card">
             <div className="portal-logo-glow" />
-            <img
-              src={farmaciaLogo}
-              alt="Logo Farmacia"
-              className="portal-logo-img"
-            />
+            <div className="portal-hero-icon-wrapper">
+              <FileSpreadsheet size={64} strokeWidth={2.2} />
+            </div>
             <div className="portal-logo-caption">
               <h3>Obras Sociales San Martín</h3>
-              <p>Módulo Integrado de Salud y Medicamentos</p>
+              <p>Informes Estadísticos y Control de Exoneraciones</p>
             </div>
           </div>
 
-          {/* Columna Derecha con las 3 Opciones del Wireframe */}
+          {/* Columna Derecha con las 2 Opciones */}
           <div className="portal-options-list">
             {opciones.map((opcion) => (
               <div

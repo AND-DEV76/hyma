@@ -9,5 +9,6 @@ import lombok.*;
 @Builder
 public class EntregaMedicamentosRequest {
     private boolean noPagaConsulta;
+    private boolean esCasoEspecial;
     private String observaciones;
 }

@@ -1,6 +1,7 @@
 package com.hyma.reporte.controller;
 
 import com.hyma.reporte.dto.DashboardHospitalarioResponse;
+import com.hyma.reporte.dto.ReporteCasosEspecialesResponse;
 import com.hyma.reporte.dto.ReporteEstadisticaResponse;
 import com.hyma.reporte.service.ReporteService;
 import lombok.RequiredArgsConstructor;
@@ -79,6 +80,38 @@ public class ReporteController {
 
         byte[] excelBytes = reporteService.generarExcelTopDiagnosticos(a, m, lim);
         String filename = String.format("top_%d_diagnosticos_%02d_%d.xlsx", lim, m, a);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(excelBytes);
+    }
+
+    @GetMapping("/casos-especiales")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA')")
+    public ResponseEntity<ReporteCasosEspecialesResponse> obtenerCasosEspeciales(
+            @RequestParam(name = "anio", required = false) Integer anio,
+            @RequestParam(name = "mes", required = false) Integer mes) {
+
+        LocalDate now = LocalDate.now();
+        int a = (anio != null && anio > 2000) ? anio : now.getYear();
+        int m = (mes != null && mes >= 1 && mes <= 12) ? mes : now.getMonthValue();
+
+        return ResponseEntity.ok(reporteService.generarReporteCasosEspeciales(a, m));
+    }
+
+    @GetMapping("/casos-especiales/excel")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA')")
+    public ResponseEntity<byte[]> descargarExcelCasosEspeciales(
+            @RequestParam(name = "anio", required = false) Integer anio,
+            @RequestParam(name = "mes", required = false) Integer mes) throws IOException {
+
+        LocalDate now = LocalDate.now();
+        int a = (anio != null && anio > 2000) ? anio : now.getYear();
+        int m = (mes != null && mes >= 1 && mes <= 12) ? mes : now.getMonthValue();
+
+        byte[] excelBytes = reporteService.generarExcelCasosEspeciales(a, m);
+        String filename = String.format("casos_especiales_%02d_%d.xlsx", m, a);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")

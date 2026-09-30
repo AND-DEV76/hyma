@@ -21,6 +21,8 @@ import {
   Calendar,
   AlertCircle,
   Loader2,
+  Award,
+  Check,
 } from 'lucide-react';
 import { useClinica } from '../hooks/useClinica';
 import * as clinicaService from '../services/clinicaService';
@@ -43,6 +45,8 @@ const calcularCantidadReceta = ({
   presentacion = '',
   concentracion = '',
   tomaDosis = '',
+  nombreMedicamento = '',
+  nombre = '',
 }) => {
   // 1. Extraer duración en días
   const durStr = (duracion || '').toString().toLowerCase().trim();
@@ -66,39 +70,9 @@ const calcularCantidadReceta = ({
 
   const presNorm = (presentacion || '').toLowerCase();
   const concNorm = (concentracion || '').toLowerCase();
+  const nomNorm = (nombreMedicamento || nombre || '').toLowerCase();
 
-  // 2. Detectar si es crema / ungüento / pomada / gel tópico / vaginal
-  const esTopico =
-    /crema|ung[uü]ento|pomada|gel\b|t[oó]pic|d[eé]rmic|loci[oó]n|pasta\b|vaginal/i.test(presNorm) ||
-    /crema|ung[uü]ento|pomada|gel\b|t[oó]pic|d[eé]rmic/i.test(concNorm);
-
-  if (esTopico) {
-    // Un tubo estándar (ej. 15g - 30g) cubre normalmente hasta 15 días de tratamiento tópico regular
-    const tubos = Math.max(1, Math.ceil(dias / 15));
-    return {
-      cantidad: tubos,
-      explicacion: `Sugerido: ${tubos} ${tubos > 1 ? 'tubos' : 'tubo'} (${dias} días de aplicación tópica)`,
-      esTopico: true,
-      esLiquido: false,
-    };
-  }
-
-  // 3. Detectar si es inhalador / spray / aerosol
-  const esInhalador =
-    /inhalad|spray|aerosol|nebuliz|puff/i.test(presNorm) ||
-    /inhalad|spray|aerosol/i.test(concNorm);
-
-  if (esInhalador) {
-    const frascos = Math.max(1, Math.ceil(dias / 30));
-    return {
-      cantidad: frascos,
-      explicacion: `Sugerido: ${frascos} ${frascos > 1 ? 'inhaladores/frascos' : 'inhalador/frasco'} (${dias} días)`,
-      esInhalador: true,
-      esLiquido: false,
-    };
-  }
-
-  // 2. Extraer frecuencia (horas de intervalo o tomas al día)
+  // Extraer frecuencia (horas de intervalo o tomas al día)
   const frecStr = (frecuencia || '').toString().toLowerCase().trim();
   let tomasAlDia = 0;
 
@@ -147,26 +121,98 @@ const calcularCantidadReceta = ({
     }
   }
 
-  if (dias <= 0 || tomasAlDia <= 0) {
-    return { cantidad: 1, explicacion: '' };
-  }
-
+  if (tomasAlDia <= 0) tomasAlDia = 3;
   const totalTomas = dias * tomasAlDia;
 
-  // 4. Detectar si es líquido (Jarabe / Suspensión / Solución / Gotas)
+  // 2. Detectar si es Gotas (gotas oftálmicas, óticas, pediátricas o frascos gotero)
+  const esGotas =
+    /gotas|gotero/i.test(presNorm) ||
+    /gotas|gotero/i.test(concNorm) ||
+    /gotas|gotero/i.test(nomNorm);
+
+  if (esGotas) {
+    // Convención posológica estándar: 20 gotas = 1 ml (1 gota ≈ 0.05 ml)
+    let gotasPorToma = 20;
+    let mlPorToma = 1.0;
+
+    const tomaStr = (tomaDosis || '').toString().toLowerCase();
+    if (tomaStr.includes('gotas')) {
+      const m = tomaStr.match(/(\d+(?:\.\d+)?)\s*gotas/);
+      if (m) {
+        gotasPorToma = parseFloat(m[1]);
+        mlPorToma = Number((gotasPorToma / 20).toFixed(2));
+      }
+    } else if (tomaStr.includes('ml')) {
+      const m = tomaStr.match(/(\d+(?:\.\d+)?)\s*ml/);
+      if (m) {
+        mlPorToma = parseFloat(m[1]);
+        gotasPorToma = Math.round(mlPorToma * 20);
+      }
+    }
+
+    // Tamaño del frasco gotero (buscar ej. "15 ml", "20 ml", "30 ml", "10 ml")
+    let tamanoFrascoGotero = 15;
+    const matchTam = (concNorm + ' ' + presNorm + ' ' + nomNorm).match(/(\d{1,3})\s*ml\b/);
+    if (matchTam) {
+      const vol = parseFloat(matchTam[1]);
+      if (vol >= 5 && vol <= 60 && !matchTam[0].includes('1ml')) {
+        tamanoFrascoGotero = vol;
+      }
+    }
+
+    const totalMl = totalTomas * mlPorToma;
+    const frascos = Math.max(1, Math.ceil(totalMl / tamanoFrascoGotero));
+    const tomasTxt = totalTomas % 1 === 0 ? totalTomas : totalTomas.toFixed(1);
+
+    const explicacion = `Sugerido: ${tomasTxt} tomas de ${gotasPorToma} gotas (${mlPorToma}ml) = ${Math.round(totalTomas * gotasPorToma)} gotas (~${totalMl.toFixed(1)}ml = ${frascos} ${frascos > 1 ? 'frascos gotero' : 'frasco gotero'} de ${tamanoFrascoGotero}ml)`;
+
+    return {
+      cantidad: frascos,
+      explicacion,
+      esGotas: true,
+      esLiquido: false,
+      gotasPorToma,
+      mlPorToma,
+      tamanoFrasco: tamanoFrascoGotero,
+    };
+  }
+
+  // 3. Detectar si es crema / ungüento / pomada / gel tópico / vaginal
+  const esTopico =
+    /crema|ung[uü]ento|pomada|gel\b|t[oó]pic|d[eé]rmic|loci[oó]n|pasta\b|vaginal/i.test(presNorm) ||
+    /crema|ung[uü]ento|pomada|gel\b|t[oó]pic|d[eé]rmic/i.test(concNorm);
+
+  if (esTopico) {
+    const tubos = Math.max(1, Math.ceil(dias / 15));
+    return {
+      cantidad: tubos,
+      explicacion: `Sugerido: ${tubos} ${tubos > 1 ? 'tubos' : 'tubo'} (${dias} días de aplicación tópica)`,
+      esTopico: true,
+      esLiquido: false,
+    };
+  }
+
+  // 3. Detectar si es inhalador / spray / aerosol
+  const esInhalador =
+    /inhalad|spray|aerosol|nebuliz|puff/i.test(presNorm) ||
+    /inhalad|spray|aerosol/i.test(concNorm);
+
+  if (esInhalador) {
+    const frascos = Math.max(1, Math.ceil(dias / 30));
+    return {
+      cantidad: frascos,
+      explicacion: `Sugerido: ${frascos} ${frascos > 1 ? 'inhaladores/frascos' : 'inhalador/frasco'} (${dias} días)`,
+      esInhalador: true,
+      esLiquido: false,
+    };
+  }
+
+  // 5. Detectar si es líquido (Jarabe / Suspensión / Solución)
   const esLiquido =
-    /jarabe|suspensi[oó]n|soluci[oó]n|elixir|gotas|frasco|l[ií]quid/i.test(presNorm) ||
+    /jarabe|suspensi[oó]n|soluci[oó]n|elixir|frasco|l[ií]quid/i.test(presNorm) ||
     /jarabe|suspensi[oó]n|soluci[oó]n/i.test(concNorm);
 
   if (esLiquido) {
-    if (/gotas/i.test(presNorm) || /gotas/i.test(concNorm)) {
-      const frascos = Math.max(1, Math.ceil(totalTomas / 60));
-      return {
-        cantidad: frascos,
-        explicacion: `Sugerido: ${Math.round(totalTomas)} aplicaciones (${frascos} ${frascos > 1 ? 'frascos' : 'frasco'})`,
-        esLiquido: true,
-      };
-    }
 
     // Volumen por toma (ej. 5ml cucharadita, 10ml cucharada, 15ml)
     let mlPorToma = 5;
@@ -242,6 +288,61 @@ export default function AtencionMedicaPage() {
   const [mostrarUltimaConsulta, setMostrarUltimaConsulta] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const stepBodyRef = useRef(null);
+
+  // Control y advertencia de salida
+  const [modalSalirVisible, setModalSalirVisible] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [destinoNavegacion, setDestinoNavegacion] = useState(null);
+  const consultaFinalizadaRef = useRef(false);
+
+  const solicitarConfirmacionSalir = (targetPath = '/clinica') => {
+    if (consultaFinalizadaRef.current) return true;
+    setDestinoNavegacion(targetPath);
+    setModalSalirVisible(true);
+    return false;
+  };
+
+  const handleCancelar = () => {
+    solicitarConfirmacionSalir('/clinica');
+  };
+
+  const confirmarSalir = async () => {
+    setModalSalirVisible(false);
+    consultaFinalizadaRef.current = true;
+    if (idCola) {
+      try {
+        await clinicaService.reanudarEsperaConsulta(idCola);
+      } catch (err) {
+        console.error('Error al retornar paciente a espera de consulta', err);
+      }
+    }
+    navigate(destinoNavegacion || '/clinica');
+  };
+
+  // Interceptar cierre de ventana, recarga o botón atrás del navegador
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (consultaFinalizadaRef.current) return;
+      e.preventDefault();
+      e.returnValue = '¿Deseas salir de la consulta actual? Los datos ingresados no se guardarán';
+      return e.returnValue;
+    };
+
+    const handlePopState = () => {
+      if (consultaFinalizadaRef.current) return;
+      window.history.pushState(null, '', window.location.href);
+      solicitarConfirmacionSalir('/clinica');
+    };
+
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   // Al cambiar de paso, restaurar el scroll del cuerpo del wizard arriba
   useEffect(() => {
@@ -340,9 +441,17 @@ export default function AtencionMedicaPage() {
     if (!detallesTratamiento.find((x) => x.idMedicamento === med.idMedicamento)) {
       const presNorm = (med.presentacion || '').toLowerCase();
       const concNorm = (med.concentracion || '').toLowerCase();
+      const nomNorm = (med.nombre || '').toLowerCase();
+
+      const esGotas =
+        /gotas|gotero/i.test(presNorm) ||
+        /gotas|gotero/i.test(concNorm) ||
+        /gotas|gotero/i.test(nomNorm);
       const esLiquido =
-        /jarabe|suspensi[oó]n|soluci[oó]n|elixir|gotas|frasco|l[ií]quid/i.test(presNorm) ||
-        /jarabe|suspensi[oó]n|soluci[oó]n/i.test(concNorm);
+        !esGotas && (
+          /jarabe|suspensi[oó]n|soluci[oó]n|elixir|frasco|l[ií]quid/i.test(presNorm) ||
+          /jarabe|suspensi[oó]n|soluci[oó]n/i.test(concNorm)
+        );
       const esTopico =
         /crema|ung[uü]ento|pomada|gel\b|t[oó]pic|d[eé]rmic|loci[oó]n|pasta\b|vaginal/i.test(presNorm) ||
         /crema|ung[uü]ento|pomada|gel\b|t[oó]pic/i.test(concNorm);
@@ -351,7 +460,8 @@ export default function AtencionMedicaPage() {
         /inhalad|spray|aerosol/i.test(concNorm);
 
       let defaultDosis = '1';
-      if (esLiquido) defaultDosis = '5ml';
+      if (esGotas) defaultDosis = '20 gotas (1 ml)';
+      else if (esLiquido) defaultDosis = '5ml';
       else if (esTopico) defaultDosis = '1 aplicación';
       else if (esInhalador) defaultDosis = '1 disparo';
 
@@ -363,6 +473,7 @@ export default function AtencionMedicaPage() {
         unidades: med.unidades ?? null,
         frecuencia: 'Cada 8 hrs',
         duracion: '5 días',
+        esGotas,
         esLiquido,
         esTopico,
         esInhalador,
@@ -427,7 +538,9 @@ export default function AtencionMedicaPage() {
           observaciones: observacionesTratamiento,
           detalles: detallesTratamiento.map((dt) => {
             let tomaTexto = '';
-            if (dt.esLiquido) {
+            if (dt.esGotas) {
+              tomaTexto = dt.tomaDosis || '20 gotas (1 ml)';
+            } else if (dt.esLiquido) {
               if (dt.tomaDosis === '5ml') tomaTexto = '1 cucharadita (5 ml)';
               else if (dt.tomaDosis === '10ml') tomaTexto = '1 cucharada (10 ml)';
               else if (dt.tomaDosis === '15ml') tomaTexto = '1 cucharada sopera (15 ml)';
@@ -449,29 +562,23 @@ export default function AtencionMedicaPage() {
 
       const res = await finalizarAtencion(payload);
       if (res.success) {
-        alert('Consulta finalizada correctamente. El paciente ha sido enviado a Farmacia.');
-        navigate('/clinica');
+        consultaFinalizadaRef.current = true;
+        setShowSuccessModal(true);
       }
     } finally {
       setEnviando(false);
     }
   };
 
-  const handleCancelar = async () => {
-    if (idCola) {
-      try {
-        await clinicaService.reanudarEsperaConsulta(idCola);
-      } catch (err) {
-        console.error('Error al retornar paciente a espera de consulta', err);
-      }
-    }
+  const handleAceptarExito = () => {
+    setShowSuccessModal(false);
     navigate('/clinica');
   };
 
   if (loadingDatos) {
     return (
       <div style={styles.page}>
-        <AdminNavbar />
+        <AdminNavbar onBeforeNavigate={solicitarConfirmacionSalir} />
         <div style={styles.content}>
           <div style={styles.loadingBox}>
             <p style={{ margin: 0, color: '#0077b6', fontWeight: 600 }}>
@@ -489,7 +596,7 @@ export default function AtencionMedicaPage() {
 
   return (
     <div style={styles.page}>
-      <AdminNavbar />
+      <AdminNavbar onBeforeNavigate={solicitarConfirmacionSalir} />
       <main className="clinica-content" style={styles.content}>
         {/* Header Odoo: USER.PNG | Paciente X */}
         <div className="clinica-odoo-header" style={styles.odooHeaderCard}>
@@ -1381,7 +1488,11 @@ export default function AtencionMedicaPage() {
                                     style={styles.quantityInput}
                                   />
                                   <span style={styles.unitLabel}>
-                                    {dt.esTopico
+                                    {dt.esGotas
+                                      ? Number(dt.cantidad) === 1
+                                        ? 'frasco gotero'
+                                        : 'frascos gotero'
+                                      : dt.esTopico
                                       ? Number(dt.cantidad) === 1
                                         ? 'tubo'
                                         : 'tubos'
@@ -1398,7 +1509,23 @@ export default function AtencionMedicaPage() {
                                       : 'unidades'}
                                   </span>
 
-                                  {dt.esLiquido && (
+                                  {dt.esGotas ? (
+                                    <select
+                                      value={dt.tomaDosis || '20 gotas (1 ml)'}
+                                      onChange={(e) =>
+                                        updateDetalle(dt.idMedicamento, 'tomaDosis', e.target.value)
+                                      }
+                                      style={styles.doseSelect}
+                                      title="Gotas por toma"
+                                    >
+                                      <option value="10 gotas (0.5 ml)">10 gotas (0.5 ml)</option>
+                                      <option value="15 gotas (0.75 ml)">15 gotas (0.75 ml)</option>
+                                      <option value="20 gotas (1 ml)">20 gotas (1 ml)</option>
+                                      <option value="25 gotas (1.25 ml)">25 gotas (1.25 ml)</option>
+                                      <option value="30 gotas (1.5 ml)">30 gotas (1.5 ml)</option>
+                                      <option value="2 gotas">2 gotas (oftálmico / ótico)</option>
+                                    </select>
+                                  ) : dt.esLiquido ? (
                                     <select
                                       value={dt.tomaDosis || '5ml'}
                                       onChange={(e) =>
@@ -1411,7 +1538,7 @@ export default function AtencionMedicaPage() {
                                       <option value="10ml">1 cucharada (10 ml)</option>
                                       <option value="15ml">1 cucharada sopera (15 ml)</option>
                                     </select>
-                                  )}
+                                  ) : null}
                                 </div>
 
                                 {dt.explicacion && (
@@ -1496,7 +1623,7 @@ export default function AtencionMedicaPage() {
                   ) : (
                     <>
                       <CheckCircle2 size={18} />
-                      <span>Finalizar Consulta y Enviar a Farmacia</span>
+                      <span>Finalizar Consulta</span>
                     </>
                   )}
                 </button>
@@ -1505,6 +1632,103 @@ export default function AtencionMedicaPage() {
           </div>
         </div>
       </main>
+
+      {/* Modal de Advertencia al Salir */}
+      {modalSalirVisible && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalCard}>
+            <div style={styles.modalHeader}>
+              <div style={styles.modalIconBoxWarning}>
+                <AlertTriangle size={24} color="#d97706" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={styles.modalTitle}>¿Deseas salir de la consulta actual?</h3>
+                <p style={styles.modalSubtitle}>
+                  Los datos ingresados no se guardarán
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setModalSalirVisible(false);
+                  setDestinoNavegacion(null);
+                }}
+                style={styles.btnModalClose}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={styles.modalBody}>
+              <p style={{ margin: 0, color: '#334155', fontSize: '14px', lineHeight: '1.5' }}>
+                Tiene una atención médica en proceso. Si decide salir ahora, la información ingresada en los 5 pasos se perderá y no podrá recuperarse.
+              </p>
+            </div>
+
+            <div style={styles.modalFooter}>
+              <button
+                type="button"
+                onClick={() => {
+                  setModalSalirVisible(false);
+                  setDestinoNavegacion(null);
+                }}
+                style={styles.btnModalCancel}
+              >
+                Continuar en Consulta
+              </button>
+              <button
+                type="button"
+                onClick={confirmarSalir}
+                style={styles.btnModalConfirmExit}
+              >
+                Sí, Salir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Éxito Tipo Logro al Finalizar Consulta */}
+      {showSuccessModal && (
+        <div className="clinica-modal-overlay" role="dialog" aria-modal="true">
+          <div className="logro-card">
+            {/* Efecto de barrido de luz */}
+            <div className="logro-shimmer" />
+
+            {/* Emblema central con anillos tipo sonar */}
+            <div className="logro-emblem-container">
+              <div className="logro-pulse-ring ring-1" />
+              <div className="logro-pulse-ring ring-2" />
+              <div className="logro-emblem-circle">
+                <Award size={42} color="#ffffff" strokeWidth={2.2} />
+              </div>
+            </div>
+
+            <h3 className="logro-title">¡Consulta Finalizada!</h3>
+
+            {nombreCompleto && (
+              <div className="logro-patient-chip">
+                <User size={13} />
+                <span>Paciente: <strong>{nombreCompleto}</strong></span>
+              </div>
+            )}
+
+            <p className="logro-desc">
+              La atención médica ha finalizado con éxito. El paciente ha sido enviado a Farmacia.
+            </p>
+
+            <button
+              type="button"
+              autoFocus
+              onClick={handleAceptarExito}
+              className="logro-btn-confirm"
+            >
+              <Check size={18} strokeWidth={2.5} />
+              <span>Aceptar</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2431,6 +2655,94 @@ const styles = {
     fontWeight: '700',
     cursor: 'pointer',
     boxShadow: '0 3px 8px rgba(0, 119, 182, 0.35)',
+    transition: 'all 0.2s',
+  },
+  modalOverlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(3, 4, 94, 0.45)',
+    backdropFilter: 'blur(3px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1050,
+    padding: '16px',
+  },
+  modalCard: {
+    background: 'white',
+    borderRadius: '12px',
+    maxWidth: '460px',
+    width: '100%',
+    padding: '24px',
+    boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.05)',
+  },
+  modalHeader: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '12px',
+    marginBottom: '16px',
+  },
+  modalIconBoxWarning: {
+    width: '42px',
+    height: '42px',
+    borderRadius: '50%',
+    background: '#fef3c7',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  modalTitle: {
+    margin: 0,
+    fontSize: '17px',
+    fontWeight: '700',
+    color: '#03045e',
+  },
+  modalSubtitle: {
+    margin: '3px 0 0',
+    fontSize: '13px',
+    fontWeight: '600',
+    color: '#d97706',
+  },
+  btnModalClose: {
+    background: 'none',
+    border: 'none',
+    color: '#94a3b8',
+    cursor: 'pointer',
+    padding: '4px',
+  },
+  modalBody: {
+    background: '#f8fafc',
+    padding: '14px',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
+    marginBottom: '20px',
+  },
+  modalFooter: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '10px',
+  },
+  btnModalCancel: {
+    background: '#f1f5f9',
+    color: '#475569',
+    border: '1px solid #cbd5e1',
+    padding: '9px 18px',
+    borderRadius: '6px',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
+  btnModalConfirmExit: {
+    background: '#dc2626',
+    color: 'white',
+    border: 'none',
+    padding: '9px 18px',
+    borderRadius: '6px',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
     transition: 'all 0.2s',
   },
 };

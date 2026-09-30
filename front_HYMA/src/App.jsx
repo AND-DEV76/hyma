@@ -17,7 +17,9 @@ import PreconsultaPage from './features/preconsulta/pages/PreconsultaPage';
 import SignosVitalesPage from './features/preconsulta/pages/SignosVitalesPage';
 import FarmaciaPortalPage from './features/farmacia/pages/FarmaciaPortalPage';
 import FarmaciaPage from './features/farmacia/pages/FarmaciaPage';
+import DispensacionHubPage from './features/farmacia/pages/DispensacionHubPage';
 import DispensacionColaPage from './features/farmacia/pages/DispensacionColaPage';
+import VentaExternaPage from './features/farmacia/pages/VentaExternaPage';
 import DispensarMedicamentosPage from './features/farmacia/pages/DispensarMedicamentosPage';
 import MedicamentosHubPage from './features/farmacia/pages/MedicamentosHubPage';
 import InventarioPage from './features/farmacia/pages/InventarioPage';
@@ -31,7 +33,9 @@ import AlergiaPage from './features/alergia/pages/AlergiaPage';
 import ClinicaPage from './features/clinica/pages/ClinicaPage';
 import AtencionMedicaPage from './features/clinica/pages/AtencionMedicaPage';
 import DiagnosticosPage from './features/diagnostico/pages/DiagnosticosPage';
-import ReportesPage from './features/reportes/pages/ReportesPage';
+import InformesHubPage from './features/reportes/pages/InformesHubPage';
+import EstadisticaMensualPage from './features/reportes/pages/EstadisticaMensualPage';
+import CasosEspecialesPage from './features/reportes/pages/CasosEspecialesPage';
 import HospitalDashboardPage from './features/reportes/pages/HospitalDashboardPage';
 import TarifasPage from './features/tarifa/pages/TarifasPage';
 import ConfiguracionPage from './features/configuracion/pages/ConfiguracionPage';
@@ -51,12 +55,17 @@ function App() {
             <Route path="/preconsulta" element={<PreconsultaPage />} />
             <Route path="/preconsulta/signos" element={<SignosVitalesPage />} />
             <Route path="/farmacia" element={<FarmaciaPortalPage />} />
-            <Route path="/farmacia/dispensacion" element={<DispensacionColaPage />} />
+            <Route path="/farmacia/dispensacion" element={<DispensacionHubPage />} />
+            <Route path="/farmacia/dispensacion/consulta" element={<DispensacionColaPage />} />
+            <Route path="/farmacia/dispensacion/venta-externa" element={<VentaExternaPage />} />
             <Route path="/farmacia/dispensar" element={<DispensarMedicamentosPage />} />
             <Route path="/farmacia/medicamentos" element={<MedicamentosHubPage />} />
             <Route path="/farmacia/medicamentos/inventario" element={<InventarioPage />} />
             <Route path="/farmacia/medicamentos/movimientos" element={<MovimientosPage />} />
             <Route path="/farmacia/medicamentos/catalogo" element={<CatalogoMedicamentosPage />} />
+            <Route path="/farmacia/informes" element={<InformesHubPage />} />
+            <Route path="/farmacia/informes/estadistica" element={<EstadisticaMensualPage />} />
+            <Route path="/farmacia/informes/casos-especiales" element={<CasosEspecialesPage />} />
             <Route path="/farmacia/inventario/*" element={<FarmaciaPage />} />
             <Route path="/farmacia/inventario" element={<FarmaciaPage />} />
             <Route path="/farmacia/*" element={<FarmaciaPage />} />
@@ -69,7 +78,9 @@ function App() {
             <Route path="/clinica" element={<ClinicaPage />} />
             <Route path="/clinica/atencion" element={<AtencionMedicaPage />} />
             <Route path="/diagnosticos" element={<DiagnosticosPage />} />
-            <Route path="/reportes" element={<ReportesPage />} />
+            <Route path="/reportes" element={<InformesHubPage />} />
+            <Route path="/reportes/estadistica" element={<EstadisticaMensualPage />} />
+            <Route path="/reportes/casos-especiales" element={<CasosEspecialesPage />} />
             <Route path="/tarifas" element={<TarifasPage />} />
             <Route path="/configuracion" element={<ConfiguracionPage />} />
             <Route path="*" element={<NotFoundPage />} />

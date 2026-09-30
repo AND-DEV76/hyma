@@ -85,7 +85,8 @@ export default function DispensacionColaPage() {
         <Breadcrumb
           items={[
             { label: 'Farmacia', to: '/farmacia' },
-            { label: 'Dispensación' }
+            { label: 'Dispensación', to: '/farmacia/dispensacion' },
+            { label: 'Dispensación De Consulta' }
           ]}
         />
 

@@ -1,35 +1,32 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  HeartPulse,
-  FileSpreadsheet,
-  Package,
-  ChevronRight,
   Pill,
-  Sparkles
+  Users,
+  ShoppingBag,
+  ChevronRight,
 } from 'lucide-react';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
-import farmaciaLogo from '../../../assets/images/farmacia.png';
 import '../styles/farmaciaPortal.css';
 
-export default function FarmaciaPortalPage() {
+export default function DispensacionHubPage() {
   const navigate = useNavigate();
 
   const opciones = [
     {
-      id: 'dispensacion',
-      titulo: 'Dispensación',
-      descripcion: 'Dispensación y entrega de recetas médicas a pacientes en espera.',
-      ruta: '/farmacia/dispensacion',
-      icono: <Pill size={26} />,
+      id: 'consulta',
+      titulo: 'Dispensación De Consulta',
+      descripcion: 'Pacientes en espera de entrega de medicamentos recetados en consulta médica.',
+      ruta: '/farmacia/dispensacion/consulta',
+      icono: <Users size={26} />,
     },
     {
-      id: 'medicamentos',
-      titulo: 'Medicamentos',
-      descripcion: 'Inventario de farmacia, control de stock, lotes activos y catálogos.',
-      ruta: '/farmacia/medicamentos',
-      icono: <Package size={26} />,
+      id: 'venta-externa',
+      titulo: 'Venta Externa',
+      descripcion: 'Venta directa de medicamentos en mostrador sin consulta médica ni paciente.',
+      ruta: '/farmacia/dispensacion/venta-externa',
+      icono: <ShoppingBag size={26} />,
     },
   ];
 
@@ -38,35 +35,35 @@ export default function FarmaciaPortalPage() {
       <AdminNavbar />
 
       <main className="farmacia-portal-container">
-        {/* Breadcrumbs */}
-        <Breadcrumb items={[{ label: 'Farmacia' }]} showHome={true} />
+        {/* Breadcrumb */}
+        <Breadcrumb
+          items={[
+            { label: 'Farmacia', to: '/farmacia' },
+            { label: 'Dispensación' },
+          ]}
+        />
 
         {/* Encabezado */}
         <div className="portal-header">
-          <span className="portal-eyebrow">PORTAL PRINCIPAL</span>
-          <h1 className="portal-title">Farmacia</h1>
-          <p className="portal-subtitle">
-            Seleccione el módulo o servicio al que desea ingresar
-          </p>
+          <span className="portal-eyebrow">MÓDULO DE DISPENSACIÓN</span>
+          <h1 className="portal-title">Dispensación y Venta de Medicamentos</h1>
         </div>
 
-        {/* Grilla: Logo a la izquierda + 3 Opciones a la derecha */}
+        {/* Grilla: Logo a la izquierda + 2 Opciones a la derecha */}
         <div className="portal-grid">
-          {/* Tarjeta Izquierda con el Logo de Farmacia */}
+          {/* Tarjeta Izquierda */}
           <div className="portal-logo-card">
             <div className="portal-logo-glow" />
-            <img
-              src={farmaciaLogo}
-              alt="Logo Farmacia"
-              className="portal-logo-img"
-            />
+            <div className="portal-hero-icon-wrapper">
+              <Pill size={64} strokeWidth={2.2} />
+            </div>
             <div className="portal-logo-caption">
               <h3>Obras Sociales San Martín</h3>
-              <p>Módulo Integrado de Salud y Medicamentos</p>
+              <p>Entrega de Recetas y Venta Directa en Mostrador</p>
             </div>
           </div>
 
-          {/* Columna Derecha con las 3 Opciones del Wireframe */}
+          {/* Columna Derecha con las 2 Opciones */}
           <div className="portal-options-list">
             {opciones.map((opcion) => (
               <div

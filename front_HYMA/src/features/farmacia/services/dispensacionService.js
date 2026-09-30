@@ -17,3 +17,8 @@ export const entregarMedicamentos = async (idCola, data = {}) => (
 export const cancelarTurnoDispensacion = async (idCola) => (
   await api.post(`/farmacia/dispensacion/cancelar/${idCola}`)
 ).data;
+
+export const registrarVentaExterna = async (data) => (
+  await api.post('/farmacia/venta-externa', data)
+).data;
+

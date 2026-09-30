@@ -253,6 +253,31 @@ public class ReporteService {
             }
         }
 
+        // Cargar salidas externas (sin consulta) para sumarlas a la recaudación del día
+        List<SalidaMedicamento> salidasExternas = salidaMedicamentoRepository.findByTipoSalidaIgnoreCaseAndFechaSalidaBetweenOrderByFechaSalidaDesc("VENTA_EXTERNA", inicioMes, finMes);
+        Map<Integer, BigDecimal> ventasExternasPorDia = new HashMap<>();
+        if (salidasExternas != null && !salidasExternas.isEmpty()) {
+            List<Long> idsSalidasExt = salidasExternas.stream().map(SalidaMedicamento::getIdSalida).filter(Objects::nonNull).toList();
+            if (!idsSalidasExt.isEmpty()) {
+                List<DetalleSalidaMedicamento> detallesExt = detalleSalidaMedicamentoRepository.findBySalida_IdSalidaIn(idsSalidasExt);
+                Map<Long, BigDecimal> subtotalPorSalidaExt = new HashMap<>();
+                for (DetalleSalidaMedicamento det : detallesExt) {
+                    if (det != null && det.getSalida() != null && det.getSalida().getIdSalida() != null
+                            && det.getCantidad() != null && det.getPrecioUnitario() != null) {
+                        BigDecimal sub = det.getPrecioUnitario().multiply(BigDecimal.valueOf(det.getCantidad()));
+                        subtotalPorSalidaExt.merge(det.getSalida().getIdSalida(), sub, BigDecimal::add);
+                    }
+                }
+                for (SalidaMedicamento se : salidasExternas) {
+                    if (se.getFechaSalida() != null) {
+                        int diaExt = se.getFechaSalida().getDayOfMonth();
+                        BigDecimal monto = subtotalPorSalidaExt.getOrDefault(se.getIdSalida(), BigDecimal.ZERO);
+                        ventasExternasPorDia.merge(diaExt, monto, BigDecimal::add);
+                    }
+                }
+            }
+        }
+
         // Agrupar consultas por día del mes
         Map<Integer, List<Consulta>> consultasPorDia = consultasMes.stream()
                 .filter(c -> c.getFechaConsulta() != null)
@@ -265,6 +290,7 @@ public class ReporteService {
         for (int dia = 1; dia <= diasEnMes; dia++) {
             LocalDate fechaDia = ym.atDay(dia);
             List<Consulta> consultasDia = consultasPorDia.getOrDefault(dia, Collections.emptyList());
+            BigDecimal recaudadoVentaExt = ventasExternasPorDia.getOrDefault(dia, BigDecimal.ZERO);
 
             if (consultasDia.isEmpty()) {
                 List<Integer> diagsCero = new ArrayList<>(Collections.nCopies(totalDiagCols, 0));
@@ -284,7 +310,7 @@ public class ReporteService {
                         .femenino(0)
                         .masculino(0)
                         .totalGenero(0)
-                        .totalRecaudado(BigDecimal.ZERO)
+                        .totalRecaudado(recaudadoVentaExt)
                         .diagnosticos(diagsCero)
                         .build());
                 continue;
@@ -339,16 +365,19 @@ public class ReporteService {
                 BigDecimal totalConsulta = BigDecimal.ZERO;
                 SalidaMedicamento salida = c.getIdConsulta() != null ? salidaPorConsulta.get(c.getIdConsulta()) : null;
                 if (salida != null) {
-                    BigDecimal costoConsulta = salida.getCostoConsulta() != null ? salida.getCostoConsulta() : BigDecimal.ZERO;
-                    totalConsulta = totalConsulta.add(costoConsulta);
+                    boolean esCasoEspecial = "CASO_ESPECIAL".equalsIgnoreCase(salida.getTipoSalida());
+                    if (!esCasoEspecial) {
+                        BigDecimal costoConsulta = salida.getCostoConsulta() != null ? salida.getCostoConsulta() : BigDecimal.ZERO;
+                        totalConsulta = totalConsulta.add(costoConsulta);
 
-                    List<DetalleSalidaMedicamento> detalles = salida.getIdSalida() != null
-                            ? detallesPorSalida.getOrDefault(salida.getIdSalida(), Collections.emptyList())
-                            : Collections.emptyList();
-                    for (DetalleSalidaMedicamento det : detalles) {
-                        if (det != null && det.getCantidad() != null && det.getPrecioUnitario() != null) {
-                            BigDecimal precioDetalle = det.getPrecioUnitario().multiply(BigDecimal.valueOf(det.getCantidad()));
-                            totalConsulta = totalConsulta.add(precioDetalle);
+                        List<DetalleSalidaMedicamento> detalles = salida.getIdSalida() != null
+                                ? detallesPorSalida.getOrDefault(salida.getIdSalida(), Collections.emptyList())
+                                : Collections.emptyList();
+                        for (DetalleSalidaMedicamento det : detalles) {
+                            if (det != null && det.getCantidad() != null && det.getPrecioUnitario() != null) {
+                                BigDecimal precioDetalle = det.getPrecioUnitario().multiply(BigDecimal.valueOf(det.getCantidad()));
+                                totalConsulta = totalConsulta.add(precioDetalle);
+                            }
                         }
                     }
                 } else {
@@ -370,6 +399,8 @@ public class ReporteService {
                     }
                 }
             }
+
+            recaudado = recaudado.add(recaudadoVentaExt);
 
             int totalPac = nuevos + reconsulta;
             int totalEdades = e0a5 + e6a12 + e13a17 + e18a59 + e60mas;
@@ -1262,8 +1293,10 @@ public class ReporteService {
 
         if (!idsConsultasMes.isEmpty()) {
             List<SalidaMedicamento> salidas = salidaMedicamentoRepository.findByConsulta_IdConsultaIn(idsConsultasMes);
+            Map<Long, SalidaMedicamento> salidaMap = salidas.stream().collect(Collectors.toMap(SalidaMedicamento::getIdSalida, s -> s, (s1, s2) -> s1));
             for (SalidaMedicamento s : salidas) {
-                if (s.getCostoConsulta() != null) {
+                boolean esCasoEsp = "CASO_ESPECIAL".equalsIgnoreCase(s.getTipoSalida());
+                if (!esCasoEsp && s.getCostoConsulta() != null) {
                     totalRecaudacionConsultas = totalRecaudacionConsultas.add(s.getCostoConsulta());
                 }
             }
@@ -1272,6 +1305,35 @@ public class ReporteService {
             if (!idsSalidas.isEmpty()) {
                 List<DetalleSalidaMedicamento> detalles = detalleSalidaMedicamentoRepository.findBySalida_IdSalidaIn(idsSalidas);
                 for (DetalleSalidaMedicamento d : detalles) {
+                    int cant = d.getCantidad() != null ? d.getCantidad() : 0;
+                    BigDecimal pUnit = d.getPrecioUnitario() != null ? d.getPrecioUnitario() : BigDecimal.ZERO;
+                    BigDecimal sub = pUnit.multiply(BigDecimal.valueOf(cant));
+
+                    SalidaMedicamento parent = d.getSalida() != null ? salidaMap.get(d.getSalida().getIdSalida()) : null;
+                    boolean esCasoEsp = parent != null && "CASO_ESPECIAL".equalsIgnoreCase(parent.getTipoSalida());
+                    if (!esCasoEsp) {
+                        totalRecaudacionMeds = totalRecaudacionMeds.add(sub);
+                    }
+
+                    LoteMedicamento l = d.getLote();
+                    Medicamento m = l != null ? l.getMedicamento() : null;
+                    if (m != null && m.getIdMedicamento() != null) {
+                        Long medId = m.getIdMedicamento();
+                        medObjMap.putIfAbsent(medId, m);
+                        unidadesPorMedicamento.put(medId, unidadesPorMedicamento.getOrDefault(medId, 0L) + cant);
+                        montoPorMedicamento.put(medId, montoPorMedicamento.getOrDefault(medId, BigDecimal.ZERO).add(sub));
+                    }
+                }
+            }
+        }
+
+        // Salidas externas (sin consulta) para el dashboard
+        List<SalidaMedicamento> salidasExtDash = salidaMedicamentoRepository.findByTipoSalidaIgnoreCaseAndFechaSalidaBetweenOrderByFechaSalidaDesc("VENTA_EXTERNA", inicioMes, finMes);
+        if (salidasExtDash != null && !salidasExtDash.isEmpty()) {
+            List<Long> idsSalidasExt = salidasExtDash.stream().map(SalidaMedicamento::getIdSalida).filter(Objects::nonNull).toList();
+            if (!idsSalidasExt.isEmpty()) {
+                List<DetalleSalidaMedicamento> detallesExt = detalleSalidaMedicamentoRepository.findBySalida_IdSalidaIn(idsSalidasExt);
+                for (DetalleSalidaMedicamento d : detallesExt) {
                     int cant = d.getCantidad() != null ? d.getCantidad() : 0;
                     BigDecimal pUnit = d.getPrecioUnitario() != null ? d.getPrecioUnitario() : BigDecimal.ZERO;
                     BigDecimal sub = pUnit.multiply(BigDecimal.valueOf(cant));
@@ -1454,5 +1516,293 @@ public class ReporteService {
                 .demografia(demografia)
                 .topMedicamentos(topMedicamentos)
                 .build();
+    }
+
+    /**
+     * Genera el listado estructurado de Casos Especiales (Exoneraciones) para el mes y año dados.
+     */
+    @Transactional(readOnly = true)
+    public ReporteCasosEspecialesResponse generarReporteCasosEspeciales(int anio, int mes) {
+        YearMonth ym = YearMonth.of(anio, mes);
+        LocalDateTime inicioMes = ym.atDay(1).atStartOfDay();
+        LocalDateTime finMes = ym.atEndOfMonth().atTime(23, 59, 59, 999999999);
+
+        List<SalidaMedicamento> salidas = salidaMedicamentoRepository
+                .findByTipoSalidaIgnoreCaseAndFechaSalidaBetweenOrderByFechaSalidaDesc("CASO_ESPECIAL", inicioMes, finMes);
+
+        List<ReporteCasosEspecialesResponse.ItemCasoEspecial> items = new ArrayList<>();
+        BigDecimal totalMontoExonerado = BigDecimal.ZERO;
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+        for (SalidaMedicamento s : salidas) {
+            Consulta c = s.getConsulta();
+            Paciente p = c != null ? c.getPaciente() : null;
+
+            String nombrePac = p != null
+                    ? (p.getNombres() + " " + p.getApellidos()).trim()
+                    : "Paciente Desconocido";
+
+            Integer edad = null;
+            if (p != null && p.getFechaNacimiento() != null) {
+                edad = Period.between(p.getFechaNacimiento(), LocalDate.now()).getYears();
+            }
+
+            String sexo = (p != null && p.getSexo() != null) ? p.getSexo().toString() : "N/E";
+
+            // Diagnósticos de la consulta
+            List<String> diagnosticos = Collections.emptyList();
+            if (c != null && c.getIdConsulta() != null) {
+                diagnosticos = diagnosticoRepository.findByConsulta_IdConsulta(c.getIdConsulta()).stream()
+                        .map(d -> (d.getDescripcion() != null && !d.getDescripcion().isBlank())
+                                ? d.getDescripcion()
+                                : (d.getCodigoCie10() != null ? d.getCodigoCie10() : "Sin diagnóstico"))
+                        .toList();
+            }
+
+            // Medicamentos dispensados en esta salida
+            List<DetalleSalidaMedicamento> detalles = detalleSalidaMedicamentoRepository.findBySalida_IdSalida(s.getIdSalida());
+            List<ReporteCasosEspecialesResponse.MedicamentoItem> medItems = new ArrayList<>();
+            BigDecimal subtotalMeds = BigDecimal.ZERO;
+
+            for (DetalleSalidaMedicamento det : detalles) {
+                int cant = det.getCantidad() != null ? det.getCantidad() : 0;
+                BigDecimal pUnit = det.getPrecioUnitario() != null ? det.getPrecioUnitario() : BigDecimal.ZERO;
+                BigDecimal sub = pUnit.multiply(BigDecimal.valueOf(cant));
+                subtotalMeds = subtotalMeds.add(sub);
+
+                Medicamento m = (det.getLote() != null) ? det.getLote().getMedicamento() : null;
+                medItems.add(ReporteCasosEspecialesResponse.MedicamentoItem.builder()
+                        .nombre(m != null ? m.getNombre() : "Medicamento")
+                        .presentacion(m != null ? m.getPresentacion() : "")
+                        .concentracion(m != null ? m.getConcentracion() : "")
+                        .cantidad(cant)
+                        .precioUnitario(pUnit)
+                        .subtotal(sub)
+                        .build());
+            }
+
+            BigDecimal subtotalConsulta = (c != null && c.getPrecioConsulta() != null)
+                    ? c.getPrecioConsulta()
+                    : BigDecimal.ZERO;
+
+            BigDecimal totalCaso = subtotalMeds.add(subtotalConsulta);
+            totalMontoExonerado = totalMontoExonerado.add(totalCaso);
+
+            items.add(ReporteCasosEspecialesResponse.ItemCasoEspecial.builder()
+                    .idSalida(s.getIdSalida())
+                    .idConsulta(c != null ? c.getIdConsulta() : null)
+                    .idPaciente(p != null ? p.getIdPaciente() : null)
+                    .fecha(s.getFechaSalida() != null ? s.getFechaSalida().format(dtf) : "")
+                    .nombrePaciente(nombrePac)
+                    .edad(edad)
+                    .sexo(sexo)
+                    .diagnosticos(diagnosticos)
+                    .medicamentos(medItems)
+                    .subtotalConsulta(subtotalConsulta)
+                    .subtotalMedicamentos(subtotalMeds)
+                    .totalExonerado(totalCaso)
+                    .observaciones(s.getObservaciones() != null ? s.getObservaciones() : "")
+                    .build());
+        }
+
+        return ReporteCasosEspecialesResponse.builder()
+                .anio(anio)
+                .mes(mes)
+                .totalCasos(items.size())
+                .totalMontoExonerado(totalMontoExonerado)
+                .items(items)
+                .build();
+    }
+
+    /**
+     * Genera el archivo Excel (.xlsx) con el listado detallado de Casos Especiales.
+     */
+    @Transactional(readOnly = true)
+    public byte[] generarExcelCasosEspeciales(int anio, int mes) throws IOException {
+        ReporteCasosEspecialesResponse data = generarReporteCasosEspeciales(anio, mes);
+
+        String[] nombresMeses = {
+                "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        };
+        String nombreMes = (mes >= 1 && mes <= 12) ? nombresMeses[mes - 1] : String.valueOf(mes);
+
+        try (Workbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("Casos Especiales");
+            sheet.setDisplayGridlines(true);
+
+            Font fontBold = wb.createFont();
+            fontBold.setBold(true);
+
+            Font fontHeaderTitle = wb.createFont();
+            fontHeaderTitle.setBold(true);
+            fontHeaderTitle.setFontHeightInPoints((short) 12);
+            fontHeaderTitle.setColor(IndexedColors.WHITE.getIndex());
+
+            Font fontSubTitle = wb.createFont();
+            fontSubTitle.setFontHeightInPoints((short) 10);
+            fontSubTitle.setColor(IndexedColors.BLACK.getIndex());
+            fontSubTitle.setBold(true);
+
+            Font fontColHeader = wb.createFont();
+            fontColHeader.setBold(true);
+            fontColHeader.setFontHeightInPoints((short) 10);
+            fontColHeader.setColor(IndexedColors.WHITE.getIndex());
+
+            Font fontRegular = wb.createFont();
+            fontRegular.setFontHeightInPoints((short) 10);
+
+            // Estilos
+            CellStyle styleMainTitle = wb.createCellStyle();
+            styleMainTitle.setFont(fontHeaderTitle);
+            styleMainTitle.setAlignment(HorizontalAlignment.CENTER);
+            styleMainTitle.setVerticalAlignment(VerticalAlignment.CENTER);
+            styleMainTitle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+            styleMainTitle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            setBorders(styleMainTitle);
+
+            CellStyle styleSubTitle = wb.createCellStyle();
+            styleSubTitle.setFont(fontSubTitle);
+            styleSubTitle.setAlignment(HorizontalAlignment.CENTER);
+            styleSubTitle.setVerticalAlignment(VerticalAlignment.CENTER);
+            styleSubTitle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            styleSubTitle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            setBorders(styleSubTitle);
+
+            CellStyle styleColHeader = wb.createCellStyle();
+            styleColHeader.setFont(fontColHeader);
+            styleColHeader.setAlignment(HorizontalAlignment.CENTER);
+            styleColHeader.setVerticalAlignment(VerticalAlignment.CENTER);
+            styleColHeader.setFillForegroundColor(IndexedColors.ROYAL_BLUE.getIndex());
+            styleColHeader.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            setBorders(styleColHeader);
+
+            CellStyle styleTextLeft = wb.createCellStyle();
+            styleTextLeft.setFont(fontRegular);
+            styleTextLeft.setAlignment(HorizontalAlignment.LEFT);
+            styleTextLeft.setVerticalAlignment(VerticalAlignment.CENTER);
+            setBorders(styleTextLeft);
+
+            CellStyle styleTextCenter = wb.createCellStyle();
+            styleTextCenter.setFont(fontRegular);
+            styleTextCenter.setAlignment(HorizontalAlignment.CENTER);
+            styleTextCenter.setVerticalAlignment(VerticalAlignment.CENTER);
+            setBorders(styleTextCenter);
+
+            CellStyle styleCurrency = wb.createCellStyle();
+            styleCurrency.setFont(fontRegular);
+            styleCurrency.setAlignment(HorizontalAlignment.RIGHT);
+            styleCurrency.setVerticalAlignment(VerticalAlignment.CENTER);
+            DataFormat df = wb.createDataFormat();
+            styleCurrency.setDataFormat(df.getFormat("Q#,##0.00"));
+            setBorders(styleCurrency);
+
+            CellStyle styleTotalLabel = wb.createCellStyle();
+            styleTotalLabel.setFont(fontBold);
+            styleTotalLabel.setAlignment(HorizontalAlignment.RIGHT);
+            styleTotalLabel.setVerticalAlignment(VerticalAlignment.CENTER);
+            styleTotalLabel.setFillForegroundColor(IndexedColors.LIGHT_TURQUOISE.getIndex());
+            styleTotalLabel.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            setBorders(styleTotalLabel);
+
+            CellStyle styleTotalCurrency = wb.createCellStyle();
+            styleTotalCurrency.setFont(fontBold);
+            styleTotalCurrency.setAlignment(HorizontalAlignment.RIGHT);
+            styleTotalCurrency.setVerticalAlignment(VerticalAlignment.CENTER);
+            styleTotalCurrency.setDataFormat(df.getFormat("Q#,##0.00"));
+            styleTotalCurrency.setFillForegroundColor(IndexedColors.LIGHT_TURQUOISE.getIndex());
+            styleTotalCurrency.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            setBorders(styleTotalCurrency);
+
+            // Fila 0: Título Principal
+            Row row0 = sheet.createRow(0);
+            row0.setHeightInPoints(32);
+            for (int c = 0; c <= 6; c++) {
+                crearCeldaConBorde(row0, c, c == 0 ? "Reporte de Casos Especiales (Exoneraciones) - HYMA" : "", styleMainTitle);
+            }
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
+
+            // Fila 1: Subtítulo
+            Row row1 = sheet.createRow(1);
+            row1.setHeightInPoints(22);
+            for (int c = 0; c <= 6; c++) {
+                crearCeldaConBorde(row1, c, c == 0 ? "Período: " + nombreMes + " " + anio : "", styleSubTitle);
+            }
+            sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 6));
+
+            // Fila 2: Cabeceras
+            Row row2 = sheet.createRow(2);
+            row2.setHeightInPoints(26);
+            crearCeldaConBorde(row2, 0, "FECHA", styleColHeader);
+            crearCeldaConBorde(row2, 1, "PACIENTE", styleColHeader);
+            crearCeldaConBorde(row2, 2, "EDAD", styleColHeader);
+            crearCeldaConBorde(row2, 3, "GÉNERO", styleColHeader);
+            crearCeldaConBorde(row2, 4, "DIAGNÓSTICOS", styleColHeader);
+            crearCeldaConBorde(row2, 5, "MEDICAMENTOS ENTREGADOS", styleColHeader);
+            crearCeldaConBorde(row2, 6, "TOTAL EXONERADO", styleColHeader);
+
+            int currentIdx = 3;
+            if (data.getItems().isEmpty()) {
+                Row emptyRow = sheet.createRow(currentIdx++);
+                emptyRow.setHeightInPoints(24);
+                crearCeldaConBorde(emptyRow, 0, "No se registraron casos especiales en este período", styleTextLeft);
+                for (int c = 1; c <= 6; c++) {
+                    crearCeldaConBorde(emptyRow, c, "", styleTextLeft);
+                }
+                sheet.addMergedRegion(new CellRangeAddress(3, 3, 0, 6));
+            } else {
+                for (ReporteCasosEspecialesResponse.ItemCasoEspecial item : data.getItems()) {
+                    Row r = sheet.createRow(currentIdx++);
+                    r.setHeightInPoints(22);
+
+                    crearCeldaConBorde(r, 0, item.getFecha(), styleTextCenter);
+                    crearCeldaConBorde(r, 1, item.getNombrePaciente(), styleTextLeft);
+                    crearCeldaConBorde(r, 2, item.getEdad() != null ? String.valueOf(item.getEdad()) : "-", styleTextCenter);
+                    crearCeldaConBorde(r, 3, item.getSexo() != null ? item.getSexo() : "-", styleTextCenter);
+
+                    String diagsText = item.getDiagnosticos() != null && !item.getDiagnosticos().isEmpty()
+                            ? String.join(", ", item.getDiagnosticos())
+                            : "Sin diagnósticos";
+                    crearCeldaConBorde(r, 4, diagsText, styleTextLeft);
+
+                    String medsText = item.getMedicamentos() != null && !item.getMedicamentos().isEmpty()
+                            ? item.getMedicamentos().stream()
+                                    .map(m -> m.getCantidad() + "x " + m.getNombre() + " (" + m.getPresentacion() + ")")
+                                    .collect(Collectors.joining(", "))
+                            : "Ninguno";
+                    crearCeldaConBorde(r, 5, medsText, styleTextLeft);
+
+                    Cell cVal = r.createCell(6);
+                    double val = item.getTotalExonerado() != null ? item.getTotalExonerado().doubleValue() : 0.0;
+                    cVal.setCellValue(val);
+                    cVal.setCellStyle(styleCurrency);
+                }
+
+                // Fila Total
+                Row rTotal = sheet.createRow(currentIdx);
+                rTotal.setHeightInPoints(25);
+                for (int c = 0; c <= 5; c++) {
+                    crearCeldaConBorde(rTotal, c, c == 5 ? "TOTAL GENERAL EXONERADO" : "", styleTotalLabel);
+                }
+                sheet.addMergedRegion(new CellRangeAddress(currentIdx, currentIdx, 0, 5));
+
+                Cell cTotalVal = rTotal.createCell(6);
+                double totalVal = data.getTotalMontoExonerado() != null ? data.getTotalMontoExonerado().doubleValue() : 0.0;
+                cTotalVal.setCellValue(totalVal);
+                cTotalVal.setCellStyle(styleTotalCurrency);
+            }
+
+            sheet.setColumnWidth(0, 4800);
+            sheet.setColumnWidth(1, 9000);
+            sheet.setColumnWidth(2, 2400);
+            sheet.setColumnWidth(3, 2600);
+            sheet.setColumnWidth(4, 9500);
+            sheet.setColumnWidth(5, 13000);
+            sheet.setColumnWidth(6, 4800);
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            wb.write(baos);
+            return baos.toByteArray();
+        }
     }
 }

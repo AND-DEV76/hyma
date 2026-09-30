@@ -34,20 +34,25 @@ export default function DispensarMedicamentosPage() {
 
   const [confirmandoEntrega, setConfirmandoEntrega] = useState(false);
   const [entregaFinalizada, setEntregaFinalizada] = useState(false);
-  const [noPagaConsulta, setNoPagaConsulta] = useState(false);
+  const [tipoCobro, setTipoCobro] = useState('NORMAL'); // 'NORMAL' | 'NO_PAGA_CONSULTA' | 'CASO_ESPECIAL'
   const [duplicarEnHoja, setDuplicarEnHoja] = useState(false);
   const [procesandoEntrega, setProcesandoEntrega] = useState(false);
+
+  const esCasoEspecial = tipoCobro === 'CASO_ESPECIAL';
+  const noPagaConsulta = tipoCobro === 'NO_PAGA_CONSULTA' || esCasoEspecial;
 
   const precioConsultaOriginal = Number(receta?.precioConsulta || 0);
   const costoConsultaCobrar = noPagaConsulta ? 0 : precioConsultaOriginal;
 
-  const totalMedicamentos = (receta?.lotesSugeridos || []).reduce((acc, l) => {
+  const totalMedicamentosOriginal = (receta?.lotesSugeridos || []).reduce((acc, l) => {
     const cant = Number(l.cantidadADescontar || 0);
     const precio = Number(l.precioUnitario || 0);
     return acc + (cant * precio);
   }, 0);
 
-  const totalAPagar = costoConsultaCobrar + totalMedicamentos;
+  const totalMedicamentosCobrar = esCasoEspecial ? 0 : totalMedicamentosOriginal;
+  const totalMedicamentos = totalMedicamentosCobrar;
+  const totalAPagar = costoConsultaCobrar + totalMedicamentosCobrar;
 
   useEffect(() => {
     if (idCola || idPaciente) {
@@ -64,11 +69,19 @@ export default function DispensarMedicamentosPage() {
       return;
     }
 
+    let observaciones = null;
+    if (esCasoEspecial) {
+      observaciones = 'Caso Especial: Exoneración total de consulta y medicamentos';
+    } else if (noPagaConsulta) {
+      observaciones = 'Exonerado de consulta médica';
+    }
+
     setProcesandoEntrega(true);
     try {
       const res = await entregarMedicamentos(Number(idCola), {
         noPagaConsulta,
-        observaciones: noPagaConsulta ? 'Exonerado de consulta médica por caso especial' : null,
+        esCasoEspecial,
+        observaciones,
       });
       if (res.success) {
         setConfirmandoEntrega(false);
@@ -127,6 +140,7 @@ export default function DispensarMedicamentosPage() {
           items={[
             { label: 'Farmacia', to: '/farmacia' },
             { label: 'Dispensación', to: '/farmacia/dispensacion' },
+            { label: 'Dispensación De Consulta', to: '/farmacia/dispensacion/consulta' },
             { label: 'Dispensar Medicamentos' }
           ]}
         />
@@ -151,7 +165,7 @@ export default function DispensarMedicamentosPage() {
           <div style={styles.headerRight}>
             <button
               type="button"
-              onClick={() => navigate('/farmacia/dispensacion')}
+              onClick={() => navigate('/farmacia/dispensacion/consulta')}
               style={styles.btnVolver}
               title="Volver a la cola"
             >
@@ -211,28 +225,76 @@ export default function DispensarMedicamentosPage() {
 
                 <div style={styles.billingRow}>
                   <span style={styles.billingLabel}>Medicamentos:</span>
-                  <span style={styles.billingVal}>
-                    Q {totalMedicamentos.toFixed(2)}
-                  </span>
+                  <div style={{ textAlign: 'right' }}>
+                    {esCasoEspecial ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                        <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '12px' }}>
+                          Q {totalMedicamentosOriginal.toFixed(2)}
+                        </span>
+                        <span style={{ color: '#059669', fontWeight: '800', fontSize: '13px' }}>
+                          Q 0.00
+                        </span>
+                      </div>
+                    ) : (
+                      <span style={styles.billingVal}>
+                        Q {totalMedicamentosOriginal.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                {/* Checkbox No Paga Consulta */}
-                <div style={styles.checkboxContainer}>
-                  <label style={styles.checkboxLabelWrapper}>
+                {/* Modalidades de Cobro / Exoneración */}
+                <div style={styles.modalidadCobroBox}>
+                  <span style={styles.modalidadTitle}>Modalidad de Cobro:</span>
+
+                  <label style={styles.radioLabelWrapper}>
                     <input
-                      type="checkbox"
-                      checked={noPagaConsulta}
-                      onChange={(e) => setNoPagaConsulta(e.target.checked)}
-                      style={styles.checkboxInput}
+                      type="radio"
+                      name="tipoCobro"
+                      value="NORMAL"
+                      checked={tipoCobro === 'NORMAL'}
+                      onChange={() => setTipoCobro('NORMAL')}
+                      style={styles.radioInput}
                     />
-                    <span style={styles.checkboxText}>
-                      No paga consulta (Caso Especial)
+                    <span style={styles.radioText}>Cobro Normal (Consulta + Medicinas)</span>
+                  </label>
+
+                  <label style={styles.radioLabelWrapper}>
+                    <input
+                      type="radio"
+                      name="tipoCobro"
+                      value="NO_PAGA_CONSULTA"
+                      checked={tipoCobro === 'NO_PAGA_CONSULTA'}
+                      onChange={() => setTipoCobro('NO_PAGA_CONSULTA')}
+                      style={styles.radioInput}
+                    />
+                    <span style={styles.radioText}>Exonerar solo Consulta</span>
+                  </label>
+
+                  <label style={{ ...styles.radioLabelWrapper, color: esCasoEspecial ? '#b45309' : '#334155' }}>
+                    <input
+                      type="radio"
+                      name="tipoCobro"
+                      value="CASO_ESPECIAL"
+                      checked={tipoCobro === 'CASO_ESPECIAL'}
+                      onChange={() => setTipoCobro('CASO_ESPECIAL')}
+                      style={styles.radioInput}
+                    />
+                    <span style={{ ...styles.radioText, fontWeight: esCasoEspecial ? '700' : '500' }}>
+                      ★ Caso Especial (Exoneración Total)
                     </span>
                   </label>
-                  {noPagaConsulta && (
-                    <span style={styles.exoneradoBadge}>
-                      ✓ Consulta exonerada (Q 0.00)
-                    </span>
+
+                  {esCasoEspecial && (
+                    <div style={styles.casoEspecialBadge}>
+                      ✓ 100% Exonerado (Valor absorbido: Q {totalMedicamentosOriginal.toFixed(2)})
+                    </div>
+                  )}
+
+                  {tipoCobro === 'NO_PAGA_CONSULTA' && (
+                    <div style={styles.exoneradoBadge}>
+                      ✓ Consulta médica exonerada (Q 0.00)
+                    </div>
                   )}
                 </div>
               </div>
@@ -269,22 +331,9 @@ export default function DispensarMedicamentosPage() {
                   <span>Imprimir Receta</span>
                 </button>
 
-                {/* Opción para duplicar boleta en la misma hoja horizontal */}
-                <label style={styles.duplicarLabel}>
-                  <input
-                    type="checkbox"
-                    checked={duplicarEnHoja}
-                    onChange={(e) => setDuplicarEnHoja(e.target.checked)}
-                    style={styles.duplicarInput}
-                  />
-                  <span style={styles.duplicarText}>
-                    Imprimir 2 por hoja (2 pacientes / copias)
-                  </span>
-                </label>
-
                 <button
                   type="button"
-                  onClick={() => navigate('/farmacia/dispensacion')}
+                  onClick={() => navigate('/farmacia/dispensacion/consulta')}
                   disabled={entregando}
                   style={styles.btnCancelar}
                   title="Volver a la cola"
@@ -594,14 +643,16 @@ export default function DispensarMedicamentosPage() {
                   </div>
                   <div style={styles.modalSummaryRow}>
                     <span>Total Medicamentos Prescritos:</span>
-                    <strong style={{ color: '#1e293b' }}>
-                      Q {totalMedicamentos.toFixed(2)}
+                    <strong style={{ color: esCasoEspecial ? '#059669' : '#1e293b' }}>
+                      {esCasoEspecial
+                        ? `Q 0.00 (Exonerado - Valor: Q ${totalMedicamentosOriginal.toFixed(2)})`
+                        : `Q ${totalMedicamentos.toFixed(2)}`}
                     </strong>
                   </div>
                   <div style={{ ...styles.modalSummaryRow, borderTop: '1px solid #cbd5e1', paddingTop: '8px', marginTop: '6px' }}>
                     <span style={{ fontWeight: '700', color: '#03045e' }}>Total a Cobrar al Paciente:</span>
-                    <span style={{ fontWeight: '800', color: '#0077b6', fontSize: '16px' }}>
-                      Q {totalAPagar.toFixed(2)}
+                    <span style={{ fontWeight: '800', color: esCasoEspecial ? '#059669' : '#0077b6', fontSize: '16px' }}>
+                      Q {totalAPagar.toFixed(2)} {esCasoEspecial && '(Caso Especial)'}
                     </span>
                   </div>
                 </div>
@@ -655,20 +706,6 @@ export default function DispensarMedicamentosPage() {
                   La receta médica se abrió para imprimir en formato <strong>Media Hoja Carta</strong>. Si no se abrió o necesitas otra copia, puedes volver a imprimirla.
                 </p>
 
-                <div style={{ marginBottom: '14px' }}>
-                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={duplicarEnHoja}
-                      onChange={(e) => setDuplicarEnHoja(e.target.checked)}
-                      style={{ accentColor: '#0077b6', width: '16px', height: '16px', cursor: 'pointer' }}
-                    />
-                    <span style={{ fontSize: '13px', color: '#1e293b', fontWeight: 600 }}>
-                      Imprimir 2 recetas por hoja (2 pacientes / copias)
-                    </span>
-                  </label>
-                </div>
-
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                   <button
                     type="button"
@@ -680,7 +717,7 @@ export default function DispensarMedicamentosPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => navigate('/farmacia/dispensacion')}
+                    onClick={() => navigate('/farmacia/dispensacion/consulta')}
                     style={styles.btnFinalizarModal}
                   >
                     <span>Finalizar y Salir</span>
@@ -695,7 +732,7 @@ export default function DispensarMedicamentosPage() {
       </div>
 
       {/* Componente Modular de Impresión de Receta (Media Carta en Hoja Horizontal) */}
-      <RecetaMedicaPrint receta={receta} duplicar={duplicarEnHoja} />
+      <RecetaMedicaPrint receta={receta} duplicar={false} />
     </div>
   );
 }
@@ -863,32 +900,52 @@ const styles = {
     color: '#1e293b',
     fontWeight: '700',
   },
-  checkboxContainer: {
-    marginTop: '6px',
-    paddingTop: '10px',
+  modalidadCobroBox: {
+    marginTop: '8px',
+    paddingTop: '12px',
     borderTop: '1px dashed #cbd5e1',
     display: 'flex',
     flexDirection: 'column',
-    gap: '6px',
+    gap: '8px',
   },
-  checkboxLabelWrapper: {
+  modalidadTitle: {
+    fontSize: '11px',
+    fontWeight: '700',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: '0.04em',
+    marginBottom: '2px',
+  },
+  radioLabelWrapper: {
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: '8px',
     cursor: 'pointer',
+    fontSize: '12px',
+    color: '#334155',
   },
-  checkboxInput: {
-    marginTop: '2px',
+  radioInput: {
+    margin: 0,
     cursor: 'pointer',
-    width: '16px',
-    height: '16px',
+    width: '15px',
+    height: '15px',
     accentColor: '#0077b6',
   },
-  checkboxText: {
+  radioText: {
     fontSize: '12px',
     fontWeight: '600',
-    color: '#334155',
-    lineHeight: '1.3',
+    lineHeight: '1.2',
+  },
+  casoEspecialBadge: {
+    fontSize: '11px',
+    fontWeight: '700',
+    color: '#b45309',
+    background: '#fef3c7',
+    padding: '4px 8px',
+    borderRadius: '4px',
+    border: '1px solid #fde68a',
+    marginTop: '2px',
+    display: 'inline-block',
   },
   exoneradoBadge: {
     fontSize: '11px',

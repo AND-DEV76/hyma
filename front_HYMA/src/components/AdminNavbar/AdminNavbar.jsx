@@ -23,9 +23,17 @@ import {
 import saludLogo from '../../assets/images/log1.png';
 import './AdminNavbar.css';
 
-export default function AdminNavbar() {
+export default function AdminNavbar({ onBeforeNavigate }) {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleNav = (targetPath) => {
+    if (onBeforeNavigate) {
+      const allow = onBeforeNavigate(targetPath);
+      if (allow === false) return;
+    }
+    navigate(targetPath);
+  };
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
     return localStorage.getItem('admin_sidebar_collapsed') === 'true';
@@ -73,6 +81,10 @@ export default function AdminNavbar() {
   };
 
   const handleLogout = () => {
+    if (onBeforeNavigate) {
+      const allow = onBeforeNavigate('/login');
+      if (allow === false) return;
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');
@@ -82,8 +94,14 @@ export default function AdminNavbar() {
     if (path === '/dashboard') return location.pathname.startsWith('/dashboard');
     if (path === '/farmacia') {
       return (
-        location.pathname.startsWith('/farmacia') ||
-        location.pathname.startsWith('/reportes')
+        location.pathname.startsWith('/farmacia') &&
+        !location.pathname.startsWith('/farmacia/informes')
+      );
+    }
+    if (path === '/reportes') {
+      return (
+        location.pathname.startsWith('/reportes') ||
+        location.pathname.startsWith('/farmacia/informes')
       );
     }
     if (path === '/preconsulta') return location.pathname.startsWith('/preconsulta');
@@ -138,6 +156,12 @@ export default function AdminNavbar() {
       show: isAdmin || isFarmacia,
     },
     {
+      label: 'Reportes',
+      path: '/reportes',
+      icon: FileSpreadsheet,
+      show: isAdmin || isFarmacia,
+    },
+    {
       label: 'Configuración',
       path: '/configuracion',
       icon: Settings,
@@ -181,7 +205,7 @@ export default function AdminNavbar() {
         <div className="sidebar-header">
           <button
             className="sidebar-brand"
-            onClick={() => navigate(isEnfermera ? '/recepcion' : (isMedico ? '/clinica' : '/dashboard'))}
+            onClick={() => handleNav(isEnfermera ? '/recepcion' : (isMedico ? '/clinica' : '/dashboard'))}
             title="Programa de Salud - Obras Sociales San Martín"
           >
             <div className="brand-logo-wrapper">
@@ -226,7 +250,7 @@ export default function AdminNavbar() {
                   <li key={item.path}>
                     <button
                       className={`sidebar-nav-item ${active ? 'active' : ''}`}
-                      onClick={() => navigate(item.path)}
+                      onClick={() => handleNav(item.path)}
                       title={isCollapsed ? item.label : undefined}
                     >
                       <div className="nav-icon-box">

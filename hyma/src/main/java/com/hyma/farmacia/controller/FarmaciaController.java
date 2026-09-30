@@ -173,4 +173,12 @@ public class FarmaciaController {
     public ResponseEntity<List<SalidaMedicamentoResponse>> listarSalidas() {
         return ResponseEntity.ok(farmaciaService.listarSalidas());
     }
+
+    @PostMapping("/venta-externa")
+    public ResponseEntity<VentaExternaResponse> registrarVentaExterna(
+            @Valid @RequestBody VentaExternaRequest request,
+            Authentication authentication) {
+        String username = authentication != null ? authentication.getName() : null;
+        return ResponseEntity.status(HttpStatus.CREATED).body(farmaciaService.registrarVentaExterna(request, username));
+    }
 }

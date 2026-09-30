@@ -104,7 +104,7 @@ public class ColaAtencionService {
     @Transactional(readOnly = true)
     public List<ColaAtencionResponse> obtenerColaConsulta() {
         List<ColaAtencion> cola = colaAtencionRepository
-                .findByEstadoOrderByFechaIngresoAsc(EstadoCola.ESPERA_CONSULTA);
+                .findByEstadoInOrderByFechaIngresoAsc(List.of(EstadoCola.ESPERA_CONSULTA, EstadoCola.EN_CONSULTA));
 
         return cola.stream()
                 .map(colaAtencionMapper::toResponse)
