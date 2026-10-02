@@ -1,27 +1,28 @@
-# Etapa 1: Compilar la aplicación con JDK 21 y Gradle
-FROM eclipse-temurin:21-jdk AS builder
+# Etapa 1: Compilar la aplicación con Gradle 9.5.1 + JDK 21
+FROM gradle:9.5.1-jdk21 AS builder
 
 WORKDIR /app
 
-# Copiar archivos de configuración de Gradle
-COPY gradlew .
-COPY gradle ./gradle
+# Copiar archivos de configuración primero para aprovechar la caché de Docker
 COPY build.gradle .
 COPY settings.gradle .
 
-# Asegurar permisos de ejecución y normalizar saltos de línea (evita problemas CRLF en Linux)
-RUN sed -i 's/\r$//' ./gradlew && chmod +x ./gradlew
+# Descargar dependencias antes de copiar el código fuente
+RUN gradle dependencies --no-daemon
 
-# Copiar código fuente y compilar el JAR
+# Copiar el código fuente
 COPY src ./src
-RUN ./gradlew bootJar --no-daemon -x test
 
-# Etapa 2: Imagen final liviana de ejecución con JRE 21
+# Compilar el JAR
+RUN gradle bootJar --no-daemon -x test
+
+
+# Etapa 2: Imagen final liviana con JRE 21
 FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-# Copiar el JAR generado desde la etapa builder
+# Copiar el JAR generado
 COPY --from=builder /app/build/libs/hyma-0.0.1-SNAPSHOT.jar app.jar
 
 ENV TZ=America/Guatemala

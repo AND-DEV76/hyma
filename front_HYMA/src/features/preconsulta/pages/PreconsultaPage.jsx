@@ -110,7 +110,7 @@ export default function PreconsultaPage() {
         <header className="preconsulta-header-bar" style={styles.headerBar}>
           <div>
             <span style={styles.eyebrow}>MÓDULO DE ENFERMERÍA</span>
-            <h1 style={styles.title}>Lista de Preconsulta</h1>
+            <h1 style={styles.title}>Lista de Triaje</h1>
           </div>
           <div className="preconsulta-header-actions" style={styles.headerActions}>
             <span style={styles.countBadge}>
@@ -142,12 +142,12 @@ export default function PreconsultaPage() {
           <aside className="preconsulta-brand-aside" style={styles.brandCard}>
             <div style={styles.avatarGlowContainer}>
               <div style={styles.bigAvatarWrapper}>
-                <img src={userImg} alt="Ilustración Preconsulta" style={styles.bigAvatarImg} />
+                <img src={userImg} alt="Ilustración Triaje" style={styles.bigAvatarImg} />
               </div>
             </div>
 
             <div style={styles.brandContent}>
-              <h2 style={styles.brandTitle}>Preconsulta Médica</h2>
+              <h2 style={styles.brandTitle}>Triaje Clínico</h2>
               <p style={styles.brandDesc}>
                 Registro y evaluación de signos vitales del paciente previos a la consulta médica.
               </p>
@@ -177,7 +177,7 @@ export default function PreconsultaPage() {
               <div style={styles.emptyState}>
                 <img src={userImg} alt="Sin pacientes" style={styles.emptyImg} />
                 <h3 style={{ color: '#03045e', margin: '14px 0 6px', fontSize: '18px' }}>
-                  No hay pacientes en cola de preconsulta
+                  No hay pacientes en cola de triaje
                 </h3>
                 <p style={{ color: '#64748b', margin: 0, fontSize: '14px' }}>
                   Los pacientes derivados desde recepción aparecerán aquí automáticamente.
@@ -266,7 +266,7 @@ export default function PreconsultaPage() {
                   <AlertTriangle size={22} color="#dc2626" />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <h3 style={styles.modalTitle}>¿Retirar de la cola de preconsulta?</h3>
+                  <h3 style={styles.modalTitle}>¿Retirar de la cola de triaje?</h3>
                   <p style={styles.modalSubtitle}>
                     El turno pasará a estado <strong>CANCELADO</strong>
                   </p>
@@ -286,7 +286,7 @@ export default function PreconsultaPage() {
                   <strong>
                     {pacienteAEliminar.nombresPaciente} {pacienteAEliminar.apellidosPaciente}
                   </strong>{' '}
-                  de la lista de preconsulta? El paciente se marcará como cancelado y ya no figurará en la lista.
+                  de la lista de triaje? El paciente se marcará como cancelado y ya no figurará en la lista.
                 </p>
               </div>
 

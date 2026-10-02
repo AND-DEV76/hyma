@@ -20,7 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/clinica")
-@PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
+@PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMERA')")
 @RequiredArgsConstructor
 public class ClinicaController {
 
@@ -34,6 +34,7 @@ public class ClinicaController {
     }
 
     @GetMapping("/pacientes/{idPaciente}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
     public ResponseEntity<PacienteConsultaResponse> obtenerDatosPaciente(
             @PathVariable(name = "idPaciente") Long idPaciente,
             @RequestParam(name = "idCola", required = false) Long idCola) {
@@ -41,6 +42,7 @@ public class ClinicaController {
     }
 
     @PostMapping("/consultas")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
     public ResponseEntity<ConsultaCompletaResponse> finalizarConsulta(
             @Valid @RequestBody ConsultaCompletaRequest request,
             Authentication authentication) {

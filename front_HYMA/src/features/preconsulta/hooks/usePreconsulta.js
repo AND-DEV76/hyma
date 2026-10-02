@@ -4,21 +4,20 @@ import { obtenerCola } from '../../recepcion/services/recepcionService';
 
 /**
  * Calcula el Índice de Masa Corporal e interpretación diagnóstica en tiempo real.
- * El peso se ingresa en libras (lbs) y la talla en centímetros (cm) o metros.
- * 1 kg = 2.20462 lbs -> pesoKg = pesoLbs / 2.20462
+ * El peso se ingresa en kilogramos (kg) y la talla en centímetros (cm) o metros.
+ * IMC = pesoKg / (tallaM * tallaM)
  */
-export const calcularIMC = (pesoLbs, tallaCm) => {
-  const peso = parseFloat(pesoLbs);
+export const calcularIMC = (pesoKg, tallaCm) => {
+  const peso = parseFloat(pesoKg);
   const talla = parseFloat(tallaCm);
 
   if (!peso || !talla || peso <= 0 || talla <= 0) {
     return { imc: null, texto: '—', color: '#64748b' };
   }
 
-  // Convertir peso en libras (lbs) a kilogramos (kg)
-  const pesoKg = peso / 2.20462;
+  // Convertir talla de cm a metros si está en centímetros > 3
   const tallaM = talla > 3 ? talla / 100 : talla;
-  const imcValor = Number((pesoKg / (tallaM * tallaM)).toFixed(2));
+  const imcValor = Number((peso / (tallaM * tallaM)).toFixed(2));
 
   if (imcValor < 18.5) return { imc: imcValor, texto: 'Bajo peso', color: '#0284c7' };
   if (imcValor < 25.0) return { imc: imcValor, texto: 'Normal', color: '#16a34a' };

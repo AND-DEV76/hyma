@@ -138,7 +138,7 @@ export default function AdminNavbar({ onBeforeNavigate }) {
       show: isAdmin || isEnfermera,
     },
     {
-      label: 'Preconsulta',
+      label: 'Triaje',
       path: '/preconsulta',
       icon: HeartPulse,
       show: isAdmin || isEnfermera,
@@ -147,7 +147,7 @@ export default function AdminNavbar({ onBeforeNavigate }) {
       label: 'Clínica',
       path: '/clinica',
       icon: Stethoscope,
-      show: isAdmin || isMedico,
+      show: isAdmin || isMedico || isEnfermera,
     },
     {
       label: 'Farmacia',

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Stethoscope, Trash2, AlertCircle, RefreshCw, AlertTriangle, X, Loader2 } from 'lucide-react';
+import { Clock, Stethoscope, Trash2, AlertCircle, RefreshCw, AlertTriangle, X, Loader2, Activity } from 'lucide-react';
 import { useClinica } from '../hooks/useClinica';
+import { evaluarTriajePaciente } from '../utils/triajeSignosVitales';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import userImg from '../../../assets/images/user.png';
 import '../styles/clinica.css';
@@ -11,6 +12,13 @@ export default function ClinicaPage() {
   const { cola, loading, error, cargarCola, cancelarAtencion } = useClinica();
   const [pacienteAEliminar, setPacienteAEliminar] = useState(null);
   const [eliminando, setEliminando] = useState(false);
+
+  // Obtener roles del usuario actual
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userRoles = (user.roles && user.roles.length > 0)
+    ? user.roles
+    : (user.nombreRol ? [user.nombreRol] : []);
+  const canAtender = userRoles.includes('ADMIN') || userRoles.includes('MEDICO');
 
   // Cargar cola y mantener en tiempo real
   useEffect(() => {
@@ -89,6 +97,31 @@ export default function ClinicaPage() {
           </div>
         </section>
 
+        {/* Leyenda de Triaje Clínico estilo Odoo */}
+        <section className="clinica-triaje-legend">
+          <span className="clinica-triaje-legend-title">
+            <Activity size={14} color="#0077b6" /> Triaje de Signos Vitales:
+          </span>
+          <div className="clinica-triaje-legend-items">
+            <span className="clinica-triaje-legend-item">
+              <span className="clinica-triaje-dot clinica-triaje-dot-rojo" />
+              <span><strong>Rojo:</strong> Crítico Alto</span>
+            </span>
+            <span className="clinica-triaje-legend-item">
+              <span className="clinica-triaje-dot clinica-triaje-dot-azul" />
+              <span><strong>Azul:</strong> Crítico Bajo</span>
+            </span>
+            <span className="clinica-triaje-legend-item">
+              <span className="clinica-triaje-dot clinica-triaje-dot-amarillo" />
+              <span><strong>Amarillo:</strong> Alerta Leve</span>
+            </span>
+            <span className="clinica-triaje-legend-item">
+              <span className="clinica-triaje-dot clinica-triaje-dot-normal" />
+              <span><strong>Verde:</strong> Normal</span>
+            </span>
+          </div>
+        </section>
+
         {error && (
           <div style={styles.errorAlert}>
             <AlertCircle size={18} />
@@ -112,68 +145,123 @@ export default function ClinicaPage() {
           </div>
         ) : (
           <div style={styles.patientList}>
-            {cola.map((item) => (
-              <div key={item.idCola} className="clinica-patient-card" style={styles.patientCard}>
-                <div className="clinica-card-top-row" style={styles.cardTopRow}>
-                  {/* Avatar USER.PNG */}
-                  <div style={styles.avatarContainer}>
-                    <img src={userImg} alt="Avatar Paciente" style={styles.avatarImg} />
+            {cola.map((item) => {
+              const triaje = evaluarTriajePaciente(item.ultimoSignoVital);
+
+              return (
+                <div key={item.idCola} className="clinica-patient-card" style={styles.patientCard}>
+                  <div className="clinica-card-top-row" style={styles.cardTopRow}>
+                    {/* Avatar USER.PNG */}
+                    <div style={styles.avatarContainer}>
+                      <img src={userImg} alt="Avatar Paciente" style={styles.avatarImg} />
+                    </div>
+
+                    {/* Separator | */}
+                    <div className="clinica-card-divider" style={styles.divider} />
+
+                    {/* Paciente: Nombre, Estado, Badge Triaje y Signos Vitales */}
+                    <div className="clinica-card-info" style={styles.infoCol}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <h3 style={styles.patientName}>
+                          {item.nombresPaciente} {item.apellidosPaciente}
+                        </h3>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            backgroundColor: item.estado === 'EN_CONSULTA' ? '#dcfce7' : '#e0f2fe',
+                            color: item.estado === 'EN_CONSULTA' ? '#166534' : '#0369a1',
+                            border: `1px solid ${item.estado === 'EN_CONSULTA' ? '#bbf7d0' : '#bae6fd'}`,
+                          }}
+                        >
+                          {item.estado === 'EN_CONSULTA' ? 'EN CONSULTA' : 'ESPERA CONSULTA'}
+                        </span>
+
+                        {/* Badge de Estado General (Prioridad Máxima) */}
+                        {triaje.tieneSignos && (
+                          <span
+                            className={`clinica-badge-triaje ${triaje.estadoGeneral.toLowerCase()}`}
+                            title={
+                              triaje.alertas.length > 0
+                                ? `Alertas: ${triaje.alertas.map((a) => `${a.signo} (${a.label})`).join(', ')}`
+                                : 'Todos los signos vitales registrados están en rango normal'
+                            }
+                          >
+                            <span
+                              className="clinica-triaje-dot"
+                              style={{ backgroundColor: triaje.badge.dot }}
+                            />
+                            {triaje.badge.text}
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginTop: '2px' }}>
+                        <div style={styles.horaBadge}>
+                          <Clock size={14} color="#0077b6" />
+                          <span style={styles.horaText}>
+                            Hora: <strong>{formatHora(item.fechaIngreso)}</strong>
+                          </span>
+                        </div>
+
+                        {triaje.alertas.length > 0 && (
+                          <span style={{ fontSize: '12px', color: triaje.badge.color, fontWeight: 600 }}>
+                            ⚠️ {triaje.alertas.length} {triaje.alertas.length === 1 ? 'signo en alerta' : 'signos en alerta'} ({triaje.alertas.map((a) => a.signo).join(', ')})
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Desglose de Signos Vitales (Odoo style chips) */}
+                      <div className="clinica-vitals-container">
+                        <div className="clinica-vitals-chips-row">
+                          {triaje.chips.length > 0 ? (
+                            triaje.chips.map((chip, idx) => (
+                              <span
+                                key={idx}
+                                className={`clinica-vital-chip ${chip.estado.toLowerCase()}`}
+                                title={`${chip.nombre}: ${chip.valor} — ${chip.label} (${chip.tipo})`}
+                              >
+                                <span className="clinica-vital-chip-sigla">{chip.sigla}:</span>
+                                <span className="clinica-vital-chip-valor">{chip.valor}</span>
+                              </span>
+                            ))
+                          ) : (
+                            <span style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>
+                              Sin signos vitales registrados en preconsulta
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Separator | */}
-                  <div className="clinica-card-divider" style={styles.divider} />
-
-                  {/* Paciente: Nombre y Hora */}
-                  <div className="clinica-card-info" style={styles.infoCol}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <h3 style={styles.patientName}>
-                        {item.nombresPaciente} {item.apellidosPaciente}
-                      </h3>
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          padding: '2px 8px',
-                          borderRadius: '12px',
-                          backgroundColor: item.estado === 'EN_CONSULTA' ? '#dcfce7' : '#e0f2fe',
-                          color: item.estado === 'EN_CONSULTA' ? '#166534' : '#0369a1',
-                          border: `1px solid ${item.estado === 'EN_CONSULTA' ? '#bbf7d0' : '#bae6fd'}`,
-                        }}
+                  {/* Opciones: Atender (solo Médico/Admin) y Eliminar */}
+                  <div className="clinica-card-actions" style={styles.actionsCol}>
+                    {canAtender && (
+                      <button
+                        onClick={() => handleAtender(item.idPaciente, item.idCola)}
+                        style={styles.btnAtender}
+                        title="Iniciar atención médica"
                       >
-                        {item.estado === 'EN_CONSULTA' ? 'EN CONSULTA' : 'ESPERA CONSULTA'}
-                      </span>
-                    </div>
-                    <div style={styles.horaBadge}>
-                      <Clock size={15} color="#0077b6" />
-                      <span style={styles.horaText}>
-                        Hora: <strong>{formatHora(item.fechaIngreso)}</strong>
-                      </span>
-                    </div>
+                        <Stethoscope size={16} />
+                        <span>Atender</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => setPacienteAEliminar(item)}
+                      style={styles.btnEliminar}
+                      title="Eliminar de la cola de espera"
+                    >
+                      <Trash2 size={16} />
+                      <span>Eliminar</span>
+                    </button>
                   </div>
                 </div>
-
-                {/* Opciones: Atender y Eliminar */}
-                <div className="clinica-card-actions" style={styles.actionsCol}>
-                  <button
-                    onClick={() => handleAtender(item.idPaciente, item.idCola)}
-                    style={styles.btnAtender}
-                    title="Iniciar atención médica"
-                  >
-                    <Stethoscope size={16} />
-                    <span>Atender</span>
-                  </button>
-
-                  <button
-                    onClick={() => setPacienteAEliminar(item)}
-                    style={styles.btnEliminar}
-                    title="Eliminar de la cola de espera"
-                  >
-                    <Trash2 size={16} />
-                    <span>Eliminar</span>
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

@@ -9,6 +9,9 @@ import com.hyma.recepcion.model.EstadoCola;
 import com.hyma.recepcion.model.Paciente;
 import com.hyma.recepcion.repository.ColaAtencionRepository;
 
+import com.hyma.preconsulta.dto.SignoVitalResponse;
+import com.hyma.preconsulta.mapper.SignoVitalMapper;
+import com.hyma.preconsulta.repository.SignoVitalRepository;
 import com.hyma.recepcion.repository.PacienteRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -25,6 +28,8 @@ public class ColaAtencionService {
     private final ColaAtencionRepository colaAtencionRepository;
     private final PacienteRepository pacienteRepository;
     private final ColaAtencionMapper colaAtencionMapper;
+    private final SignoVitalRepository signoVitalRepository;
+    private final SignoVitalMapper signoVitalMapper;
 
     private static final List<EstadoCola> ESTADOS_ACTIVOS = List.of(
             EstadoCola.PENDIENTE,
@@ -97,7 +102,13 @@ public class ColaAtencionService {
         }
 
         return cola.stream()
-                .map(colaAtencionMapper::toResponse)
+                .map(c -> {
+                    SignoVitalResponse signoResp = signoVitalRepository
+                            .findFirstByPaciente_IdPacienteOrderByFechaRegistroDesc(c.getPaciente().getIdPaciente())
+                            .map(signoVitalMapper::toResponse)
+                            .orElse(null);
+                    return colaAtencionMapper.toResponse(c, signoResp);
+                })
                 .toList();
     }
 
@@ -107,7 +118,13 @@ public class ColaAtencionService {
                 .findByEstadoInOrderByFechaIngresoAsc(List.of(EstadoCola.ESPERA_CONSULTA, EstadoCola.EN_CONSULTA));
 
         return cola.stream()
-                .map(colaAtencionMapper::toResponse)
+                .map(c -> {
+                    SignoVitalResponse signoResp = signoVitalRepository
+                            .findFirstByPaciente_IdPacienteOrderByFechaRegistroDesc(c.getPaciente().getIdPaciente())
+                            .map(signoVitalMapper::toResponse)
+                            .orElse(null);
+                    return colaAtencionMapper.toResponse(c, signoResp);
+                })
                 .toList();
     }
 

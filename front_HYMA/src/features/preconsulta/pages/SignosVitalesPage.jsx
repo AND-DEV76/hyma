@@ -233,7 +233,7 @@ export default function SignosVitalesPage() {
               type="button"
               onClick={handleCancelar}
               style={styles.btnVolver}
-              title="Volver a la lista de preconsulta"
+              title="Volver a la lista de triaje"
             >
               <ArrowLeft size={16} />
               <span>Volver a la lista</span>
@@ -285,7 +285,7 @@ export default function SignosVitalesPage() {
               <div style={styles.fieldGroup}>
                 <label style={styles.label}>
                   <span>Peso</span>
-                  <span style={styles.unitTag}>lbs</span>
+                  <span style={styles.unitTag}>kg</span>
                 </label>
                 <input
                   type="number"
@@ -497,7 +497,7 @@ export default function SignosVitalesPage() {
               </div>
             </div>
 
-            <h3 className="logro-title">¡Preconsulta Completada!</h3>
+            <h3 className="logro-title">¡Triaje Completado!</h3>
 
             {nombreCompleto && (
               <div className="logro-patient-chip">

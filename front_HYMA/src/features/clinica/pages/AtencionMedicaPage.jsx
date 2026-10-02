@@ -750,7 +750,7 @@ export default function AtencionMedicaPage() {
                       <div style={styles.vitalItem}>
                         <span style={styles.vitalLabel}>Peso</span>
                         <span style={styles.vitalVal}>
-                          {pacienteData.ultimoSignoVital.peso ? `${pacienteData.ultimoSignoVital.peso} lbs` : '--'}
+                          {pacienteData.ultimoSignoVital.peso ? `${pacienteData.ultimoSignoVital.peso} kg` : '--'}
                         </span>
                       </div>
                       <div style={styles.vitalItem}>

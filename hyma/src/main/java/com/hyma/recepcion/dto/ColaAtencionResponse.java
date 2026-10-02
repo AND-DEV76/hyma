@@ -1,5 +1,6 @@
 package com.hyma.recepcion.dto;
 
+import com.hyma.preconsulta.dto.SignoVitalResponse;
 import com.hyma.recepcion.model.EstadoCola;
 import lombok.*;
 
@@ -27,4 +28,6 @@ public class ColaAtencionResponse {
     private Integer prioridad;
 
     private LocalDateTime fechaAtencion;
+
+    private SignoVitalResponse ultimoSignoVital;
 }
