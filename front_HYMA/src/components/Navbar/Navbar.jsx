@@ -1,6 +1,6 @@
 import './Navbar.css'
 import { useNavigate } from "react-router-dom";
-import { LogIn } from "lucide-react";
+import { User } from "lucide-react";
 
 import hymaLogo from '../../assets/images/log3.png'
 
@@ -58,8 +58,9 @@ function Navbar() {
       <button
         className="login-btn"
         onClick={() => navigate("/login")}
+        title="Iniciar Sesión"
       >
-        <LogIn size={18} />
+        <User size={20} />
       </button>
 
     </nav>

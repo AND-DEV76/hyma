@@ -41,6 +41,11 @@ export default function DispensarMedicamentosPage() {
   const esCasoEspecial = tipoCobro === 'CASO_ESPECIAL';
   const noPagaConsulta = tipoCobro === 'NO_PAGA_CONSULTA' || esCasoEspecial;
 
+  const tieneMedicamentos = Boolean(
+    (receta?.medicamentos && receta.medicamentos.length > 0) ||
+    (receta?.lotesSugeridos && receta.lotesSugeridos.length > 0)
+  );
+
   const precioConsultaOriginal = Number(receta?.precioConsulta || 0);
   const costoConsultaCobrar = noPagaConsulta ? 0 : precioConsultaOriginal;
 
@@ -86,10 +91,12 @@ export default function DispensarMedicamentosPage() {
       if (res.success) {
         setConfirmandoEntrega(false);
         setEntregaFinalizada(true);
-        // Abrir directamente la ventana para imprimir la receta médica en media carta
-        setTimeout(() => {
-          window.print();
-        }, 350);
+        // Abrir directamente la ventana para imprimir la receta médica SOLO si tiene medicamentos
+        if (tieneMedicamentos) {
+          setTimeout(() => {
+            window.print();
+          }, 350);
+        }
       }
     } finally {
       setProcesandoEntrega(false);
@@ -306,7 +313,11 @@ export default function DispensarMedicamentosPage() {
                   onClick={() => setConfirmandoEntrega(true)}
                   disabled={entregando || procesandoEntrega}
                   style={styles.btnDar}
-                  title="Dispensar medicamentos, registrar cobro e imprimir receta"
+                  title={
+                    tieneMedicamentos
+                      ? 'Dispensar medicamentos, registrar cobro e imprimir receta'
+                      : 'Registrar cobro de consulta y finalizar turno'
+                  }
                 >
                   {entregando || procesandoEntrega ? (
                     <>
@@ -316,7 +327,7 @@ export default function DispensarMedicamentosPage() {
                   ) : (
                     <>
                       <CheckCircle2 size={18} />
-                      <span>Dispensar y Cobrar</span>
+                      <span>{tieneMedicamentos ? 'Dispensar y Cobrar' : 'Cobrar Consulta'}</span>
                     </>
                   )}
                 </button>
@@ -601,7 +612,7 @@ export default function DispensarMedicamentosPage() {
           </div>
         )}
 
-        {/* Modal Confirmar Entrega */}
+        {/* Modal Confirmar Entrega / Cobro */}
         {confirmandoEntrega && (
           <div style={styles.modalOverlay}>
             <div style={styles.modalCard}>
@@ -610,16 +621,22 @@ export default function DispensarMedicamentosPage() {
                   <CheckCircle2 size={22} color="#059669" />
                 </div>
                 <div>
-                  <h3 style={styles.modalTitle}>Confirmar Entrega y Salida de Medicamentos</h3>
+                  <h3 style={styles.modalTitle}>
+                    {tieneMedicamentos
+                      ? 'Confirmar Entrega y Salida de Medicamentos'
+                      : 'Confirmar Cobro de Consulta'}
+                  </h3>
                   <p style={styles.modalSub}>
-                    Esta acción descontará el stock de inventario, registrará la salida y finalizará el turno.
+                    {tieneMedicamentos
+                      ? 'Esta acción descontará el stock de inventario, registrará la salida y finalizará el turno.'
+                      : 'Esta acción registrará el pago de la consulta médica y finalizará el turno del paciente.'}
                   </p>
                 </div>
               </div>
 
               <div style={styles.modalBody}>
                 <p style={{ margin: '0 0 14px', color: '#334155', fontSize: '14px', lineHeight: '1.5' }}>
-                  ¿Confirmas la entrega de medicamentos para{' '}
+                  ¿Confirmas {tieneMedicamentos ? 'la entrega de medicamentos' : 'el cobro de la consulta'} para{' '}
                   <strong>{receta?.nombreCompletoPaciente}</strong>?
                 </p>
 
@@ -631,14 +648,16 @@ export default function DispensarMedicamentosPage() {
                       {noPagaConsulta ? 'Q 0.00 (Exonerada)' : `Q ${precioConsultaOriginal.toFixed(2)}`}
                     </strong>
                   </div>
-                  <div style={styles.modalSummaryRow}>
-                    <span>Total Medicamentos Prescritos:</span>
-                    <strong style={{ color: esCasoEspecial ? '#059669' : '#1e293b' }}>
-                      {esCasoEspecial
-                        ? `Q 0.00 (Exonerado - Valor: Q ${totalMedicamentosOriginal.toFixed(2)})`
-                        : `Q ${totalMedicamentos.toFixed(2)}`}
-                    </strong>
-                  </div>
+                  {tieneMedicamentos && (
+                    <div style={styles.modalSummaryRow}>
+                      <span>Total Medicamentos Prescritos:</span>
+                      <strong style={{ color: esCasoEspecial ? '#059669' : '#1e293b' }}>
+                        {esCasoEspecial
+                          ? `Q 0.00 (Exonerado - Valor: Q ${totalMedicamentosOriginal.toFixed(2)})`
+                          : `Q ${totalMedicamentos.toFixed(2)}`}
+                      </strong>
+                    </div>
+                  )}
                   <div style={{ ...styles.modalSummaryRow, borderTop: '1px solid #cbd5e1', paddingTop: '8px', marginTop: '6px' }}>
                     <span style={{ fontWeight: '700', color: '#03045e' }}>Total a Cobrar al Paciente:</span>
                     <span style={{ fontWeight: '800', color: esCasoEspecial ? '#059669' : '#0077b6', fontSize: '16px' }}>
@@ -664,10 +683,10 @@ export default function DispensarMedicamentosPage() {
                   {entregando || procesandoEntrega ? (
                     <>
                       <Loader2 size={16} style={{ animation: 'spin 1s linear infinite', display: 'inline-block', marginRight: '6px' }} />
-                      <span>Registrando entrega...</span>
+                      <span>{tieneMedicamentos ? 'Registrando entrega...' : 'Registrando cobro...'}</span>
                     </>
                   ) : (
-                    'Confirmar y Finalizar'
+                    tieneMedicamentos ? 'Confirmar y Finalizar' : 'Confirmar Cobro'
                   )}
                 </button>
               </div>
@@ -675,7 +694,7 @@ export default function DispensarMedicamentosPage() {
           </div>
         )}
 
-        {/* Modal de Entrega Exitosa y Confirmación de Impresión */}
+        {/* Modal de Entrega / Cobro Exitoso */}
         {entregaFinalizada && (
           <div style={styles.modalOverlay}>
             <div style={styles.modalCard}>
@@ -684,35 +703,62 @@ export default function DispensarMedicamentosPage() {
                   <CheckCircle2 size={24} color="#059669" />
                 </div>
                 <div>
-                  <h3 style={styles.modalTitle}>¡Medicamentos Entregados con Éxito!</h3>
+                  <h3 style={styles.modalTitle}>
+                    {tieneMedicamentos
+                      ? '¡Medicamentos Entregados con Éxito!'
+                      : '¡Cobro Registrado con Éxito!'}
+                  </h3>
                   <p style={styles.modalSub}>
-                    El inventario ha sido actualizado y el turno del paciente ha finalizado.
+                    {tieneMedicamentos
+                      ? 'El inventario ha sido actualizado y el turno del paciente ha finalizado.'
+                      : 'El pago de la consulta ha sido registrado y el turno del paciente ha finalizado.'}
                   </p>
                 </div>
               </div>
 
               <div style={{ padding: '16px 0', textAlign: 'center' }}>
-                <p style={{ margin: '0 0 12px', color: '#334155', fontSize: '14px', lineHeight: 1.5 }}>
-                  La receta médica se abrió para imprimir en formato <strong>Hoja Carta</strong>. Si no se abrió o necesitas otra copia, puedes volver a imprimirla.
-                </p>
+                {tieneMedicamentos ? (
+                  <>
+                    <p style={{ margin: '0 0 12px', color: '#334155', fontSize: '14px', lineHeight: 1.5 }}>
+                      La receta médica se abrió para imprimir en formato <strong>Hoja Carta</strong>. Si no se abrió o necesitas otra copia, puedes volver a imprimirla.
+                    </p>
 
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                  <button
-                    type="button"
-                    onClick={() => window.print()}
-                    style={styles.btnPrintModal}
-                  >
-                    <Printer size={16} />
-                    <span>Volver a Imprimir Receta</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/farmacia/dispensacion/consulta')}
-                    style={styles.btnFinalizarModal}
-                  >
-                    <span>Finalizar y Salir</span>
-                  </button>
-                </div>
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => window.print()}
+                        style={styles.btnPrintModal}
+                      >
+                        <Printer size={16} />
+                        <span>Volver a Imprimir Receta</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/farmacia/dispensacion/consulta')}
+                        style={styles.btnFinalizarModal}
+                      >
+                        <span>Finalizar y Salir</span>
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ margin: '0 0 16px', color: '#334155', fontSize: '14px', lineHeight: 1.5 }}>
+                      Esta consulta no requirió prescripción de medicamentos. El proceso de cobro se ha completado satisfactoriamente.
+                    </p>
+
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/farmacia/dispensacion/consulta')}
+                        style={styles.btnFinalizarModal}
+                      >
+                        <CheckCircle2 size={16} />
+                        <span>Finalizar y Salir</span>
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -721,8 +767,10 @@ export default function DispensarMedicamentosPage() {
         </main>
       </div>
 
-      {/* Componente Modular de Impresión de Receta (Media Carta en Hoja Horizontal) */}
-      <RecetaMedicaPrint receta={receta} duplicar={false} />
+      {/* Componente Modular de Impresión de Receta (Solo si cuenta con medicamentos) */}
+      {tieneMedicamentos && (
+        <RecetaMedicaPrint receta={receta} duplicar={false} />
+      )}
     </div>
   );
 }

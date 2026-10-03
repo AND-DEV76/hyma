@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getUsuarios, createUsuario, updateUsuario, deleteUsuario } from '../services/usuarioService';
+import { getUsuarios, createUsuario, updateUsuario, toggleEstadoUsuario, deleteUsuario } from '../services/usuarioService';
 
 export const useUsuarios = () => {
   const [usuarios, setUsuarios] = useState([]);

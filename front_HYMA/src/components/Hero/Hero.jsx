@@ -8,21 +8,22 @@ function Hero() {
   return (
     <main>
 
-      {/* HERO */}
+      {/* HERO CON FONDO EDIFICIO Y EFECTO CRISTAL */}
       <section className="hero" id="inicio">
 
         <div className="hero-content">
 
-          <div className="hero-text">
+          {/* Tarjeta de Texto Izquierda */}
+          <div className="hero-text-glass">
 
             <span className="hero-tag">
               ORGANIZACIÓN NO GUBERNAMENTAL
             </span>
 
-            <h1>
-              Hombres y Mujeres
-              <br />
-              <span>en Acción</span>
+            <h1 className="hero-title-black">
+              Hombres y<br />
+              Mujeres<br />
+              en Acción
             </h1>
 
             <p className="hero-description">
@@ -41,70 +42,30 @@ function Hero() {
               </a>
             </div>
 
-            <div className="hero-values">
-              <div>
-                <strong>3</strong>
-                <span>Áreas de trabajo</span>
-              </div>
-
-              <div>
-                <strong>+</strong>
-                <span>Programas sociales</span>
-              </div>
-
-              <div>
-                <strong>∞</strong>
-                <span>Compromiso comunitario</span>
-              </div>
-            </div>
-
           </div>
 
+        </div>
 
-          <div className="hero-visual">
-
-            <div className="hero-circle"></div>
-
-            <div className="hero-logo-card">
-              <img src={hymaLogo} alt="Logo Hombre y Mujer en Acción" />
-            </div>
-
-            <div className="floating-card health-card">
-
-              <div className="floating-icon">
-                <img
-                  src={saludLogo}
-                  alt="Programa de Salud"
-                />
-              </div>
-
-              <div>
-                <span>Programa de Salud</span>
-                <strong>Obras Sociales San Martín</strong>
-              </div>
-
-            </div>
-
-<div className="floating-card education-card">
-
-  <div className="floating-icon">
-
-    <img
-      src={educacionLogo}
-      alt="Programa de Educación"
-    />
-
-  </div>
-
-  <div>
-    <span>Programa de Educación</span>
-    <strong>Becas y Centro de Aprendizaje</strong>
-  </div>
-
-</div>
-
+        {/* Barra Flotante Inferior de Estadísticas */}
+        <div className="hero-bottom-stats-bar">
+          <div className="hero-stat-box">
+            <strong>3</strong>
+            <span>Áreas de trabajo</span>
           </div>
 
+          <div className="hero-stat-sep" />
+
+          <div className="hero-stat-box">
+            <strong>+</strong>
+            <span>Programas sociales</span>
+          </div>
+
+          <div className="hero-stat-sep" />
+
+          <div className="hero-stat-box">
+            <strong>∞</strong>
+            <span>Compromiso comunitario</span>
+          </div>
         </div>
 
       </section>
