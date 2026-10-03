@@ -299,36 +299,26 @@ export default function DispensarMedicamentosPage() {
                 </div>
               </div>
 
-              {/* Botones DAR, IMPRIMIR y CANCELAR */}
+              {/* Botones de Acción */}
               <div style={styles.actionButtonsStack}>
                 <button
                   type="button"
                   onClick={() => setConfirmandoEntrega(true)}
                   disabled={entregando || procesandoEntrega}
                   style={styles.btnDar}
-                  title="Entregar medicamentos y finalizar atención"
+                  title="Dispensar medicamentos, registrar cobro e imprimir receta"
                 >
                   {entregando || procesandoEntrega ? (
                     <>
                       <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
-                      <span>Entregando...</span>
+                      <span>Procesando...</span>
                     </>
                   ) : (
                     <>
                       <CheckCircle2 size={18} />
-                      <span>Dar</span>
+                      <span>Dispensar y Cobrar</span>
                     </>
                   )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  style={styles.btnPrintReceta}
-                  title="Imprimir receta médica (Media Carta)"
-                >
-                  <Printer size={16} />
-                  <span>Imprimir Receta</span>
                 </button>
 
                 <button
@@ -703,7 +693,7 @@ export default function DispensarMedicamentosPage() {
 
               <div style={{ padding: '16px 0', textAlign: 'center' }}>
                 <p style={{ margin: '0 0 12px', color: '#334155', fontSize: '14px', lineHeight: 1.5 }}>
-                  La receta médica se abrió para imprimir en formato <strong>Media Hoja Carta</strong>. Si no se abrió o necesitas otra copia, puedes volver a imprimirla.
+                  La receta médica se abrió para imprimir en formato <strong>Hoja Carta</strong>. Si no se abrió o necesitas otra copia, puedes volver a imprimirla.
                 </p>
 
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>

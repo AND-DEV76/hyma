@@ -68,6 +68,11 @@
     gap: 16px !important;
   }
 
+  .clinica-step4-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
   /* Tarjeta del Wizard */
   .clinica-wizard-card {
     height: auto !important;
@@ -101,16 +106,28 @@
   /* Tarjetas de Pacientes en Espera */
   .clinica-patient-card {
     flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 0 !important;
+  }
+
+  .clinica-btn-prioridad-lateral {
+    width: 100% !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    border-right: none !important;
+    border-bottom: 1px solid #bae6fd !important;
+    border-radius: 9px 9px 0 0 !important;
+  }
+
+  .clinica-btn-prioridad-lateral.prioridad-activa {
+    border-bottom-color: #fca5a5 !important;
+  }
+
+  .clinica-card-upper-row {
+    flex-direction: column !important;
     align-items: flex-start !important;
     gap: 14px !important;
     padding: 14px 16px !important;
-  }
-
-  .clinica-card-top-row {
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-    width: 100% !important;
   }
 
   .clinica-card-divider {
@@ -660,5 +677,114 @@
   background: #f1f5f9;
   color: #64748b;
   border: 1px solid #cbd5e1;
+}
+
+/* ==========================================================
+   ESTILOS DE PRIORIZACIÓN DE PACIENTES (RECTÁNGULO AZUL LATERAL)
+   ========================================================== */
+.clinica-btn-prioridad-lateral {
+  width: 48px;
+  min-height: 100%;
+  background: #f0f9ff;
+  border: none;
+  border-right: 1px solid #bae6fd;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  outline: none;
+}
+
+.clinica-btn-prioridad-lateral:hover {
+  background: #0284c7;
+  border-color: #0284c7;
+  color: #ffffff;
+}
+
+.clinica-btn-prioridad-lateral.prioridad-activa {
+  background: #fee2e2;
+  border-right-color: #fca5a5;
+  color: #dc2626;
+}
+
+.clinica-btn-prioridad-lateral.prioridad-activa:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+.clinica-badge-prioridad-alta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #f87171;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 12px;
+  letter-spacing: 0.03em;
+  animation: pulsePrioridad 2.5s infinite ease-in-out;
+}
+
+@keyframes pulsePrioridad {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.02); }
+}
+
+/* Fila Superior de Datos y Acciones en Tarjeta */
+.clinica-card-upper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  gap: 16px;
+  flex: 1;
+}
+
+/* Botón Desplegable de Signos Vitales */
+.clinica-btn-toggle-signos {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0f766e;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clinica-btn-toggle-signos:hover {
+  background: #ccfbf1;
+  border-color: #5eead4;
+  color: #115e59;
+  transform: translateY(-1px);
+}
+
+/* RECTÁNGULO VERDE: Panel Desplegable Inferior a todo el ancho */
+.clinica-vitals-bottom-panel {
+  background: #f8fafc;
+  border-top: 1px dashed #e2e8f0;
+  padding: 10px 20px 12px;
+  animation: slideDownVitals 0.2s ease-out;
+}
+
+@keyframes slideDownVitals {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 

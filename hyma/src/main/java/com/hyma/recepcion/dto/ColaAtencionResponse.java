@@ -27,6 +27,8 @@ public class ColaAtencionResponse {
 
     private Integer prioridad;
 
+    private LocalDateTime fechaPrioridad;
+
     private LocalDateTime fechaAtencion;
 
     private SignoVitalResponse ultimoSignoVital;

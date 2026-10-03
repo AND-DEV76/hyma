@@ -57,8 +57,20 @@ export const useClinica = () => {
     }
   };
 
+  const cambiarPrioridad = async (idCola, nuevaPrioridad = 1) => {
+    try {
+      await clinicaService.cambiarPrioridad(idCola, nuevaPrioridad);
+      await cargarCola(true);
+      return { success: true };
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Error al cambiar la prioridad del paciente';
+      setError(msg);
+      return { success: false, error: msg };
+    }
+  };
+
   return {
     cola, loading, guardando, error,
-    cargarCola, finalizarAtencion, cancelarAtencion
+    cargarCola, finalizarAtencion, cancelarAtencion, cambiarPrioridad
   };
 };

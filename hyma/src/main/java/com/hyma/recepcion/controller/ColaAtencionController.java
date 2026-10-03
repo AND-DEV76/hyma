@@ -56,4 +56,14 @@ public class ColaAtencionController {
                 colaAtencionService.cambiarEstado(id, request)
         );
     }
+
+    @PatchMapping("/{id}/prioridad")
+    public ResponseEntity<ColaAtencionResponse> cambiarPrioridad(
+            @PathVariable(name = "id") Long id,
+            @RequestParam(name = "prioridad", defaultValue = "1") Integer prioridad
+    ) {
+        return ResponseEntity.ok(
+                colaAtencionService.cambiarPrioridad(id, prioridad)
+        );
+    }
 }

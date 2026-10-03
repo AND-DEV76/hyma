@@ -37,3 +37,8 @@ export const reanudarEsperaConsulta = async (idCola) => {
   return response.data;
 };
 
+export const cambiarPrioridad = async (idCola, prioridad = 1) => {
+  const response = await api.patch(`/clinica/cola/${idCola}/prioridad?prioridad=${prioridad}`);
+  return response.data;
+};
+

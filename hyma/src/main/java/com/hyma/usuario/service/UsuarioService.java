@@ -122,6 +122,14 @@ public class UsuarioService {
     }
 
     @Transactional
+    public UsuarioResponse updateEstado(Long id, Boolean estado) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
+        usuario.setEstado(estado);
+        return usuarioMapper.toResponse(usuarioRepository.save(usuario));
+    }
+
+    @Transactional
     public void delete(Long id) {
         if (!usuarioRepository.existsById(id)) {
             throw new RuntimeException("Usuario no encontrado con ID: " + id);

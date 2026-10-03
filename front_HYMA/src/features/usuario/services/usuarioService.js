@@ -15,6 +15,11 @@ export const updateUsuario = async (id, usuarioData) => {
   return response.data;
 };
 
+export const toggleEstadoUsuario = async (id, estado) => {
+  const response = await api.patch(`/usuarios/${id}/estado?estado=${estado}`);
+  return response.data;
+};
+
 export const deleteUsuario = async (id) => {
   await api.delete(`/usuarios/${id}`);
 };

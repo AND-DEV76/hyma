@@ -8,7 +8,7 @@ import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
 import '../styles/usuarios.css';
 
 export default function UsuariosPage() {
-  const { usuarios, loading, error, addUsuario, editUsuario, removeUsuario } = useUsuarios();
+  const { usuarios, loading, error, addUsuario, editUsuario, toggleEstado, removeUsuario } = useUsuarios();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUsuario, setSelectedUsuario] = useState(null);
@@ -111,6 +111,7 @@ export default function UsuariosPage() {
               <option value="MEDICO">MÉDICO</option>
               <option value="ENFERMERA">ENFERMERA</option>
               <option value="FARMACIA">FARMACIA</option>
+              <option value="SOCIAL">SOCIAL</option>
             </select>
 
             {/* Botón Nuevo Usuario */}
@@ -144,6 +145,7 @@ export default function UsuariosPage() {
             usuarios={filteredUsuarios}
             onEdit={handleOpenEdit}
             onDelete={handleDelete}
+            onToggleEstado={toggleEstado}
           />
         )}
       </main>

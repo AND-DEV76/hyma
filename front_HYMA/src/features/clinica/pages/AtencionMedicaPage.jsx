@@ -23,9 +23,11 @@ import {
   Loader2,
   Award,
   Check,
+  Share2,
 } from 'lucide-react';
 import { useClinica } from '../hooks/useClinica';
 import * as clinicaService from '../services/clinicaService';
+import * as socialService from '../../social/services/socialService';
 import { calcularIMC } from '../../preconsulta/hooks/usePreconsulta';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import userImg from '../../../assets/images/user.png';
@@ -378,6 +380,12 @@ export default function AtencionMedicaPage() {
   const [searchDiag, setSearchDiag] = useState('');
   const [diagResults, setDiagResults] = useState([]);
 
+  // Section D.2: Referencia Médica (Opcional - Módulo Social)
+  const [especialidadReferencia, setEspecialidadReferencia] = useState(null); // { idEspecialidad, nombre, ... }
+  const [motivoReferencia, setMotivoReferencia] = useState('');
+  const [searchEspecialidad, setSearchEspecialidad] = useState('');
+  const [especialidadResults, setEspecialidadResults] = useState([]);
+
   // Section E
   const [observacionesTratamiento, setObservacionesTratamiento] = useState('');
   const [detallesTratamiento, setDetallesTratamiento] = useState([]);
@@ -424,6 +432,34 @@ export default function AtencionMedicaPage() {
 
   const removeDiagnostico = (codigo) => {
     setDiagnosticos(diagnosticos.filter((d) => d.codigoCie10 !== codigo));
+  };
+
+  const handleSearchEspecialidad = async (e) => {
+    const val = e.target.value;
+    setSearchEspecialidad(val);
+    if (val.trim().length > 1) {
+      try {
+        const res = await socialService.buscarEspecialidades(val.trim());
+        setEspecialidadResults(res);
+      } catch (err) {
+        console.error('Error buscando especialidades', err);
+      }
+    } else {
+      setEspecialidadResults([]);
+    }
+  };
+
+  const selectEspecialidad = (esp) => {
+    setEspecialidadReferencia(esp);
+    setSearchEspecialidad('');
+    setEspecialidadResults([]);
+  };
+
+  const removeEspecialidad = () => {
+    setEspecialidadReferencia(null);
+    setMotivoReferencia('');
+    setSearchEspecialidad('');
+    setEspecialidadResults([]);
   };
 
   const handleSearchMed = async (e) => {
@@ -558,6 +594,12 @@ export default function AtencionMedicaPage() {
             };
           }),
         },
+        referenciaMedica: especialidadReferencia
+          ? {
+              idEspecialidad: especialidadReferencia.idEspecialidad,
+              motivoReferencia: motivoReferencia?.trim() ? motivoReferencia.trim().substring(0, 300) : null,
+            }
+          : null,
       };
 
       const res = await finalizarAtencion(payload);
@@ -1204,103 +1246,235 @@ export default function AtencionMedicaPage() {
             </div>
           )}
 
-          {/* PASO 4: Diagnósticos */}
+          {/* PASO 4: Diagnósticos y Referencia Médica */}
           {pasoActual === 4 && (
             <div style={styles.stepContentFade}>
-              <div style={styles.stepTitleBar}>
-                <div style={styles.stepIconWrap}>
-                  <Stethoscope size={20} color="#0077b6" />
-                </div>
-                <div>
-                  <h2 style={styles.stepHeading}>Diagnósticos Clínicos</h2>
-                  <p style={styles.stepSubheading}>
-                    Búsqueda y selección de diagnósticos clínicos.
-                  </p>
-                </div>
-              </div>
+              <div className="clinica-step4-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
+                
+                {/* COLUMNA 1: Diagnósticos Clínicos */}
+                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                  <div style={styles.stepTitleBar}>
+                    <div style={styles.stepIconWrap}>
+                      <Stethoscope size={20} color="#0077b6" />
+                    </div>
+                    <div>
+                      <h2 style={styles.stepHeading}>Diagnósticos Clínicos</h2>
+                      <p style={styles.stepSubheading}>
+                        Búsqueda y selección de diagnósticos clínicos.
+                      </p>
+                    </div>
+                  </div>
 
-              <div style={styles.searchContainer}>
-                <div style={styles.searchInputWrapper}>
-                  <Search size={16} color="#64748b" style={styles.searchIcon} />
-                  <input
-                    type="text"
-                    placeholder="Buscar diagnóstico por descripción o patología..."
-                    value={searchDiag}
-                    onChange={handleSearchDiag}
-                    style={styles.searchInput}
-                  />
+                  <div style={styles.searchContainer}>
+                    <div style={styles.searchInputWrapper}>
+                      <Search size={16} color="#64748b" style={styles.searchIcon} />
+                      <input
+                        type="text"
+                        placeholder="Buscar diagnóstico por descripción o patología..."
+                        value={searchDiag}
+                        onChange={handleSearchDiag}
+                        style={styles.searchInput}
+                      />
+                    </div>
+
+                    {diagResults.length > 0 && (
+                      <ul style={styles.autocompleteList}>
+                        {diagResults.map((d) => (
+                          <li
+                            key={d.idCie10 || d.codigo}
+                            onClick={() => addDiagnostico(d)}
+                            style={styles.autocompleteItem}
+                          >
+                            <span style={{ color: '#03045e', fontWeight: '600', fontSize: '14px' }}>
+                              {d.descripcion}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {diagnosticos.length > 0 ? (
+                    <div className="clinica-table-responsive" style={{ overflowX: 'auto', marginTop: '16px' }}>
+                      <table style={styles.table}>
+                        <thead>
+                          <tr>
+                            <th style={{ ...styles.th, width: '50px', textAlign: 'center' }}>#</th>
+                            <th style={styles.th}>Diagnóstico</th>
+                            <th style={{ ...styles.th, width: '60px', textAlign: 'center' }}>Acción</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {diagnosticos.map((d, index) => (
+                            <tr key={d.codigoCie10} style={styles.tr}>
+                              <td style={{ ...styles.td, textAlign: 'center', color: '#64748b', fontWeight: '600' }}>
+                                {index + 1}
+                              </td>
+                              <td style={{ ...styles.td, color: '#03045e', fontWeight: '500' }}>
+                                {d.descripcion}
+                              </td>
+                              <td style={{ ...styles.td, textAlign: 'center' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => removeDiagnostico(d.codigoCie10)}
+                                  style={{
+                                    background: '#fff1f2',
+                                    border: '1px solid #fecdd3',
+                                    color: '#e11d48',
+                                    padding: '6px 10px',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.15s ease',
+                                  }}
+                                  title="Eliminar diagnóstico"
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div style={styles.emptyDiagBox}>
+                      <Stethoscope size={32} color="#94a3b8" />
+                      <p style={styles.emptyHint}>
+                        Aún no ha seleccionado ningún diagnóstico para esta consulta.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                {diagResults.length > 0 && (
-                  <ul style={styles.autocompleteList}>
-                    {diagResults.map((d) => (
-                      <li
-                        key={d.idCie10 || d.codigo}
-                        onClick={() => addDiagnostico(d)}
-                        style={styles.autocompleteItem}
-                      >
-                        <span style={{ color: '#03045e', fontWeight: '600', fontSize: '14px' }}>
-                          {d.descripcion}
+                {/* COLUMNA 2: Referencia Médica (Opcional) */}
+                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                  <div style={styles.stepTitleBar}>
+                    <div style={{ ...styles.stepIconWrap, background: '#eff6ff', borderColor: '#bfdbfe' }}>
+                      <Share2 size={20} color="#0284c7" />
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h2 style={styles.stepHeading}>Referencia Médica</h2>
+                        <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0' }}>
+                          OPCIONAL
                         </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+                      </div>
+                      <p style={styles.stepSubheading}>
+                        Derivación del paciente a una especialidad médica externa.
+                      </p>
+                    </div>
+                  </div>
 
-              {diagnosticos.length > 0 ? (
-                <div className="clinica-table-responsive" style={{ overflowX: 'auto', marginTop: '16px' }}>
-                  <table style={styles.table}>
-                    <thead>
-                      <tr>
-                        <th style={{ ...styles.th, width: '60px', textAlign: 'center' }}>#</th>
-                        <th style={styles.th}>Descripción del Diagnóstico</th>
-                        <th style={{ ...styles.th, width: '70px', textAlign: 'center' }}>Acción</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {diagnosticos.map((d, index) => (
-                        <tr key={d.codigoCie10} style={styles.tr}>
-                          <td style={{ ...styles.td, textAlign: 'center', color: '#64748b', fontWeight: '600' }}>
-                            {index + 1}
-                          </td>
-                          <td style={{ ...styles.td, color: '#03045e', fontWeight: '500' }}>
-                            {d.descripcion}
-                          </td>
-                          <td style={{ ...styles.td, textAlign: 'center' }}>
-                            <button
-                              type="button"
-                              onClick={() => removeDiagnostico(d.codigoCie10)}
-                              style={{
-                                background: '#fff1f2',
-                                border: '1px solid #fecdd3',
-                                color: '#e11d48',
-                                padding: '6px 10px',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.15s ease',
-                              }}
-                              title="Eliminar diagnóstico"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <div style={styles.searchContainer}>
+                    <div style={styles.searchInputWrapper}>
+                      <Search size={16} color="#64748b" style={styles.searchIcon} />
+                      <input
+                        type="text"
+                        placeholder="Buscar especialidad por nombre o descripción..."
+                        value={searchEspecialidad}
+                        onChange={handleSearchEspecialidad}
+                        style={styles.searchInput}
+                      />
+                    </div>
+
+                    {especialidadResults.length > 0 && (
+                      <ul style={styles.autocompleteList}>
+                        {especialidadResults.map((esp) => (
+                          <li
+                            key={esp.idEspecialidad}
+                            onClick={() => selectEspecialidad(esp)}
+                            style={styles.autocompleteItem}
+                          >
+                            <span style={{ color: '#03045e', fontWeight: '600', fontSize: '14px' }}>
+                              {esp.nombre}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {especialidadReferencia ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '16px' }}>
+                      <div className="clinica-table-responsive" style={{ overflowX: 'auto' }}>
+                        <table style={styles.table}>
+                          <thead>
+                            <tr>
+                              <th style={{ ...styles.th, width: '50px', textAlign: 'center' }}>#</th>
+                              <th style={styles.th}>Especialidad de Referencia</th>
+                              <th style={{ ...styles.th, width: '60px', textAlign: 'center' }}>Acción</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr style={styles.tr}>
+                              <td style={{ ...styles.td, textAlign: 'center', color: '#64748b', fontWeight: '600' }}>
+                                1
+                              </td>
+                              <td style={{ ...styles.td, color: '#03045e', fontWeight: '500' }}>
+                                {especialidadReferencia.nombre}
+                              </td>
+                              <td style={{ ...styles.td, textAlign: 'center' }}>
+                                <button
+                                  type="button"
+                                  onClick={removeEspecialidad}
+                                  style={{
+                                    background: '#fff1f2',
+                                    border: '1px solid #fecdd3',
+                                    color: '#e11d48',
+                                    padding: '6px 10px',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.15s ease',
+                                  }}
+                                  title="Eliminar especialidad de referencia"
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Campo Motivo de la Referencia */}
+                      <div style={styles.inputGroup}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                          <label style={styles.label}>Motivo de la Referencia (Opcional)</label>
+                          <span style={{ fontSize: '11px', color: (motivoReferencia?.length || 0) >= 300 ? '#ef4444' : '#64748b' }}>
+                            {motivoReferencia?.length || 0} / 300
+                          </span>
+                        </div>
+                        <textarea
+                          placeholder="Describa el motivo clínico de la referencia, sospecha diagnóstica o indicaciones..."
+                          value={motivoReferencia}
+                          onChange={(e) => {
+                            if (e.target.value.length <= 300) {
+                              setMotivoReferencia(e.target.value);
+                            }
+                          }}
+                          maxLength={300}
+                          rows={3}
+                          style={styles.textarea}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={styles.emptyDiagBox}>
+                      <Share2 size={32} color="#94a3b8" />
+                      <p style={styles.emptyHint}>
+                        Aún no ha seleccionado ninguna referencia médica para esta consulta.
+                      </p>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div style={styles.emptyDiagBox}>
-                  <Stethoscope size={32} color="#94a3b8" />
-                  <p style={styles.emptyHint}>
-                    Aún no ha seleccionado ningún diagnóstico para esta consulta.
-                  </p>
-                </div>
-              )}
+
+              </div>
             </div>
           )}
 

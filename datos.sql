@@ -1,3 +1,9 @@
+INSERT INTO rol (nombre) VALUES
+('ADMIN'),
+('MEDICO'),
+('ENFERMERA'),
+('FARMACIA'),
+('SOCIAL');
 
 
 -- ==========================================================
@@ -126,200 +132,6 @@ INSERT INTO casa_farmaceutica (nombre) VALUES
 ('Baxter')
 ON CONFLICT (nombre) DO NOTHING;
 
-
--- ==========================================================
--- 3. INSERCIÓN DE MEDICAMENTOS CON CATEGORÍA
--- ==========================================================
-
-INSERT INTO medicamento (nombre, presentacion, concentracion, id_categoria_medicamento, id_casa_farmaceutica) VALUES
-
--- ANALGÉSICOS Y ANTIINFLAMATORIOS
-('Acetaminofén 100mg/1ml', 'Gotas 100mg/1ml', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Acetaminofén', 'Caj x 10 blis x 10 tab', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Acetaminofén', 'Tab 500mg', '500mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Acetaminofén', '80 mg/dropper', '80mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Acetaminofén', 'Supositorio 300mg', '300mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Diclofenaco Sódico', 'Tab. 100mg', '100mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Diclofenaco Sódico', 'Ampolla  75mg', '75mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Diclofenaco Potásico', 'Jarabe 9mg/1ml', '9mg/1ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Diclofenaco Potásico ( DICLOFAR k)', 'Jarabe 9mg/1ml ( 120 ml)', '9mg/1ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Donovan')),
-('Diclofenaco Potásico', 'TAB 226.05 20/T18', '20mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Diclofenaco + neurotropas', 'Gel de uso externo x 20G', '20g', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Unipharm')),
-('Ibuprofeno', 'Tableta 400 mg', '400mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Ibuprofeno', 'Tabletas  800 mg', '800mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Ibuprofeno', 'Tab 200mg', '200mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Ibuprofeno', 'Jarabe 120ml', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Naproxeno', 'Ampolla', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Nimesulida', 'Tabletas 100mg', '100mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Paracetamol (Tremadol)', 'Solución Inyectable 50 mg/ 1 ml', '50mg/1ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Paracetamol', 'Tab 500 mg', '500mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), NULL),
-('Supositorios de Paracetamol', 'Supositorios', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Baxter')),
-('Piroxicam', 'Caj x x100caps caja x 100', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANALGESICOS Y ANTIINFLAMATORIOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-
--- ANTIBIÓTICOS Y ANTIVIRALES
-('Aciclovir', 'Tab. 400 mg.  400mg', '400mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Aciclovir', 'Tabletas    200 mg /5ml ( 100 ml)', '200mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Aciclovir', 'Jarabe  200 mg /5ml ( 100 ml)', '200mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Amoxicilina', 'Suspensión 250 mg - 250mg/5ml', '250mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Amoxicilina', 'Tab/Caps 500mg', '500mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Amoxicilina + clavulanato potásico', 'Susp.  250+62.5mg/5ml  (70 ml)', '250+62.5mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Amoxicilina + ácido clavulánico', 'Susp. 200+42.9mg/5ml ( 70 ml)', '200+42.9mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Amoxicilina + ácido clavulanico  (Amoxiclav-AC)', 'Susp. 400+57mg/5ml ( 70 ml)', '400+57mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Azitromicina', 'Tab 500mg', '500mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Azitromicina', 'Suspensión 200mg/5ml (15ml)', '200mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Cefadroxilo', 'Tableta  500mg', '500mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Cefadroxilo', 'Suspensión   250mg/5ml 60ml', '250mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Cefalexina monohidrato', 'Jarabe 250 mg (60 ml)', '250mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Cefalexina monohidrato', 'Capsulas 500 mg ( 100 caps)', '500mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Cefixima', 'Caja de 400 mg x 10 tab', '400mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Ceftriaxona', 'Ampolla 1gr I.M', '1g', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Ciprofloxacina', 'Tabletas 500mg', '500mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Claritromicina', 'Tabletas  500mg', '500mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Claritromicina', 'Suspensión 250mg/5ml, 60ml', '250mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Dicloxacilina sodica', 'Tableta 500mg', '500mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Dicloxacilina sodica', 'Jp suspensión 250mg/5ml', '250mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Dofloxacina', 'Jarabe 120 ml', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Donovan')),
-('Eritromicina Estolato', 'Jarabe 125mg/5ml', '125mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Eritromicina Estolato', 'TAB 226', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Eritromicina', 'Jarabe 120 ml', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Levofloxacina', 'Tabletas 500mg', '500mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Metronidazol', 'Tabletas 500mg', '500mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Metronidazol  jarabe', 'Jarabe  125 mg / 5ml (120ml)', '125mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Nitrofurantoina  Tabletas (NITROGEN)', 'Jatabe', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Nitrofurantoina  jarabe (NITROGEN)', 'Jarabe', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Norfloxacina', 'Tab 400 mg', '400mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Norfloxacina', 'TAB 226.05 20', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Trimetoprim', 'Jarabe  200mg/5mg /  120ml', '200mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Ultraseptil Jarabe', '120ml', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIBIOTICOS Y ANTIVIRALES'), NULL),
-
--- ANTIPARASITARIOS Y ANTIFÚNGICOS
-('Albendazol', 'Tabletas 400mg', '400mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIPARASITARIOS Y ANTIFUNGICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Albendazol', 'Jarabe 400 mg- 20 ml', '400mg/20ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIPARASITARIOS Y ANTIFUNGICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Albendazol', 'Jarabe 200mg/ 5ml- 60ml', '200mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIPARASITARIOS Y ANTIFUNGICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Fluconazol', 'Tableta  150mg', '150mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIPARASITARIOS Y ANTIFUNGICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Fluconazol', 'Ampolla 200mg', '200mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIPARASITARIOS Y ANTIFUNGICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Ivermectina', 'Crema tópica 1%', '1%', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIPARASITARIOS Y ANTIFUNGICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Ivermectina (Ivermectina 6 mg)', 'Tab 6mg', '6mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIPARASITARIOS Y ANTIFUNGICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Ketoconazol', 'Tab 200mg', '200mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIPARASITARIOS Y ANTIFUNGICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Mebendazol', 'Tableta 100 mg', '100mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIPARASITARIOS Y ANTIFUNGICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Mebendazol ( DIFONAL)', 'Ampolla 10mg/2ml', '10mg/2ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIPARASITARIOS Y ANTIFUNGICOS'), NULL),
-('Nistatina (Nifuran/GTS. EN  20,000)', 'Ampolla  2,500 UI', '2500UI', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIPARASITARIOS Y ANTIFUNGICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Nistatina', 'Susp. Oral x 100,000 u/ml 120ml', '100000UI/ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIPARASITARIOS Y ANTIFUNGICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Nitazoxanida', 'Suspensión 100 mg/5 ml ( 30 ml )', '100mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIPARASITARIOS Y ANTIFUNGICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Donovan')),
-('Secnidazol', 'Ampolla  500mg', '500mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'ANTIPARASITARIOS Y ANTIFUNGICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-
--- RESPIRATORIOS Y ANTIHISTAMÍNICOS
-('Ambroxol  3 mg/ml (Glicitol, SPEDETOL)', 'Jarabe   15mg/ 5ml ( 120ml)', '15mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Ambroxol + Clorfeniramina Cl', 'Jarabe  7.5mg+2mg/5ml', '7.5mg+2mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Ambroxol + Salbutamol (Glicitol S)', 'Jarabe  3 + 0.3mg/ 5ml', '3+0.3mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Broncodilatal', 'Sol. Nebulizar  0.5%', '0.5%', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), NULL),
-('Clorfeniramina', 'Tab 4mg/4mg', '4mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Clorfeniramina', 'Ampolla 10mg/1ml', '10mg/1ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Clorfeniramina', 'Jarabe 2mg/5ml', '2mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Difenilhidramina ( Jarabe Difen)', 'Crema', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Doxofilina', '400mg', '400mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Donovan')),
-('Guayacolato', 'Jarabe 100mg/5ml', '100mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Guayacolato', 'Lotion', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Loratadina', 'Ampolla', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Loratadina', 'Jarabe  5mg/5ml', '5mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Loratadina', 'Tabletas 10mg', '10mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Limpia Moco de Infantes', 'Gotas (0.65%/15ml)', '0.65%', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Salbutamol', 'Jarabe 2mg/5ml', '2mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Sorbitocina', 'TAB 226 400 mg expectorantes', '400mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'RESPIRATORIOS Y ANTIHISTAMINICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-
--- GASTROINTESTINALES
-('Bromuro de pinitio + clordiazepox (SPASMO CLLOPE)', 'Tabletas 11 mg', '11mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Dimenhidrinato', 'TAB 226.05 20/T18 x 120', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Dimenhidrinato', 'Jarabe', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Enzimas Digestivas', 'TAB 226.024 01 R 100', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Glicerina', 'Supositorio 1g/2g', '1g', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Hidróxido de Aluminio + Magnesio', 'Crema de 100 ml.  Topesol', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Hidróxido de Aluminio + Magnesio', 'Jarabe de 360 ml.  Fluimix', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Metoclopramida', 'Jarabe  100 mg/ 5ml', '100mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Metoclopramida  2.4 mg/ml', 'Gotas', '2.4mg/ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Metoclopramida 10mg', 'Lotion', '10mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Omeprazol', 'Capsulas  20mg', '20mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Senal compuestos (no se apercibe el componel)', 'Ampolla 25+100mg/2ml', '25+100mg/2ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sana')),
-('Sertal (Butilhioscina y paracetamol)', 'Ampolla 10+500mg/ 1 ml', '10+500mg/1ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Sertal - (Buscapina)', 'Ampolla 20+500mg/2ml', '20+500mg/2ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Simeticona', 'Gotas 100mg/ml(15ml)', '100mg/ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Supositorios de glicerina', 'GTS 20 00.00', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), NULL),
-('Silrimarin', 'TAB 226 35 mg caja x 2', '35mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'GASTROINTESTINALES'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Unipharm')),
-
--- CARDIOVASCULARES Y METABÓLICOS
-('Enalapril', 'Tab  20mg', '20mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'CARDIOVASCULARES Y METABOLICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Glibenclamida', 'Tab 5mg 5mg', '5mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'CARDIOVASCULARES Y METABOLICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Losartán', 'Tabletas 50 mg', '50mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'CARDIOVASCULARES Y METABOLICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Metformina', 'Tabletas 850 mg', '850mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'CARDIOVASCULARES Y METABOLICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-
--- VITAMINAS Y SUPLEMENTOS
-('Ácido Fólico', 'Tab 5mg. 5mg', '5mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'VITAMINAS Y SUPLEMENTOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Calcio + Vit. D', 'Tab 500mg/200UI', '500mg/200UI', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'VITAMINAS Y SUPLEMENTOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Complejo B', 'Tab 10 mg', '10mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'VITAMINAS Y SUPLEMENTOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bayer')),
-('Complejo B  ( B1, B6 y B12 de 10,00/5ml )', 'Jp. O Amp. Bebible con 10 viales', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'VITAMINAS Y SUPLEMENTOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Unipharm')),
-('Hierro + Ácido fólico', 'Tab 200 mg + 0.4mg', '200mg+0.4mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'VITAMINAS Y SUPLEMENTOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Hierro + Ácido fólico', 'TAB 226 (10 X 10)', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'VITAMINAS Y SUPLEMENTOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Pedilutina (Ferrosoilron I)', 'Liquido', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'VITAMINAS Y SUPLEMENTOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Sulfato ferroso', 'Jarabe  125 mg / 5ml', '125mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'VITAMINAS Y SUPLEMENTOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Sulfato de zinc', 'Tab.  20mg/ 10mg', '20mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'VITAMINAS Y SUPLEMENTOS'), NULL),
-('Vitaminas prenatal', 'TAB 226', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'VITAMINAS Y SUPLEMENTOS'), NULL),
-('Vitaminas Prenatales', 'Tab caja', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'VITAMINAS Y SUPLEMENTOS'), NULL),
-('Zinc', 'Tab  10 mg', '10mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'VITAMINAS Y SUPLEMENTOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-
--- SOLUCIONES Y ELECTROLITOS
-('Bicarbonato de Sodio', 'Jarabe  4mg/5ml ( 120ml)', '4mg/5ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'SOLUCIONES Y ELECTROLITOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Sol. Hartman', '1,000ml', '1000ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'SOLUCIONES Y ELECTROLITOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Baxter')),
-('Sol. Hartman', '500 ml', '500ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'SOLUCIONES Y ELECTROLITOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Baxter')),
-('Sol. Salina  0.9%', '1,000ml', '0.9%', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'SOLUCIONES Y ELECTROLITOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Baxter')),
-('Sol. Salina  0.9%', '500 ml', '0.9%', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'SOLUCIONES Y ELECTROLITOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Baxter')),
-('Suero oral', 'Polvo  20.5 g  x 1 sobl', '20.5g', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'SOLUCIONES Y ELECTROLITOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Donovan')),
-('Suero oral', 'Polvo x 20.5 g - 4 Sobres', '20.5g', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'SOLUCIONES Y ELECTROLITOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-
--- DERMATOLÓGICOS Y TÓPICOS
-('Benzoato de Bencilo', 'Loción 75ml al 25%', '25%', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'DERMATOLOGICOS Y TOPICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Betametasona (Scleramin)', 'Ampolla 10mg/2ml', '10mg/2ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'DERMATOLOGICOS Y TOPICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Calamina', 'Loción Tópica 120ml', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'DERMATOLOGICOS Y TOPICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Clotrimazol 1%', 'Crema Tópica', '1%', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'DERMATOLOGICOS Y TOPICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Dexametasona  ( Fortecortin / Antianafiláctico)', 'Ampolla 4mg/1ml', '4mg/1ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'DERMATOLOGICOS Y TOPICOS'), NULL),
-('Dexametasona sodio', 'Ampolla 4mg/ 1ml', '4mg/1ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'DERMATOLOGICOS Y TOPICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Hidrocortisona  loción', 'Lotion 120 ml', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'DERMATOLOGICOS Y TOPICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Hidrocortisona', 'Crema de 15g', '15g', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'DERMATOLOGICOS Y TOPICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Permetrina (Permetrina)', 'Suspensión  1200.00-Somatico', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'DERMATOLOGICOS Y TOPICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Unipharm')),
-('Prednisona', 'Tab de  5 mg', '5mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'DERMATOLOGICOS Y TOPICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Tríple antibiótico', 'Ungüento', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'DERMATOLOGICOS Y TOPICOS'), NULL),
-('Tríple antibiótico (Loticin)', '120 ml', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'DERMATOLOGICOS Y TOPICOS'), NULL),
-('Tríple Crema (Solución Antiinflamatoria)', 'Crema tubo 20g', '20g', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'DERMATOLOGICOS Y TOPICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Vaselina solida verde', 'Tarro 30 gr', '30g', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'DERMATOLOGICOS Y TOPICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Medpharma')),
-('Vaselina solida verde', 'Tarro 15 gr', '15g', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'DERMATOLOGICOS Y TOPICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Unipharm')),
-
--- SALUD FEMENINA Y GINECOLOGÍA
-('Clotrimazol 2% Vaginal', 'Crema Vaginal 20g', '2%', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'SALUD FEMENINA Y GINECOLOGIA'), NULL),
-('Clotrimazol, Óvulos vaginales', 'Caj x 6 óvulos, 200mg', '200mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'SALUD FEMENINA Y GINECOLOGIA'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Metronidazol + Nistatina  (Filtricod 4)', 'Caj.  20 ovulos (500mg + 100,000 UI)', '500mg+100000UI', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'SALUD FEMENINA Y GINECOLOGIA'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Píldoras de emergencia o.n.a. 1.5 mg', 'Tab de 1.5 mg', '1.5mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'SALUD FEMENINA Y GINECOLOGIA'), NULL),
-
--- OTROS Y ÓTICOS/OFTÁLMICOS
-('Allercurial', 'Tabletas 100mg', '100mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'OTROS Y OTICOS/OFTALMICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Arguet')),
-('Cloranfenicol + Dexametasona', 'Gotas Oticas 0.5%/0.1% 5ml', '0.5%/0.1%', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'OTROS Y OTICOS/OFTALMICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Cloranfenicol + dexametasona + lidocaina', 'Gotas Oftálmicas', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'OTROS Y OTICOS/OFTALMICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Cloranfenicol', 'Gotas oftálmicas 0.5%(5ml)', '0.5%', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'OTROS Y OTICOS/OFTALMICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sonnenschein')),
-('Doxorrubicina Clorhidrato inyectable', 'Ampolla  20mg/10ml caja x 20', '20mg/10ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'OTROS Y OTICOS/OFTALMICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Doxorrubicina inyectable', 'Tab 10mg o 20mg caja x 10', '10mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'OTROS Y OTICOS/OFTALMICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Ergotamina + cafeína', 'Jp 120 ml', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'OTROS Y OTICOS/OFTALMICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Finasterida', 'Tableta 100mg', '100mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'OTROS Y OTICOS/OFTALMICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Normoxenina', 'Caj x x100 caps x 100', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'OTROS Y OTICOS/OFTALMICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('O.N.A', 'Suspensión  60ml', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'OTROS Y OTICOS/OFTALMICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Sana')),
-('Ojo de Águila', 'Gotas  Oftálmicas 10ml', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'OTROS Y OTICOS/OFTALMICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Unipharm')),
-('Pieroxanida', 'Bolsa 25ml', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'OTROS Y OTICOS/OFTALMICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Bodepharma')),
-('Solución salina', 'Gotas  oticas', NULL, (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'OTROS Y OTICOS/OFTALMICOS'), NULL),
-('Sorbitocina', 'TAB 226 100 mg / caja x 10', '100mg', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'OTROS Y OTICOS/OFTALMICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Caplin')),
-('Ubral', 'Ampolla   100mg/ 2mg/ ml', '100mg/2ml', (SELECT id_categoria_medicamento FROM categoria_medicamento WHERE nombre = 'OTROS Y OTICOS/OFTALMICOS'), (SELECT id_casa_farmaceutica FROM casa_farmaceutica WHERE nombre = 'Unipharm'));
-
-
-
-
--- ==========================================================
--- INSERCIÓN AMPLIADA DE ALERGIAS COMUNES Y CLÍNICAS
 -- ==========================================================
 
 INSERT INTO alergia (nombre) VALUES
@@ -396,3 +208,59 @@ INSERT INTO alergia (nombre) VALUES
 ('Detergentes, suavizantes y jabones enzimáticos'),
 ('Plantas (Hiedra venenosa, Ortiga, Lirio)')
 ON CONFLICT (nombre) DO NOTHING;
+
+
+
+
+
+INSERT INTO especialidad_referencia (nombre, descripcion, activo) VALUES
+('Medicina General / Familiar', 'Atención médica primaria, integral y continua para todas las edades.', TRUE),
+('Medicina Interna', 'Diagnóstico y tratamiento no quirúrgico de enfermedades complejas en adultos.', TRUE),
+('Pediatría', 'Cuidado médico, preventivo y desarrollo integral de niños y adolescentes.', TRUE),
+('Ginecología y Obstetricia', 'Salud del sistema reproductor femenino, control del embarazo y parto.', TRUE),
+('Cardiología', 'Diagnóstico y tratamiento de enfermedades del corazón y sistema circulatorio.', TRUE),
+('Dermatología', 'Prevención, diagnóstico y tratamiento de afecciones en piel, cabello y uñas.', TRUE),
+('Endocrinología', 'Trastornos hormonales, metabólicos, diabetes y tiroides.', TRUE),
+('Gastroenterología', 'Enfermedades del tubo digestivo, estómago, intestinos, hígado y páncreas.', TRUE),
+('Neumología', 'Enfermedades de las vías respiratorias y pulmones.', TRUE),
+('Neurología', 'Trastornos del sistema nervioso central, periférico y cerebrovascular.', TRUE),
+('Nefrología', 'Prevención y tratamiento de patologías renales e hipertensión arterial.', TRUE),
+('Infectología', 'Diagnóstico y manejo de infecciones por virus, bacterias o parásitos.', TRUE),
+('Reumatología', 'Enfermedades inflamatorias y autoinmunes que afectan articulaciones y músculos.', TRUE),
+('Oncología Médica', 'Diagnóstico y tratamiento del cáncer mediante quimioterapia y terapias sistémicas.', TRUE),
+('Psiquiatría', 'Diagnóstico y tratamiento médico/farmacológico de trastornos de la salud mental.', TRUE),
+('Geriatría', 'Atención médica especializada e integral en la salud del adulto mayor.', TRUE),
+('Hematología', 'Estudio y tratamiento de enfermedades de la sangre y órganos hematopoyéticos.', TRUE),
+('Alergología e Inmunología', 'Manejo de alergias, asma y trastornos del sistema inmunológico.', TRUE),
+('Fisiatría / Medicina Física', 'Rehabilitación e integración funcional de pacientes con discapacidades físicas.', TRUE),
+('Medicina del Trabajo', 'Salud preventiva y gestión de riesgos en entornos laborales.', TRUE),
+('Cirugía General', 'Intervenciones quirúrgicas del abdomen, aparato digestivo y tejidos blandos.', TRUE),
+('Traumatología y Ortopedia', 'Tratamiento quirúrgico y médico de lesiones en huesos y articulaciones.', TRUE),
+('Cirugía Pediátrica', 'Corrección e intervenciones quirúrgicas exclusivas para niños y recién nacidos.', TRUE),
+('Cirugía Cardiovascular', 'Operaciones en el corazón y grandes vasos sanguíneos.', TRUE),
+('Cirugía Vascular Periférica', 'Diagnóstico y tratamiento quirúrgico de venas y arterias periféricas.', TRUE),
+('Neurocirugía', 'Intervenciones en cerebro, médula espinal y columna vertebral.', TRUE),
+('Cirugía Plástica y Reconstructiva', 'Reparación, reconstrucción de tejidos dañados y estética.', TRUE),
+('Urología', 'Tratamiento quirúrgico del sistema urinario e infertilidad/salud masculina.', TRUE),
+('Oftalmología', 'Tratamiento médico y quirúrgico de los ojos y corrección visual.', TRUE),
+('Otorrinolaringología', 'Diagnóstico y cirugía de enfermedades de oído, nariz y garganta.', TRUE),
+('Cirugía Maxilofacial', 'Intervenciones en estructura facial, mandíbula, cavidad oral y cuello.', TRUE),
+('Cirugía Oncológica', 'Resección y tratamiento quirúrgico de tumores malignos y benignos.', TRUE),
+('Cirugía Bariátrica', 'Procedimientos quirúrgicos para el tratamiento de la obesidad mórbida.', TRUE),
+('Cirugía Torácica', 'Operaciones en órganos dentro del tórax, exceptuando el corazón.', TRUE),
+('Coloproctología', 'Diagnóstico y tratamiento quirúrgico de enfermedades del colon, recto y ano.', TRUE),
+('Medicina de Urgencias', 'Atención médica inmediata e intensiva a pacientes en estado crítico.', TRUE),
+('Anestesiología', 'Manejo del dolor, sedación y soporte vital durante y después de cirugías.', TRUE),
+('Medicina Intensiva (UCI)', 'Cuidado y monitoreo de pacientes graves o en fallo multiorgánico.', TRUE),
+('Radiología e Imagenología', 'Diagnóstico por imágenes (Rayos X, Ultrasonido, TAC, Resonancia).', TRUE),
+('Radiología Intervencionista', 'Procedimientos mínimamente invasivos guiados por imágenes médicas.', TRUE),
+('Anatomía Patológica', 'Análisis de biopsias, citologías y muestras de tejidos para diagnósticos.', TRUE),
+('Patología Clínica', 'Análisis e interpretación de exámenes de laboratorio clínico.', TRUE),
+('Medicina Nuclear', 'Diagnóstico y tratamiento mediante el uso de radiofármacos.', TRUE),
+('Genética Médica', 'Diagnóstico y asesoramiento de enfermedades hereditarias y genéticas.', TRUE),
+('Cuidados Paliativos', 'Alivio del sufrimiento y dolor en pacientes con enfermedades avanzadas.', TRUE),
+('Neonatología', 'Cuidado intensivo de recién nacidos prematuros o con complicaciones.', TRUE),
+('Toxicología Médica', 'Diagnóstico y tratamiento de envenenamientos, intoxicaciones y sobredosis.', TRUE),
+('Medicina Preventiva', 'Promoción de la salud, control de epidemias y prevención de enfermedades.', TRUE),
+('Nutriología Clínica', 'Tratamiento nutricional y dietético en pacientes con condiciones médicas.', TRUE),
+('Medicina del Deporte', 'Prevención, diagnóstico y tratamiento de lesiones por actividad física.', TRUE);

@@ -33,10 +33,24 @@ export const useUsuarios = () => {
     await fetchUsuarios();
   };
 
+  const toggleEstado = async (id, nuevoEstado) => {
+    // Actualización optimista inmediata en la UI
+    setUsuarios((prev) =>
+      prev.map((u) => (u.idUsuario === id ? { ...u, estado: nuevoEstado } : u))
+    );
+    try {
+      await toggleEstadoUsuario(id, nuevoEstado);
+    } catch (err) {
+      // Revertir en caso de error
+      await fetchUsuarios();
+      throw err;
+    }
+  };
+
   const removeUsuario = async (id) => {
     await deleteUsuario(id);
     await fetchUsuarios();
   };
 
-  return { usuarios, loading, error, refetch: fetchUsuarios, addUsuario, editUsuario, removeUsuario };
+  return { usuarios, loading, error, refetch: fetchUsuarios, addUsuario, editUsuario, toggleEstado, removeUsuario };
 };

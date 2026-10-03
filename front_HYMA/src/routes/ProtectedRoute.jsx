@@ -28,6 +28,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     if (!hasAccess) {
       if (userRoles.includes('MEDICO')) return <Navigate to="/clinica" replace />;
       if (userRoles.includes('ENFERMERA')) return <Navigate to="/recepcion" replace />;
+      if (userRoles.includes('SOCIAL')) return <Navigate to="/social" replace />;
       return <Navigate to="/dashboard" replace />;
     }
   }

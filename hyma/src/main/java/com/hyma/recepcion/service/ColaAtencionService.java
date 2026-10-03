@@ -70,14 +70,12 @@ public class ColaAtencionService {
             );
         }
 
+        int prioridadInicial = (request.getPrioridad() == null) ? 0 : (request.getPrioridad() > 0 ? 1 : 0);
         ColaAtencion cola = ColaAtencion.builder()
                 .paciente(paciente)
                 .estado(EstadoCola.PENDIENTE)
-                .prioridad(
-                        request.getPrioridad() == null
-                                ? 0
-                                : request.getPrioridad()
-                )
+                .prioridad(prioridadInicial)
+                .fechaPrioridad(prioridadInicial > 0 ? LocalDateTime.now() : null)
                 .fechaIngreso(LocalDateTime.now())
                 .build();
 
@@ -115,7 +113,7 @@ public class ColaAtencionService {
     @Transactional(readOnly = true)
     public List<ColaAtencionResponse> obtenerColaConsulta() {
         List<ColaAtencion> cola = colaAtencionRepository
-                .findByEstadoInOrderByFechaIngresoAsc(List.of(EstadoCola.ESPERA_CONSULTA, EstadoCola.EN_CONSULTA));
+                .findColaConsultaConPrioridad(List.of(EstadoCola.ESPERA_CONSULTA, EstadoCola.EN_CONSULTA));
 
         return cola.stream()
                 .map(c -> {
@@ -126,6 +124,28 @@ public class ColaAtencionService {
                     return colaAtencionMapper.toResponse(c, signoResp);
                 })
                 .toList();
+    }
+
+    @Transactional
+    public ColaAtencionResponse cambiarPrioridad(Long idCola, Integer prioridad) {
+        ColaAtencion cola = colaAtencionRepository.findById(idCola)
+                .orElseThrow(() -> new ColaAtencionNotFoundException(idCola));
+
+        int nuevaPrioridad = (prioridad != null && prioridad > 0) ? 1 : 0;
+        cola.setPrioridad(nuevaPrioridad);
+        if (nuevaPrioridad > 0) {
+            cola.setFechaPrioridad(LocalDateTime.now());
+        } else {
+            cola.setFechaPrioridad(null);
+        }
+        ColaAtencion guardada = colaAtencionRepository.save(cola);
+
+        SignoVitalResponse signoResp = signoVitalRepository
+                .findFirstByPaciente_IdPacienteOrderByFechaRegistroDesc(guardada.getPaciente().getIdPaciente())
+                .map(signoVitalMapper::toResponse)
+                .orElse(null);
+
+        return colaAtencionMapper.toResponse(guardada, signoResp);
     }
 
     @Transactional

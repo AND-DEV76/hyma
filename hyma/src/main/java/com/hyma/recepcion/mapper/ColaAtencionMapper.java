@@ -19,6 +19,7 @@ public class ColaAtencionMapper {
                 .nombresPaciente(cola.getPaciente().getNombres())
                 .apellidosPaciente(cola.getPaciente().getApellidos())
                 .fechaIngreso(cola.getFechaIngreso())
+                .fechaPrioridad(cola.getFechaPrioridad())
                 .estado(cola.getEstado())
                 .prioridad(cola.getPrioridad())
                 .fechaAtencion(cola.getFechaAtencion())

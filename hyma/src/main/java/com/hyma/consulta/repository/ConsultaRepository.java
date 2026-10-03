@@ -13,6 +13,7 @@ import java.util.Optional;
 public interface ConsultaRepository extends JpaRepository<Consulta, Long> {
 
     Optional<Consulta> findTopByPacienteOrderByFechaConsultaDesc(Paciente paciente);
+    List<Consulta> findByPacienteOrderByFechaConsultaDesc(Paciente paciente);
 
     List<Consulta> findByFechaConsultaBetweenOrderByFechaConsultaAsc(LocalDateTime start, LocalDateTime end);
 

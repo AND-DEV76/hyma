@@ -33,6 +33,13 @@ public class ClinicaController {
         return ResponseEntity.ok(colaAtencionService.obtenerColaConsulta());
     }
 
+    @PatchMapping("/cola/{idCola}/prioridad")
+    public ResponseEntity<ColaAtencionResponse> cambiarPrioridad(
+            @PathVariable(name = "idCola") Long idCola,
+            @RequestParam(name = "prioridad", defaultValue = "1") Integer prioridad) {
+        return ResponseEntity.ok(colaAtencionService.cambiarPrioridad(idCola, prioridad));
+    }
+
     @GetMapping("/pacientes/{idPaciente}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
     public ResponseEntity<PacienteConsultaResponse> obtenerDatosPaciente(

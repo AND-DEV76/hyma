@@ -109,7 +109,7 @@ public class SecurityConfig {
 
                 // Gestión de usuarios: Solo accesible por Administradores
                 .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
-                .requestMatchers("/api/clinica/**", "/api/diagnosticos/**").authenticated()
+                .requestMatchers("/api/clinica/**", "/api/diagnosticos/**", "/api/social/**").authenticated()
 
                 // Todas las demás rutas de la API requieren autenticación válida
                 .requestMatchers("/api/**").authenticated()

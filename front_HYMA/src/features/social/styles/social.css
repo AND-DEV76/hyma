@@ -1,0 +1,951 @@
+/* ==========================================================
+   ESTILOS MÓDULO TRABAJO SOCIAL (HYMA)
+   ========================================================== */
+
+.social-page-container {
+  flex: 1;
+  padding: 1.75rem 2.25rem;
+  max-width: 1250px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Bar Odoo Style */
+.social-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 18px 24px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.social-header-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.social-btn-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.social-btn-back:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.social-header h1 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.social-subtitle {
+  font-size: 0.825rem;
+  color: #64748b;
+  margin: 3px 0 0 0;
+}
+
+.social-controls-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.social-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.social-filter-icon {
+  color: #0284c7;
+}
+
+.social-select {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  cursor: pointer;
+}
+
+.social-select:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+}
+
+.social-btn-excel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0284c7;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(2, 132, 199, 0.2);
+}
+
+.social-btn-excel:hover:not(:disabled) {
+  background: #0369a1;
+  transform: translateY(-1px);
+}
+
+.social-btn-excel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Emblema Vectorial de Trabajo Social */
+.social-emblem-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%) !important;
+  border: 1.5px solid #bae6fd !important;
+}
+
+.social-emblem-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  z-index: 1;
+}
+
+.social-emblem-outer-ring {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.4);
+  padding: 6px;
+}
+
+.social-emblem-inner-ring {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.social-emblem-icon {
+  color: #0284c7;
+}
+
+.social-emblem-mini-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #0284c7;
+  color: #ffffff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.social-badge-tag {
+  display: inline-block;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.social-chip-badge {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+/* Buscador de Pacientes */
+.social-search-wrapper {
+  position: relative;
+  min-width: 320px;
+}
+
+.social-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.social-search-input {
+  width: 100%;
+  padding: 8px 32px 8px 36px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s;
+  background: #ffffff;
+}
+
+.social-search-input:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+}
+
+.social-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px;
+}
+
+/* Dashboard Grid */
+.social-dashboard-grid {
+  display: grid;
+  grid-template-columns: 460px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* Tabla Estilo Excel (Times New Roman) */
+.social-card-excel {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.social-excel-header {
+  background: #f1f5f9;
+  border-bottom: 2px solid #0f172a;
+  padding: 12px 16px;
+}
+
+.social-excel-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Times New Roman', Times, serif;
+  font-weight: bold;
+  font-size: 17px;
+  color: #0f172a;
+  letter-spacing: 0.02em;
+}
+
+.social-excel-periodo {
+  font-size: 14px;
+  color: #334155;
+  margin-top: 2px;
+}
+
+.social-table-container {
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.social-excel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.social-excel-table th {
+  background: #e2e8f0;
+  border: 1px solid #94a3b8;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #0f172a;
+  text-align: left;
+}
+
+.social-excel-table .th-conteo {
+  text-align: center;
+  width: 120px;
+}
+
+.social-excel-table td {
+  border: 1px solid #cbd5e1;
+  padding: 7px 14px;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.social-excel-table .td-conteo {
+  text-align: center;
+  font-weight: 600;
+}
+
+.social-excel-table .td-empty {
+  text-align: center;
+  color: #64748b;
+  font-style: italic;
+  padding: 24px;
+}
+
+.social-excel-table .tr-total {
+  background: #f8fafc;
+  font-weight: bold;
+  border-top: 2px solid #0f172a;
+}
+
+.social-excel-table .td-total-label {
+  font-size: 15px;
+  letter-spacing: 0.05em;
+}
+
+.social-excel-table .td-total-val {
+  text-align: center;
+  font-size: 16px;
+  color: #0284c7;
+}
+
+.social-excel-footer-note {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 12px;
+  font-style: italic;
+  color: #64748b;
+  padding: 8px 14px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Tarjeta Gráfica Estilo Excel */
+.social-card-excel-chart {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.social-chart-scroll-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.social-excel-svg {
+  display: block;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.svg-chart-main-title {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 16px;
+  font-weight: bold;
+  fill: #000000;
+  letter-spacing: 0.02em;
+}
+
+.svg-grid-line {
+  stroke: #e2e8f0;
+  stroke-width: 1;
+}
+
+.svg-axis-line {
+  stroke: #94a3b8;
+  stroke-width: 1.5;
+}
+
+.svg-y-axis-label {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 12px;
+  fill: #475569;
+}
+
+.svg-bar-rect {
+  fill: #2f5597;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.svg-bar-rect:hover {
+  fill: #1f3864;
+}
+
+.svg-bar-rect-total {
+  fill: #1f4e78;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.svg-bar-rect-total:hover {
+  fill: #112f4c;
+}
+
+.svg-x-label {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 11px;
+  fill: #1e293b;
+  font-weight: 500;
+}
+
+.svg-x-label-total {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 12px;
+  fill: #000000;
+  font-weight: bold;
+}
+
+.social-chart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+}
+
+/* Banner de Aviso */
+.social-notice-banner {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  color: #0369a1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+/* Grid de Pacientes */
+.social-pacientes-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.social-paciente-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.social-paciente-card:hover {
+  border-color: #0284c7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.08);
+}
+
+.social-paciente-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #e0f2fe;
+  color: #0284c7;
+  border: 1.5px solid #bae6fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.social-paciente-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.social-paciente-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.social-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.social-paciente-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.social-badge-ref-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #e0f2fe;
+  color: #0284c7;
+  border: 1px solid #bae6fd;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.social-badge-ref-zero {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.social-btn-open-exp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #0284c7;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Modal Horizontal Fluido y Optimizado */
+.social-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  will-change: opacity;
+}
+
+.social-modal-horizontal {
+  background: #ffffff;
+  width: 100%;
+  max-width: 1200px;
+  height: 85vh;
+  max-height: 750px;
+  border-radius: 14px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  contain: content;
+}
+
+.social-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.social-modal-header-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.social-modal-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #0284c7;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.social-modal-header h2 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.social-modal-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 1px 0 0 0;
+}
+
+.social-modal-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.social-modal-close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* 3 COLUMNAS HORIZONTALES */
+.social-modal-horizontal-body {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 270px 1fr 1fr;
+  gap: 16px;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 900px) {
+  .social-modal-horizontal {
+    height: auto;
+    max-height: 90vh;
+  }
+  .social-modal-horizontal-body {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+}
+
+.social-modal-col {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.social-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.social-col-header h4 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.social-patient-details-box {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.social-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.social-detail-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.social-detail-val {
+  font-size: 0.875rem;
+  color: #0f172a;
+}
+
+.social-detail-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.social-col-scrollable-content {
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.social-pill-count {
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.social-referencias-list,
+.social-consultas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.social-ref-card,
+.social-consulta-card {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  transition: border-color 0.15s;
+}
+
+.social-ref-card:hover,
+.social-consulta-card:hover {
+  border-color: #0284c7;
+}
+
+.social-ref-header,
+.social-consulta-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.social-ref-especialidad {
+  font-weight: 700;
+  color: #0284c7;
+  font-size: 0.85rem;
+}
+
+.social-ref-fecha,
+.social-consulta-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.social-ref-doctor,
+.social-consulta-medico {
+  font-size: 0.8rem;
+  color: #334155;
+  margin-bottom: 4px;
+}
+
+.social-ref-motivo,
+.social-consulta-obs {
+  font-size: 0.8rem;
+  color: #475569;
+  background: #f8fafc;
+  padding: 5px 8px;
+  border-radius: 6px;
+  line-height: 1.35;
+}
+
+.social-ref-motivo p {
+  margin: 2px 0 0 0;
+}
+
+.social-ref-motivo-empty {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.social-consulta-diag-box {
+  margin: 6px 0;
+  font-size: 0.8rem;
+}
+
+.social-diag-list {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.social-diag-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #1e293b;
+}
+
+.social-diag-bullet {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #0284c7;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.social-empty-sub {
+  text-align: center;
+  padding: 24px 12px;
+  color: #94a3b8;
+  font-size: 0.825rem;
+  font-style: italic;
+}
+
+.social-modal-footer {
+  padding: 10px 20px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.social-btn-modal-close {
+  background: #64748b;
+  color: #ffffff;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.social-btn-modal-close:hover {
+  background: #475569;
+}
+
+.social-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #64748b;
+}
+
+.social-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #0284c7;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.social-alert-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.social-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  text-align: center;
+  color: #64748b;
+}
+
+.social-empty-state h3 {
+  margin: 8px 0 4px 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+}
+
+.social-empty-state p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 992px) {
+  .social-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}

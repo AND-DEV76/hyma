@@ -85,11 +85,11 @@ export const formatUsoTexto = (m) => {
 };
 
 /**
- * Renderiza el contenido de una boleta de receta médica individual (Media Carta vertical: 5.5in x 8.5in)
+ * Renderiza el contenido de una boleta de receta médica individual en Hoja Carta Vertical Completa (8.5in x 11in)
  */
 function BoletaReceta({ receta, medicamentos }) {
   return (
-    <div className="receta-half-sheet">
+    <div className="receta-full-sheet">
       {/* 1. Encabezado Institucional: Logo Izquierda + Clínicas Médicas Derecha */}
       <div className="receta-header">
         <div className="receta-logo-col">
@@ -172,23 +172,23 @@ function BoletaReceta({ receta, medicamentos }) {
   );
 }
 
-export default function RecetaMedicaPrint({ receta, duplicar = false }) {
+export default function RecetaMedicaPrint({ receta }) {
   // Lista de medicamentos compatibles con DTO del backend (medicamentos o medicamentosRecetados)
   const medicamentos = receta?.medicamentos || receta?.medicamentosRecetados || [];
 
   return (
     <>
-      {/* Estilos Exclusivos para Impresión en Hoja Carta Horizontal dividida en Media Carta (11in x 8.5in) */}
+      {/* Estilos Exclusivos para Impresión en 1 Sola Hoja Carta Vertical (8.5in x 11in) sin encabezados ni pie de navegador */}
       <style>{`
         @media print {
           @page {
-            size: 11in 8.5in landscape; /* Hoja Carta completa horizontal */
-            margin: 0 !important;
+            size: letter portrait; /* Hoja Carta vertical (8.5in x 11in) */
+            margin: 0 !important;  /* Elimina encabezados/pies automáticos del navegador (URL, fecha, página 1/2) */
           }
           html, body {
-            width: 11in !important;
-            height: 8.5in !important;
-            max-height: 8.5in !important;
+            width: 100% !important;
+            height: 100% !important;
+            max-height: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
             background: #ffffff !important;
@@ -207,32 +207,31 @@ export default function RecetaMedicaPrint({ receta, duplicar = false }) {
             visibility: visible !important;
           }
           #receta-medica-print {
-            display: flex !important;
-            flex-direction: row !important;
+            display: block !important;
             position: fixed !important;
             left: 0 !important;
             top: 0 !important;
-            width: 11in !important;
-            height: 8.45in !important;
-            max-height: 8.45in !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
             box-sizing: border-box !important;
-            padding: 0 !important;
+            padding: 10mm 15mm 10mm 15mm !important;
             margin: 0 !important;
             background: #ffffff !important;
             overflow: hidden !important;
             page-break-after: avoid !important;
             page-break-before: avoid !important;
             page-break-inside: avoid !important;
+            break-after: avoid !important;
+            break-inside: avoid !important;
           }
 
-          /* Media Carta Individual (5.5in de ancho x 8.45in de alto) */
-          .receta-half-sheet {
-            width: 5.5in !important;
-            max-width: 5.5in !important;
-            height: 8.45in !important;
-            max-height: 8.45in !important;
+          /* Hoja Completa Vertical Ajustada Estrictamente a 1 Página */
+          .receta-full-sheet {
+            width: 100% !important;
+            height: 100% !important;
+            max-height: 100% !important;
             box-sizing: border-box !important;
-            padding: 8mm 12mm 8mm 12mm !important;
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
@@ -242,16 +241,7 @@ export default function RecetaMedicaPrint({ receta, duplicar = false }) {
             overflow: hidden !important;
             page-break-after: avoid !important;
             page-break-inside: avoid !important;
-          }
-
-          .receta-half-sheet-empty {
-            width: 5.5in !important;
-            max-width: 5.5in !important;
-            height: 8.45in !important;
-            max-height: 8.45in !important;
-            box-sizing: border-box !important;
-            background: transparent !important;
-            overflow: hidden !important;
+            break-inside: avoid !important;
           }
 
           /* Encabezado */
@@ -259,37 +249,37 @@ export default function RecetaMedicaPrint({ receta, duplicar = false }) {
             display: flex !important;
             align-items: center !important;
             justify-content: space-between !important;
-            padding-bottom: 6px !important;
-            border-bottom: 1.5px solid #000000 !important;
-            margin-bottom: 12px !important;
+            padding-bottom: 8px !important;
+            border-bottom: 2px solid #000000 !important;
+            margin-bottom: 14px !important;
           }
           .receta-logo-col {
-            width: 70px !important;
-            height: 70px !important;
+            width: 75px !important;
+            height: 75px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
           }
           .receta-logo-img {
-            width: 65px !important;
-            height: 65px !important;
+            width: 70px !important;
+            height: 70px !important;
             object-fit: contain !important;
           }
           .receta-info-col {
             text-align: right !important;
             flex: 1 !important;
-            padding-left: 10px !important;
+            padding-left: 12px !important;
           }
           .receta-clinica-title {
             margin: 0 0 2px !important;
-            font-size: 16px !important;
+            font-size: 18px !important;
             font-weight: 800 !important;
             color: #000000 !important;
             letter-spacing: -0.01em !important;
           }
           .receta-clinica-sub {
             margin: 0 !important;
-            font-size: 11px !important;
+            font-size: 12px !important;
             color: #111111 !important;
             line-height: 1.3 !important;
           }
@@ -298,13 +288,13 @@ export default function RecetaMedicaPrint({ receta, duplicar = false }) {
           }
           .receta-clinica-sub.italic {
             font-style: italic !important;
-            font-size: 9.5px !important;
+            font-size: 10.5px !important;
             color: #333333 !important;
           }
 
           /* Datos Paciente y Fecha con línea continua */
           .receta-patient-section {
-            margin-bottom: 12px !important;
+            margin-bottom: 14px !important;
             padding-bottom: 4px !important;
             border-bottom: 1px solid #000000 !important;
           }
@@ -312,11 +302,11 @@ export default function RecetaMedicaPrint({ receta, duplicar = false }) {
             display: flex !important;
             align-items: flex-end !important;
             margin-bottom: 8px !important;
-            font-size: 13.5px !important;
+            font-size: 14px !important;
           }
           .receta-data-label {
             font-weight: 700 !important;
-            width: 65px !important;
+            width: 70px !important;
             color: #000000 !important;
             flex-shrink: 0 !important;
           }
@@ -332,14 +322,14 @@ export default function RecetaMedicaPrint({ receta, duplicar = false }) {
             text-transform: capitalize !important;
           }
 
-          /* Indicaciones Generales del Médico (justo abajo de Nombre) */
+          /* Indicaciones Generales del Médico */
           .receta-observaciones {
-            margin-bottom: 12px !important;
-            padding: 6px 10px !important;
+            margin-bottom: 14px !important;
+            padding: 8px 12px !important;
             background: #fafafa !important;
             border: 1px dashed #64748b !important;
             border-radius: 4px !important;
-            font-size: 11px !important;
+            font-size: 12px !important;
             line-height: 1.4 !important;
           }
           .receta-obs-prefix {
@@ -356,12 +346,12 @@ export default function RecetaMedicaPrint({ receta, duplicar = false }) {
           /* Lista de Medicamentos Prescritos */
           .receta-body-section {
             flex: 1 !important;
-            margin-bottom: 12px !important;
+            margin-bottom: 14px !important;
           }
           .receta-meds-list {
             display: flex !important;
             flex-direction: column !important;
-            gap: 10px !important;
+            gap: 12px !important;
           }
           .receta-med-item {
             padding-bottom: 4px !important;
@@ -370,7 +360,7 @@ export default function RecetaMedicaPrint({ receta, duplicar = false }) {
             display: flex !important;
             align-items: baseline !important;
             gap: 6px !important;
-            font-size: 13.5px !important;
+            font-size: 14px !important;
           }
           .receta-med-index {
             font-weight: 800 !important;
@@ -383,13 +373,13 @@ export default function RecetaMedicaPrint({ receta, duplicar = false }) {
             flex: 1 !important;
           }
           .receta-med-qty {
-            font-size: 12px !important;
+            font-size: 12.5px !important;
             font-weight: 700 !important;
             color: #222222 !important;
             margin-left: 8px !important;
           }
           .receta-med-uso {
-            font-size: 12px !important;
+            font-size: 12.5px !important;
             margin-top: 3px !important;
             padding-left: 14px !important;
             line-height: 1.4 !important;
@@ -404,17 +394,17 @@ export default function RecetaMedicaPrint({ receta, duplicar = false }) {
           .receta-empty-meds {
             font-style: italic !important;
             color: #666666 !important;
-            font-size: 12.5px !important;
+            font-size: 13px !important;
             margin: 6px 0 !important;
           }
 
           /* Pie de Receta: Firma Médico + Datos de Contacto */
           .receta-footer-section {
             margin-top: auto !important;
-            padding-top: 10px !important;
+            padding-top: 12px !important;
           }
           .receta-signature-block {
-            width: 220px !important;
+            width: 240px !important;
             margin: 0 auto 12px !important;
             text-align: center !important;
           }
@@ -430,13 +420,13 @@ export default function RecetaMedicaPrint({ receta, duplicar = false }) {
           }
           .receta-signature-doctor {
             display: block !important;
-            font-size: 11px !important;
+            font-size: 11.5px !important;
             color: #222222 !important;
             margin-top: 2px !important;
           }
           .receta-contact-note {
             text-align: center !important;
-            font-size: 9.5px !important;
+            font-size: 10px !important;
             color: #333333 !important;
             line-height: 1.35 !important;
             border-top: 1px solid #cccccc !important;
@@ -454,17 +444,9 @@ export default function RecetaMedicaPrint({ receta, duplicar = false }) {
         }
       `}</style>
 
-      {/* Contenedor Imprimible: Hoja Carta Horizontal (11in x 8.5in) */}
+      {/* Contenedor Imprimible: Hoja Carta Vertical Completa (8.5in x 11in) - Exactamente 1 Página */}
       <div id="receta-medica-print">
-        {/* Mitad Izquierda (Media Carta 5.5in x 8.5in) */}
         <BoletaReceta receta={receta} medicamentos={medicamentos} />
-
-        {/* Mitad Derecha: Si duplicar = true, imprime 2da boleta; sino queda vacía para usar la mitad restante */}
-        {duplicar ? (
-          <BoletaReceta receta={receta} medicamentos={medicamentos} />
-        ) : (
-          <div className="receta-half-sheet-empty" />
-        )}
       </div>
     </>
   );

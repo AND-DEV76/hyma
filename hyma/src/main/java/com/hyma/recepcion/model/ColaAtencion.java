@@ -38,6 +38,9 @@ public class ColaAtencion {
     @Column(name = "prioridad")
     private Integer prioridad;
 
+    @Column(name = "fecha_prioridad")
+    private LocalDateTime fechaPrioridad;
+
     @Column(name = "fecha_atencion")
     private LocalDateTime fechaAtencion;
 
@@ -53,6 +56,10 @@ public class ColaAtencion {
 
         if (prioridad == null) {
             prioridad = 0;
+        }
+
+        if (prioridad > 0 && fechaPrioridad == null) {
+            fechaPrioridad = LocalDateTime.now();
         }
     }
 }

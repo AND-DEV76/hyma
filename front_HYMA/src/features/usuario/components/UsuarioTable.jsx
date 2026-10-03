@@ -1,7 +1,7 @@
 import React from 'react';
 import { UserX, Pencil, Trash2 } from 'lucide-react';
 
-export default function UsuarioTable({ usuarios, onEdit, onDelete }) {
+export default function UsuarioTable({ usuarios, onEdit, onDelete, onToggleEstado }) {
   if (!usuarios || usuarios.length === 0) {
     return (
       <div className="usuarios-empty">
@@ -26,6 +26,8 @@ export default function UsuarioTable({ usuarios, onEdit, onDelete }) {
         return 'usuarios-role-enfermera';
       case 'FARMACIA':
         return 'usuarios-role-farmacia';
+      case 'SOCIAL':
+        return 'usuarios-role-social';
       default:
         return 'usuarios-role-default';
     }
@@ -81,12 +83,22 @@ export default function UsuarioTable({ usuarios, onEdit, onDelete }) {
                     </div>
                   </td>
 
-                  {/* Estado */}
+                  {/* Estado con Botón Switch de Activación / Desactivación */}
                   <td className="usuarios-td">
-                    <span className={`usuarios-status-badge ${u.estado ? 'activo' : 'inactivo'}`}>
-                      <span className="usuarios-status-dot" />
-                      {u.estado ? 'Activo' : 'Inactivo'}
-                    </span>
+                    <div className="usuarios-switch-wrapper">
+                      <label className="usuarios-switch-label" title={u.estado ? 'Clic para desactivar' : 'Clic para activar'}>
+                        <input
+                          type="checkbox"
+                          className="usuarios-switch-input"
+                          checked={Boolean(u.estado)}
+                          onChange={() => onToggleEstado && onToggleEstado(u.idUsuario, !u.estado)}
+                        />
+                        <span className="usuarios-switch-slider"></span>
+                      </label>
+                      <span className={`usuarios-status-text ${u.estado ? 'activo' : 'inactivo'}`}>
+                        {u.estado ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </div>
                   </td>
 
                   {/* Acciones */}

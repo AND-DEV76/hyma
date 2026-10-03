@@ -324,13 +324,92 @@
   border: 1px solid #fde68a;
 }
 
+.usuarios-role-social {
+  background: #e0f2fe;
+  color: #0284c7;
+  border: 1px solid #bae6fd;
+}
+
 .usuarios-role-default {
   background: #f1f5f9;
   color: #475569;
   border: 1px solid #e2e8f0;
 }
 
-/* Badges de Estado */
+/* Badges y Switch de Estado */
+.usuarios-switch-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.usuarios-switch-label {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 22px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.usuarios-switch-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.usuarios-switch-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1;
+  transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 22px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.usuarios-switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.usuarios-switch-input:checked + .usuarios-switch-slider {
+  background-color: #10b981;
+}
+
+.usuarios-switch-input:checked + .usuarios-switch-slider:before {
+  transform: translateX(16px);
+}
+
+.usuarios-switch-input:focus + .usuarios-switch-slider {
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+}
+
+.usuarios-status-text {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.usuarios-status-text.activo {
+  color: #059669;
+}
+
+.usuarios-status-text.inactivo {
+  color: #94a3b8;
+}
+
 .usuarios-status-badge {
   display: inline-flex;
   align-items: center;

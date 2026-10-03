@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Stethoscope, Trash2, AlertCircle, RefreshCw, AlertTriangle, X, Loader2, Activity } from 'lucide-react';
+import { Clock, Stethoscope, Trash2, AlertCircle, RefreshCw, AlertTriangle, X, Loader2, Activity, ArrowUpToLine, ArrowDownToLine, Zap, ChevronDown, ChevronUp } from 'lucide-react';
 import { useClinica } from '../hooks/useClinica';
 import { evaluarTriajePaciente } from '../utils/triajeSignosVitales';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
@@ -9,9 +9,18 @@ import '../styles/clinica.css';
 
 export default function ClinicaPage() {
   const navigate = useNavigate();
-  const { cola, loading, error, cargarCola, cancelarAtencion } = useClinica();
+  const { cola, loading, error, cargarCola, cancelarAtencion, cambiarPrioridad } = useClinica();
   const [pacienteAEliminar, setPacienteAEliminar] = useState(null);
   const [eliminando, setEliminando] = useState(false);
+  const [priorizandoId, setPriorizandoId] = useState(null);
+  const [signosExpandidos, setSignosExpandidos] = useState({});
+
+  const toggleSignos = (idCola) => {
+    setSignosExpandidos((prev) => ({
+      ...prev,
+      [idCola]: !prev[idCola],
+    }));
+  };
 
   // Obtener roles del usuario actual
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -49,6 +58,17 @@ export default function ClinicaPage() {
 
   const handleAtender = (idPaciente, idCola) => {
     navigate('/clinica/atencion?idPaciente=' + idPaciente + '&idCola=' + idCola);
+  };
+
+  const handleTogglePrioridad = async (item) => {
+    if (priorizandoId) return;
+    setPriorizandoId(item.idCola);
+    try {
+      const nuevaPrioridad = item.prioridad === 1 ? 0 : 1;
+      await cambiarPrioridad(item.idCola, nuevaPrioridad);
+    } finally {
+      setPriorizandoId(null);
+    }
   };
 
   const handleConfirmarEliminar = async () => {
@@ -146,75 +166,154 @@ export default function ClinicaPage() {
         ) : (
           <div style={styles.patientList}>
             {cola.map((item) => {
+              const isPrioritario = item.prioridad === 1;
               const triaje = evaluarTriajePaciente(item.ultimoSignoVital);
 
               return (
-                <div key={item.idCola} className="clinica-patient-card" style={styles.patientCard}>
-                  <div className="clinica-card-top-row" style={styles.cardTopRow}>
-                    {/* Avatar USER.PNG */}
-                    <div style={styles.avatarContainer}>
-                      <img src={userImg} alt="Avatar Paciente" style={styles.avatarImg} />
-                    </div>
+                <div
+                  key={item.idCola}
+                  className="clinica-patient-card"
+                  style={{
+                    ...styles.patientCard,
+                    borderLeft: isPrioritario ? '4px solid #ef4444' : '1px solid #e2e8f0',
+                    boxShadow: isPrioritario ? '0 2px 8px rgba(239, 68, 68, 0.08)' : styles.patientCard.boxShadow,
+                  }}
+                >
+                  {/* RECTÁNGULO AZUL: Columna/Botón lateral izquierdo para Subir Prioridad */}
+                  <button
+                    type="button"
+                    onClick={() => handleTogglePrioridad(item)}
+                    disabled={priorizandoId === item.idCola}
+                    className={`clinica-btn-prioridad-lateral ${isPrioritario ? 'prioridad-activa' : ''}`}
+                    title={
+                      isPrioritario
+                        ? 'Paciente prioritario (Prioridad 1) — Clic para bajar a prioridad normal'
+                        : 'Subir paciente al primer lugar (Asignar Prioridad 1)'
+                    }
+                  >
+                    {priorizandoId === item.idCola ? (
+                      <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                    ) : isPrioritario ? (
+                      <ArrowDownToLine size={20} />
+                    ) : (
+                      <ArrowUpToLine size={20} />
+                    )}
+                  </button>
 
-                    {/* Separator | */}
-                    <div className="clinica-card-divider" style={styles.divider} />
-
-                    {/* Paciente: Nombre, Estado, Badge Triaje y Signos Vitales */}
-                    <div className="clinica-card-info" style={styles.infoCol}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        <h3 style={styles.patientName}>
-                          {item.nombresPaciente} {item.apellidosPaciente}
-                        </h3>
-                        <span
-                          style={{
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            backgroundColor: item.estado === 'EN_CONSULTA' ? '#dcfce7' : '#e0f2fe',
-                            color: item.estado === 'EN_CONSULTA' ? '#166534' : '#0369a1',
-                            border: `1px solid ${item.estado === 'EN_CONSULTA' ? '#bbf7d0' : '#bae6fd'}`,
-                          }}
-                        >
-                          {item.estado === 'EN_CONSULTA' ? 'EN CONSULTA' : 'ESPERA CONSULTA'}
-                        </span>
-
-                        {/* Badge de Estado General (Prioridad Máxima) */}
-                        {triaje.tieneSignos && (
-                          <span
-                            className={`clinica-badge-triaje ${triaje.estadoGeneral.toLowerCase()}`}
-                            title={
-                              triaje.alertas.length > 0
-                                ? `Alertas: ${triaje.alertas.map((a) => `${a.signo} (${a.label})`).join(', ')}`
-                                : 'Todos los signos vitales registrados están en rango normal'
-                            }
-                          >
-                            <span
-                              className="clinica-triaje-dot"
-                              style={{ backgroundColor: triaje.badge.dot }}
-                            />
-                            {triaje.badge.text}
-                          </span>
-                        )}
+                  {/* Contenedor Principal de la Tarjeta */}
+                  <div className="clinica-card-main-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                    {/* Fila Superior: Avatar + Datos + Acciones */}
+                    <div className="clinica-card-upper-row">
+                      {/* Avatar USER.PNG */}
+                      <div style={styles.avatarContainer}>
+                        <img src={userImg} alt="Avatar Paciente" style={styles.avatarImg} />
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginTop: '2px' }}>
-                        <div style={styles.horaBadge}>
-                          <Clock size={14} color="#0077b6" />
-                          <span style={styles.horaText}>
-                            Hora: <strong>{formatHora(item.fechaIngreso)}</strong>
+                      {/* Separator | */}
+                      <div className="clinica-card-divider" style={styles.divider} />
+
+                      {/* Paciente: Nombre, Estado, Badge Triaje y Signos Vitales */}
+                      <div className="clinica-card-info" style={styles.infoCol}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <h3 style={styles.patientName}>
+                            {item.nombresPaciente} {item.apellidosPaciente}
+                          </h3>
+
+                          {/* Badge de Prioridad Alta si aplica */}
+                          {isPrioritario && (
+                            <span className="clinica-badge-prioridad-alta" title="Paciente en atención prioritaria">
+                              <Zap size={11} /> PRIORITARIO
+                            </span>
+                          )}
+
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              backgroundColor: item.estado === 'EN_CONSULTA' ? '#dcfce7' : '#e0f2fe',
+                              color: item.estado === 'EN_CONSULTA' ? '#166534' : '#0369a1',
+                              border: `1px solid ${item.estado === 'EN_CONSULTA' ? '#bbf7d0' : '#bae6fd'}`,
+                            }}
+                          >
+                            {item.estado === 'EN_CONSULTA' ? 'EN CONSULTA' : 'ESPERA CONSULTA'}
                           </span>
+
+                          {/* Badge de Estado General (Prioridad Máxima) */}
+                          {triaje.tieneSignos && (
+                            <span
+                              className={`clinica-badge-triaje ${triaje.estadoGeneral.toLowerCase()}`}
+                              title={
+                                triaje.alertas.length > 0
+                                  ? `Alertas: ${triaje.alertas.map((a) => `${a.signo} (${a.label})`).join(', ')}`
+                                  : 'Todos los signos vitales registrados están en rango normal'
+                              }
+                            >
+                              <span
+                                className="clinica-triaje-dot"
+                                style={{ backgroundColor: triaje.badge.dot }}
+                              />
+                              {triaje.badge.text}
+                            </span>
+                          )}
                         </div>
 
-                        {triaje.alertas.length > 0 && (
-                          <span style={{ fontSize: '12px', color: triaje.badge.color, fontWeight: 600 }}>
-                            ⚠️ {triaje.alertas.length} {triaje.alertas.length === 1 ? 'signo en alerta' : 'signos en alerta'} ({triaje.alertas.map((a) => a.signo).join(', ')})
-                          </span>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginTop: '4px' }}>
+                          <div style={styles.horaBadge}>
+                            <Clock size={14} color="#0077b6" />
+                            <span style={styles.horaText}>
+                              Hora: <strong>{formatHora(item.fechaIngreso)}</strong>
+                            </span>
+                          </div>
+
+                          {triaje.alertas.length > 0 && (
+                            <span style={{ fontSize: '12px', color: triaje.badge.color, fontWeight: 600 }}>
+                              ⚠️ {triaje.alertas.length} {triaje.alertas.length === 1 ? 'signo en alerta' : 'signos en alerta'}
+                            </span>
+                          )}
+
+                          {triaje.tieneSignos && (
+                            <button
+                              type="button"
+                              onClick={() => toggleSignos(item.idCola)}
+                              className="clinica-btn-toggle-signos"
+                              title={signosExpandidos[item.idCola] ? 'Ocultar signos vitales' : 'Ver signos vitales detallados'}
+                            >
+                              <span>{signosExpandidos[item.idCola] ? 'Ocultar signos' : 'Ver signos vitales'}</span>
+                              {signosExpandidos[item.idCola] ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                            </button>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Desglose de Signos Vitales (Odoo style chips) */}
-                      <div className="clinica-vitals-container">
+                      {/* Opciones: Atender (solo Médico/Admin) y Eliminar */}
+                      <div className="clinica-card-actions" style={styles.actionsCol}>
+                        {canAtender && (
+                          <button
+                            onClick={() => handleAtender(item.idPaciente, item.idCola)}
+                            style={styles.btnAtender}
+                            title="Iniciar atención médica"
+                          >
+                            <Stethoscope size={16} />
+                            <span>Atender</span>
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => setPacienteAEliminar(item)}
+                          style={styles.btnEliminar}
+                          title="Eliminar de la cola de espera"
+                        >
+                          <Trash2 size={16} />
+                          <span>Eliminar</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* RECTÁNGULO VERDE: Desglose de Signos Vitales (Oculto por defecto, desplegable a todo el ancho abajo) */}
+                    {signosExpandidos[item.idCola] && (
+                      <div className="clinica-vitals-bottom-panel">
                         <div className="clinica-vitals-chips-row">
                           {triaje.chips.length > 0 ? (
                             triaje.chips.map((chip, idx) => (
@@ -234,30 +333,7 @@ export default function ClinicaPage() {
                           )}
                         </div>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Opciones: Atender (solo Médico/Admin) y Eliminar */}
-                  <div className="clinica-card-actions" style={styles.actionsCol}>
-                    {canAtender && (
-                      <button
-                        onClick={() => handleAtender(item.idPaciente, item.idCola)}
-                        style={styles.btnAtender}
-                        title="Iniciar atención médica"
-                      >
-                        <Stethoscope size={16} />
-                        <span>Atender</span>
-                      </button>
                     )}
-
-                    <button
-                      onClick={() => setPacienteAEliminar(item)}
-                      style={styles.btnEliminar}
-                      title="Eliminar de la cola de espera"
-                    >
-                      <Trash2 size={16} />
-                      <span>Eliminar</span>
-                    </button>
                   </div>
                 </div>
               );
@@ -439,12 +515,13 @@ const styles = {
     background: 'white',
     borderRadius: '10px',
     border: '1px solid #e2e8f0',
-    padding: '16px 22px',
+    padding: 0,
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: 'row',
+    alignItems: 'stretch',
     boxShadow: '0 2px 5px rgba(0, 0, 0, 0.03)',
     transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
+    overflow: 'hidden',
   },
   cardTopRow: {
     display: 'flex',

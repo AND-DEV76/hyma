@@ -43,6 +43,13 @@ private final UsuarioService usuarioService;
         return ResponseEntity.ok(usuarioService.update(id, request));
     }
 
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<UsuarioResponse> updateEstado(
+            @PathVariable("id") Long id,
+            @RequestParam("estado") Boolean estado) {
+        return ResponseEntity.ok(usuarioService.updateEstado(id, estado));
+    }
+
     // Agregamos ("id") explícitamente a @PathVariable
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable("id") Long id) {

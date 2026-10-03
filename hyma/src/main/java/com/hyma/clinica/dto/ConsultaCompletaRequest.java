@@ -31,4 +31,7 @@ public class ConsultaCompletaRequest {
 
     @Valid
     private TratamientoRequest tratamiento;
+
+    @Valid
+    private com.hyma.social.dto.ReferenciaMedicaRequest referenciaMedica;
 }

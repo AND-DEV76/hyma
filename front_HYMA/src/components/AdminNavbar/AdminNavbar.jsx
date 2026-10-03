@@ -55,6 +55,7 @@ export default function AdminNavbar({ onBeforeNavigate }) {
   const isEnfermera = hasRole('ENFERMERA');
   const isFarmacia = hasRole('FARMACIA');
   const isMedico = hasRole('MEDICO');
+  const isSocial = hasRole('SOCIAL');
 
   // Sincronizar CSS variable en :root y body class
   useEffect(() => {
@@ -92,6 +93,7 @@ export default function AdminNavbar({ onBeforeNavigate }) {
 
   const isActive = (path) => {
     if (path === '/dashboard') return location.pathname.startsWith('/dashboard');
+    if (path === '/social') return location.pathname.startsWith('/social');
     if (path === '/farmacia') {
       return (
         location.pathname.startsWith('/farmacia') &&
@@ -154,6 +156,12 @@ export default function AdminNavbar({ onBeforeNavigate }) {
       path: '/farmacia',
       icon: Pill,
       show: isAdmin || isFarmacia,
+    },
+    {
+      label: 'Trabajo Social',
+      path: '/social',
+      icon: Users,
+      show: isAdmin || isSocial,
     },
     {
       label: 'Reportes',

@@ -10,6 +10,7 @@ function RedirectHome() {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   if (user.nombreRol === 'MEDICO') return <Navigate to="/clinica" replace />;
   if (user.nombreRol === 'ENFERMERA') return <Navigate to="/recepcion" replace />;
+  if (user.nombreRol === 'SOCIAL') return <Navigate to="/social" replace />;
   return <Navigate to="/dashboard" replace />;
 }
 import RecepcionPage from './features/recepcion/pages/RecepcionPage';
@@ -40,6 +41,10 @@ import InventarioFarmaciaReportePage from './features/reportes/pages/InventarioF
 import HospitalDashboardPage from './features/reportes/pages/HospitalDashboardPage';
 import TarifasPage from './features/tarifa/pages/TarifasPage';
 import ConfiguracionPage from './features/configuracion/pages/ConfiguracionPage';
+
+import SocialPortalPage from './features/social/pages/SocialPortalPage';
+import DashboardReferenciasPage from './features/social/pages/DashboardReferenciasPage';
+import ExpedientesSocialPage from './features/social/pages/ExpedientesSocialPage';
 
 function App() {
   return (
@@ -86,6 +91,12 @@ function App() {
             <Route path="/reportes/casos-especiales" element={<CasosEspecialesPage />} />
             <Route path="/tarifas" element={<TarifasPage />} />
             <Route path="/configuracion" element={<ConfiguracionPage />} />
+            
+            {/* TRABAJO SOCIAL */}
+            <Route path="/social" element={<SocialPortalPage />} />
+            <Route path="/social/dashboard-referencias" element={<DashboardReferenciasPage />} />
+            <Route path="/social/expedientes" element={<ExpedientesSocialPage />} />
+
             <Route path="*" element={<NotFoundPage />} />
           </AppRoutes>
         } />

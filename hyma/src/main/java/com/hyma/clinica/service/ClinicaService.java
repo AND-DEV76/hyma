@@ -52,6 +52,8 @@ public class ClinicaService {
     private final SignoVitalMapper signoVitalMapper;
     private final PacienteMapper pacienteMapper;
     private final TarifaServicioService tarifaServicioService;
+    private final com.hyma.social.repository.EspecialidadReferenciaRepository especialidadReferenciaRepository;
+    private final com.hyma.social.repository.ReferenciaMedicaRepository referenciaMedicaRepository;
 
     @Transactional
     public PacienteConsultaResponse obtenerDatosPacienteParaConsulta(Long idPaciente, Long idCola) {
@@ -271,7 +273,29 @@ public class ClinicaService {
             }
         }
 
-        // 6. Actualizar Cola de Atención
+        // 6. Crear Referencia Médica (si aplica)
+        if (request.getReferenciaMedica() != null && request.getReferenciaMedica().getIdEspecialidad() != null) {
+            com.hyma.social.model.EspecialidadReferencia esp = especialidadReferenciaRepository
+                    .findById(request.getReferenciaMedica().getIdEspecialidad())
+                    .orElse(null);
+            if (esp != null) {
+                String motivo = request.getReferenciaMedica().getMotivoReferencia();
+                if (motivo != null && motivo.length() > 300) {
+                    motivo = motivo.substring(0, 300);
+                }
+                com.hyma.social.model.ReferenciaMedica ref = com.hyma.social.model.ReferenciaMedica.builder()
+                        .consulta(consulta)
+                        .paciente(paciente)
+                        .especialidad(esp)
+                        .medico(medico)
+                        .fechaReferencia(LocalDateTime.now())
+                        .motivoReferencia(motivo)
+                        .build();
+                referenciaMedicaRepository.save(ref);
+            }
+        }
+
+        // 7. Actualizar Cola de Atención
         cola.setEstado(EstadoCola.EN_FARMACIA);
         cola.setFechaAtencion(LocalDateTime.now());
         colaAtencionRepository.save(cola);
