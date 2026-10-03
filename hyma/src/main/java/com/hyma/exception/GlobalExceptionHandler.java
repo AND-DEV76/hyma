@@ -75,8 +75,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
-        String message = "No se puede eliminar o modificar el registro porque está relacionado con otros datos en el sistema.";
+        String message = "No se puede completar la operación debido a una restricción en la base de datos.";
         String rootMsg = ex.getRootCause() != null ? ex.getRootCause().getMessage() : ex.getMessage();
+        log.error("DataIntegrityViolationException: ", ex);
         if (rootMsg != null) {
             String lower = rootMsg.toLowerCase();
             if (lower.contains("categoria_medicamento") || lower.contains("categoria")) {
@@ -85,6 +86,8 @@ public class GlobalExceptionHandler {
                 message = "No se puede eliminar la casa farmacéutica porque ya está asociada a uno o más medicamentos registrados.";
             } else if (lower.contains("medicamento")) {
                 message = "No se puede eliminar el medicamento porque ya cuenta con registros relacionados en el inventario o recetas.";
+            } else if (lower.contains("chk_cola_estado") || lower.contains("cola_atencion_estado_check")) {
+                message = "Restricción de estado en la cola de atención (chk_cola_estado). Asegúrese de permitir ESPERA_CONSULTA en la base de datos.";
             }
         }
         return buildErrorResponse(HttpStatus.CONFLICT, message);

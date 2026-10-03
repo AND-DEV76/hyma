@@ -77,17 +77,32 @@ public class PreconsultaService {
         Paciente paciente = pacienteRepository.findById(request.getIdPaciente())
                 .orElseThrow(() -> new PacienteNotFoundException(request.getIdPaciente()));
 
-        ColaAtencion colaActual = colaAtencionRepository.findById(request.getIdCola())
-                .orElseThrow(() -> new ColaAtencionNotFoundException(request.getIdCola()));
-        if (!colaActual.getPaciente().getIdPaciente().equals(paciente.getIdPaciente())) {
-            throw new com.hyma.exception.EstadoColaInvalidoException(
-                    "El turno indicado no corresponde al paciente de los signos vitales"
-            );
+        ColaAtencion colaActual = null;
+        if (request.getIdCola() != null) {
+            colaActual = colaAtencionRepository.findById(request.getIdCola())
+                    .orElse(null);
+            if (colaActual != null && !colaActual.getPaciente().getIdPaciente().equals(paciente.getIdPaciente())) {
+                throw new com.hyma.exception.EstadoColaInvalidoException(
+                        "El turno indicado no corresponde al paciente de los signos vitales"
+                );
+            }
         }
-        if (colaActual.getEstado() != EstadoCola.EN_PRECONSULTA) {
-            throw new com.hyma.exception.EstadoColaInvalidoException(
-                    "Los signos vitales solo se pueden registrar para un turno EN_PRECONSULTA"
-            );
+
+        // Si no se encontró por ID directo, buscar turno activo del paciente
+        if (colaActual == null) {
+            List<ColaAtencion> turnosActivos = colaAtencionRepository.findByEstadoOrderByFechaIngresoAsc(EstadoCola.EN_PRECONSULTA);
+            colaActual = turnosActivos.stream()
+                    .filter(c -> c.getPaciente().getIdPaciente().equals(paciente.getIdPaciente()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (colaActual == null) {
+                List<ColaAtencion> turnosPendientes = colaAtencionRepository.findByEstadoOrderByFechaIngresoAsc(EstadoCola.PENDIENTE);
+                colaActual = turnosPendientes.stream()
+                        .filter(c -> c.getPaciente().getIdPaciente().equals(paciente.getIdPaciente()))
+                        .findFirst()
+                        .orElse(null);
+            }
         }
 
         // 2. Mapear y guardar la entidad SignoVital
@@ -95,22 +110,9 @@ public class PreconsultaService {
         SignoVital guardado = signoVitalRepository.save(signoVital);
 
         // 3. Transicionar el turno de atención a 'ESPERA_CONSULTA'
-        if (request.getIdCola() != null) {
-            colaAtencionRepository.findById(request.getIdCola())
-                    .ifPresent(cola -> {
-                        cola.setEstado(EstadoCola.ESPERA_CONSULTA);
-                        colaAtencionRepository.save(cola);
-                    });
-        } else {
-            // Si no se pasó idCola directamente, buscar si el paciente tiene un turno activo en preconsulta o pendiente
-            List<ColaAtencion> turnosActivos = colaAtencionRepository.findByEstadoOrderByFechaIngresoAsc(EstadoCola.EN_PRECONSULTA);
-            turnosActivos.stream()
-                    .filter(c -> c.getPaciente().getIdPaciente().equals(paciente.getIdPaciente()))
-                    .findFirst()
-                    .ifPresent(cola -> {
-                        cola.setEstado(EstadoCola.ESPERA_CONSULTA);
-                        colaAtencionRepository.save(cola);
-                    });
+        if (colaActual != null) {
+            colaActual.setEstado(EstadoCola.ESPERA_CONSULTA);
+            colaAtencionRepository.save(colaActual);
         }
 
         return signoVitalMapper.toResponse(guardado);
