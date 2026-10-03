@@ -636,58 +636,47 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* Badge General de Triaje */
-.clinica-badge-triaje {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 9px;
-  border-radius: 12px;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-
-.clinica-badge-triaje.rojo {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fca5a5;
-}
-
-.clinica-badge-triaje.azul {
-  background: #e0f2fe;
-  color: #0369a1;
-  border: 1px solid #7dd3fc;
-}
-
-.clinica-badge-triaje.amarillo {
-  background: #fef3c7;
-  color: #92400e;
-  border: 1px solid #fde68a;
-}
-
-.clinica-badge-triaje.normal {
-  background: #f0fdf4;
-  color: #166534;
-  border: 1px solid #bbf7d0;
-}
-
-.clinica-badge-triaje.sin-registro {
-  background: #f1f5f9;
-  color: #64748b;
-  border: 1px solid #cbd5e1;
-}
-
 /* ==========================================================
-   ESTILOS DE PRIORIZACIÓN DE PACIENTES (RECTÁNGULO AZUL LATERAL)
+   NUEVO DISEÑO LIMPIO Y ELEGANTE DE TARJETA (CLINICA)
    ========================================================== */
-.clinica-btn-prioridad-lateral {
-  width: 48px;
-  min-height: 100%;
+.clinica-patient-card-clean {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(3, 4, 94, 0.04);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+  margin-bottom: 12px;
+}
+
+.clinica-patient-card-clean:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(3, 4, 94, 0.06);
+}
+
+.clinica-patient-card-clean.prioritario {
+  border-left: 5px solid #ef4444 !important;
+  box-shadow: 0 3px 12px rgba(239, 68, 68, 0.09) !important;
+}
+
+.clinica-clean-main-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.clinica-clean-btn-prioridad {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   background: #f0f9ff;
-  border: none;
-  border-right: 1px solid #bae6fd;
+  border: 1.5px solid #bae6fd;
   color: #0284c7;
   display: flex;
   align-items: center;
@@ -695,39 +684,280 @@
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  outline: none;
 }
 
-.clinica-btn-prioridad-lateral:hover {
+.clinica-clean-btn-prioridad:hover {
   background: #0284c7;
-  border-color: #0284c7;
   color: #ffffff;
+  border-color: #0284c7;
 }
 
-.clinica-btn-prioridad-lateral.prioridad-activa {
+.clinica-clean-btn-prioridad.activa {
   background: #fee2e2;
-  border-right-color: #fca5a5;
+  border-color: #fca5a5;
   color: #dc2626;
 }
 
-.clinica-btn-prioridad-lateral.prioridad-activa:hover {
+.clinica-clean-btn-prioridad.activa:hover {
   background: #dc2626;
-  border-color: #dc2626;
   color: #ffffff;
+  border-color: #dc2626;
+}
+
+.clinica-clean-avatar-box {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #e0f2fe;
+  border: 2px solid #bae6fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.clinica-clean-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.clinica-clean-name-box {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 200px;
+}
+
+.clinica-clean-name {
+  margin: 0;
+  color: #03045e;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.clinica-clean-hora {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.clinica-clean-divider {
+  width: 1px;
+  height: 36px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+
+.clinica-clean-badges-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+/* Badges estilizados como en la imagen */
+.clinica-badge-triaje-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.clinica-badge-triaje-pill.rojo {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1.5px solid #fca5a5;
+}
+
+.clinica-badge-triaje-pill.azul {
+  background: #e0f2fe;
+  color: #0284c7;
+  border: 1.5px solid #7dd3fc;
+}
+
+.clinica-badge-triaje-pill.amarillo {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1.5px solid #fcd34d;
+}
+
+.clinica-badge-triaje-pill.normal {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1.5px solid #bbf7d0;
+}
+
+.clinica-badge-triaje-pill.sin-registro {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1.5px solid #cbd5e1;
+}
+
+.clinica-clean-state-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.clinica-clean-state-badge.espera-consulta {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.clinica-clean-state-badge.en-consulta {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.clinica-clean-actions-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.clinica-clean-btn-atender {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0f9ff;
+  color: #0284c7;
+  border: 1.5px solid #bae6fd;
+  padding: 7px 18px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clinica-clean-btn-atender:hover {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+}
+
+.clinica-clean-btn-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #0284c7;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clinica-clean-btn-chevron:hover {
+  background: #f1f5f9;
+  color: #03045e;
+}
+
+.clinica-clean-btn-chevron.rotated {
+  transform: rotate(90deg);
+  color: #03045e;
+  background: #e0f2fe;
+}
+
+/* Drawer desplegable */
+.clinica-clean-drawer {
+  background: #f8fafc;
+  border-top: 1px dashed #cbd5e1;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  animation: drawerFadeIn 0.2s ease-out;
+}
+
+.clinica-clean-drawer-vitals {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.clinica-clean-drawer-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.clinica-clean-btn-eliminar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.clinica-clean-btn-eliminar:hover {
+  background: #e11d48;
+  color: #ffffff;
+  border-color: #e11d48;
+}
+
+@keyframes drawerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .clinica-badge-prioridad-alta {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   background: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #f87171;
-  font-size: 11px;
+  color: #dc2626;
+  border: 1.5px solid #f87171;
+  font-size: 0.74rem;
   font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 12px;
-  letter-spacing: 0.03em;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
   animation: pulsePrioridad 2.5s infinite ease-in-out;
 }
 
@@ -736,55 +966,18 @@
   50% { opacity: 0.9; transform: scale(1.02); }
 }
 
-/* Fila Superior de Datos y Acciones en Tarjeta */
-.clinica-card-upper-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 20px;
-  gap: 16px;
-  flex: 1;
-}
-
-/* Botón Desplegable de Signos Vitales */
-.clinica-btn-toggle-signos {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: #f0fdfa;
-  border: 1px solid #99f6e4;
-  border-radius: 6px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #0f766e;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.clinica-btn-toggle-signos:hover {
-  background: #ccfbf1;
-  border-color: #5eead4;
-  color: #115e59;
-  transform: translateY(-1px);
-}
-
-/* RECTÁNGULO VERDE: Panel Desplegable Inferior a todo el ancho */
-.clinica-vitals-bottom-panel {
-  background: #f8fafc;
-  border-top: 1px dashed #e2e8f0;
-  padding: 10px 20px 12px;
-  animation: slideDownVitals 0.2s ease-out;
-}
-
-@keyframes slideDownVitals {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
+@media (max-width: 768px) {
+  .clinica-clean-main-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  .clinica-clean-divider {
+    display: none;
+  }
+  .clinica-clean-actions-box {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 

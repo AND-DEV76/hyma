@@ -285,7 +285,7 @@ export function evaluarTriajePaciente(signos) {
       estadoGeneral: 'ROJO',
       tieneSignos: true,
       badge: {
-        text: 'CRÍTICO / ALTO Y BAJO',
+        text: 'CRÍTICO MIXTO',
         color: '#991b1b',
         bg: '#fee2e2',
         border: '#fca5a5',
@@ -302,7 +302,7 @@ export function evaluarTriajePaciente(signos) {
       estadoGeneral: 'ROJO',
       tieneSignos: true,
       badge: {
-        text: 'CRÍTICO / ALTO RIESGO',
+        text: 'CRÍTICO ALTO',
         color: '#991b1b',
         bg: '#fee2e2',
         border: '#fca5a5',
@@ -319,7 +319,7 @@ export function evaluarTriajePaciente(signos) {
       estadoGeneral: 'AZUL',
       tieneSignos: true,
       badge: {
-        text: 'CRÍTICO / BAJO RIESGO',
+        text: 'CRÍTICO BAJO',
         color: '#0369a1',
         bg: '#e0f2fe',
         border: '#7dd3fc',
@@ -336,7 +336,7 @@ export function evaluarTriajePaciente(signos) {
       estadoGeneral: 'AMARILLO',
       tieneSignos: true,
       badge: {
-        text: 'ALERTA / ANORMAL',
+        text: 'ALERTA',
         color: '#92400e',
         bg: '#fef3c7',
         border: '#fcd34d',
@@ -352,7 +352,7 @@ export function evaluarTriajePaciente(signos) {
     estadoGeneral: 'NORMAL',
     tieneSignos: true,
     badge: {
-      text: 'SIGNOS NORMALES',
+      text: 'NORMAL',
       color: '#166534',
       bg: '#f0fdf4',
       border: '#bbf7d0',

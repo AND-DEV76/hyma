@@ -1,6 +1,23 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Stethoscope, Trash2, AlertCircle, RefreshCw, AlertTriangle, X, Loader2, Activity, ArrowUpToLine, ArrowDownToLine, Zap, ChevronDown, ChevronUp } from 'lucide-react';
+import { 
+  Clock, 
+  Stethoscope, 
+  Trash2, 
+  AlertCircle, 
+  RefreshCw, 
+  AlertTriangle, 
+  X, 
+  Loader2, 
+  Activity, 
+  ArrowUpToLine, 
+  ArrowDownToLine, 
+  Zap, 
+  ChevronRight,
+  Siren,
+  ShieldAlert,
+  CheckCircle2
+} from 'lucide-react';
 import { useClinica } from '../hooks/useClinica';
 import { evaluarTriajePaciente } from '../utils/triajeSignosVitales';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
@@ -92,6 +109,21 @@ export default function ClinicaPage() {
     }
   };
 
+  const renderTriajeIcon = (estadoGeneral) => {
+    switch (estadoGeneral) {
+      case 'ROJO':
+        return <Siren size={13} />;
+      case 'AZUL':
+        return <ShieldAlert size={13} />;
+      case 'AMARILLO':
+        return <AlertTriangle size={13} />;
+      case 'NORMAL':
+        return <CheckCircle2 size={13} />;
+      default:
+        return <Clock size={13} />;
+    }
+  };
+
   return (
     <div style={styles.page}>
       <AdminNavbar />
@@ -133,7 +165,7 @@ export default function ClinicaPage() {
             </span>
             <span className="clinica-triaje-legend-item">
               <span className="clinica-triaje-dot clinica-triaje-dot-amarillo" />
-              <span><strong>Amarillo:</strong> Alerta Leve</span>
+              <span><strong>Amarillo:</strong> Alerta</span>
             </span>
             <span className="clinica-triaje-legend-item">
               <span className="clinica-triaje-dot clinica-triaje-dot-normal" />
@@ -168,155 +200,118 @@ export default function ClinicaPage() {
             {cola.map((item) => {
               const isPrioritario = item.prioridad === 1;
               const triaje = evaluarTriajePaciente(item.ultimoSignoVital);
+              const isExpanded = Boolean(signosExpandidos[item.idCola]);
 
               return (
                 <div
                   key={item.idCola}
-                  className="clinica-patient-card"
-                  style={{
-                    ...styles.patientCard,
-                    borderLeft: isPrioritario ? '4px solid #ef4444' : '1px solid #e2e8f0',
-                    boxShadow: isPrioritario ? '0 2px 8px rgba(239, 68, 68, 0.08)' : styles.patientCard.boxShadow,
-                  }}
+                  className={`clinica-patient-card-clean ${isPrioritario ? 'prioritario' : ''}`}
                 >
-                  {/* RECTÁNGULO AZUL: Columna/Botón lateral izquierdo para Subir Prioridad */}
-                  <button
-                    type="button"
-                    onClick={() => handleTogglePrioridad(item)}
-                    disabled={priorizandoId === item.idCola}
-                    className={`clinica-btn-prioridad-lateral ${isPrioritario ? 'prioridad-activa' : ''}`}
-                    title={
-                      isPrioritario
-                        ? 'Paciente prioritario (Prioridad 1) — Clic para bajar a prioridad normal'
-                        : 'Subir paciente al primer lugar (Asignar Prioridad 1)'
-                    }
-                  >
-                    {priorizandoId === item.idCola ? (
-                      <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
-                    ) : isPrioritario ? (
-                      <ArrowDownToLine size={20} />
-                    ) : (
-                      <ArrowUpToLine size={20} />
-                    )}
-                  </button>
+                  {/* Fila Principal de la Tarjeta */}
+                  <div className="clinica-clean-main-row">
+                    {/* Botón Lateral Izquierdo de Prioridad */}
+                    <button
+                      type="button"
+                      onClick={() => handleTogglePrioridad(item)}
+                      disabled={priorizandoId === item.idCola}
+                      className={`clinica-clean-btn-prioridad ${isPrioritario ? 'activa' : ''}`}
+                      title={
+                        isPrioritario
+                          ? 'Paciente prioritario (Prioridad 1) — Clic para bajar a prioridad normal'
+                          : 'Subir prioridad del paciente'
+                      }
+                    >
+                      {priorizandoId === item.idCola ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : isPrioritario ? (
+                        <ArrowDownToLine size={18} />
+                      ) : (
+                        <ArrowUpToLine size={18} />
+                      )}
+                    </button>
 
-                  {/* Contenedor Principal de la Tarjeta */}
-                  <div className="clinica-card-main-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                    {/* Fila Superior: Avatar + Datos + Acciones */}
-                    <div className="clinica-card-upper-row">
-                      {/* Avatar USER.PNG */}
-                      <div style={styles.avatarContainer}>
-                        <img src={userImg} alt="Avatar Paciente" style={styles.avatarImg} />
-                      </div>
+                    {/* Avatar Circular */}
+                    <div className="clinica-clean-avatar-box">
+                      <img src={userImg} alt="Avatar" className="clinica-clean-avatar-img" />
+                    </div>
 
-                      {/* Separator | */}
-                      <div className="clinica-card-divider" style={styles.divider} />
-
-                      {/* Paciente: Nombre, Estado, Badge Triaje y Signos Vitales */}
-                      <div className="clinica-card-info" style={styles.infoCol}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                          <h3 style={styles.patientName}>
-                            {item.nombresPaciente} {item.apellidosPaciente}
-                          </h3>
-
-                          {/* Badge de Prioridad Alta si aplica */}
-                          {isPrioritario && (
-                            <span className="clinica-badge-prioridad-alta" title="Paciente en atención prioritaria">
-                              <Zap size={11} /> PRIORITARIO
-                            </span>
-                          )}
-
-                          <span
-                            style={{
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              padding: '2px 8px',
-                              borderRadius: '12px',
-                              backgroundColor: item.estado === 'EN_CONSULTA' ? '#dcfce7' : '#e0f2fe',
-                              color: item.estado === 'EN_CONSULTA' ? '#166534' : '#0369a1',
-                              border: `1px solid ${item.estado === 'EN_CONSULTA' ? '#bbf7d0' : '#bae6fd'}`,
-                            }}
-                          >
-                            {item.estado === 'EN_CONSULTA' ? 'EN CONSULTA' : 'ESPERA CONSULTA'}
-                          </span>
-
-                          {/* Badge de Estado General (Prioridad Máxima) */}
-                          {triaje.tieneSignos && (
-                            <span
-                              className={`clinica-badge-triaje ${triaje.estadoGeneral.toLowerCase()}`}
-                              title={
-                                triaje.alertas.length > 0
-                                  ? `Alertas: ${triaje.alertas.map((a) => `${a.signo} (${a.label})`).join(', ')}`
-                                  : 'Todos los signos vitales registrados están en rango normal'
-                              }
-                            >
-                              <span
-                                className="clinica-triaje-dot"
-                                style={{ backgroundColor: triaje.badge.dot }}
-                              />
-                              {triaje.badge.text}
-                            </span>
-                          )}
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginTop: '4px' }}>
-                          <div style={styles.horaBadge}>
-                            <Clock size={14} color="#0077b6" />
-                            <span style={styles.horaText}>
-                              Hora: <strong>{formatHora(item.fechaIngreso)}</strong>
-                            </span>
-                          </div>
-
-                          {triaje.alertas.length > 0 && (
-                            <span style={{ fontSize: '12px', color: triaje.badge.color, fontWeight: 600 }}>
-                              ⚠️ {triaje.alertas.length} {triaje.alertas.length === 1 ? 'signo en alerta' : 'signos en alerta'}
-                            </span>
-                          )}
-
-                          {triaje.tieneSignos && (
-                            <button
-                              type="button"
-                              onClick={() => toggleSignos(item.idCola)}
-                              className="clinica-btn-toggle-signos"
-                              title={signosExpandidos[item.idCola] ? 'Ocultar signos vitales' : 'Ver signos vitales detallados'}
-                            >
-                              <span>{signosExpandidos[item.idCola] ? 'Ocultar signos' : 'Ver signos vitales'}</span>
-                              {signosExpandidos[item.idCola] ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Opciones: Atender (solo Médico/Admin) y Eliminar */}
-                      <div className="clinica-card-actions" style={styles.actionsCol}>
-                        {canAtender && (
-                          <button
-                            onClick={() => handleAtender(item.idPaciente, item.idCola)}
-                            style={styles.btnAtender}
-                            title="Iniciar atención médica"
-                          >
-                            <Stethoscope size={16} />
-                            <span>Atender</span>
-                          </button>
-                        )}
-
-                        <button
-                          onClick={() => setPacienteAEliminar(item)}
-                          style={styles.btnEliminar}
-                          title="Eliminar de la cola de espera"
-                        >
-                          <Trash2 size={16} />
-                          <span>Eliminar</span>
-                        </button>
+                    {/* Datos del Paciente: Nombre + Hora */}
+                    <div className="clinica-clean-name-box">
+                      <h3 className="clinica-clean-name">
+                        {item.nombresPaciente} {item.apellidosPaciente}
+                      </h3>
+                      <div className="clinica-clean-hora">
+                        <Clock size={13} color="#0077b6" />
+                        <span>Hora: <strong>{formatHora(item.fechaIngreso)}</strong></span>
                       </div>
                     </div>
 
-                    {/* RECTÁNGULO VERDE: Desglose de Signos Vitales (Oculto por defecto, desplegable a todo el ancho abajo) */}
-                    {signosExpandidos[item.idCola] && (
-                      <div className="clinica-vitals-bottom-panel">
-                        <div className="clinica-vitals-chips-row">
-                          {triaje.chips.length > 0 ? (
-                            triaje.chips.map((chip, idx) => (
+                    {/* Divisor Vertical 1 */}
+                    <div className="clinica-clean-divider" />
+
+                    {/* Badges de Triaje y Estado */}
+                    <div className="clinica-clean-badges-box">
+                      {/* Badge Prioritario (si aplica) */}
+                      {isPrioritario && (
+                        <span className="clinica-badge-prioridad-alta" title="Paciente en atención prioritaria">
+                          <Zap size={12} /> PRIORITARIO
+                        </span>
+                      )}
+
+                      {/* Badge Alerta Triaje */}
+                      {triaje.tieneSignos ? (
+                        <span className={`clinica-badge-triaje-pill ${triaje.estadoGeneral.toLowerCase()}`}>
+                          {renderTriajeIcon(triaje.estadoGeneral)}
+                          <span>{triaje.badge.text}</span>
+                        </span>
+                      ) : (
+                        <span className="clinica-badge-triaje-pill sin-registro">
+                          <Clock size={12} />
+                          <span>SIN PRECONSULTA</span>
+                        </span>
+                      )}
+
+                      {/* Badge Estado */}
+                      <span className={`clinica-clean-state-badge ${item.estado === 'EN_CONSULTA' ? 'en-consulta' : 'espera-consulta'}`}>
+                        {item.estado === 'EN_CONSULTA' ? 'EN CONSULTA' : 'ESPERA CONSULTA'}
+                      </span>
+                    </div>
+
+                    {/* Divisor Vertical 2 */}
+                    <div className="clinica-clean-divider" />
+
+                    {/* Acciones: Botón Atender + Chevron > */}
+                    <div className="clinica-clean-actions-box">
+                      {canAtender && (
+                        <button
+                          onClick={() => handleAtender(item.idPaciente, item.idCola)}
+                          className="clinica-clean-btn-atender"
+                          title="Iniciar atención médica"
+                        >
+                          <Stethoscope size={16} />
+                          <span>Atender</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => toggleSignos(item.idCola)}
+                        className={`clinica-clean-btn-chevron ${isExpanded ? 'rotated' : ''}`}
+                        title={isExpanded ? 'Ocultar signos vitales' : 'Desplegar signos vitales y opciones'}
+                      >
+                        <ChevronRight size={20} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Panel Desplegable Inferior con Signos Vitales y Botón Eliminar */}
+                  {isExpanded && (
+                    <div className="clinica-clean-drawer">
+                      <div className="clinica-clean-drawer-vitals">
+                        <span className="clinica-clean-drawer-label">Signos Vitales:</span>
+                        {triaje.chips.length > 0 ? (
+                          <div className="clinica-vitals-chips-row">
+                            {triaje.chips.map((chip, idx) => (
                               <span
                                 key={idx}
                                 className={`clinica-vital-chip ${chip.estado.toLowerCase()}`}
@@ -325,16 +320,26 @@ export default function ClinicaPage() {
                                 <span className="clinica-vital-chip-sigla">{chip.sigla}:</span>
                                 <span className="clinica-vital-chip-valor">{chip.valor}</span>
                               </span>
-                            ))
-                          ) : (
-                            <span style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>
-                              Sin signos vitales registrados en preconsulta
-                            </span>
-                          )}
-                        </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>
+                            Sin signos vitales registrados en preconsulta
+                          </span>
+                        )}
                       </div>
-                    )}
-                  </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setPacienteAEliminar(item)}
+                        className="clinica-clean-btn-eliminar"
+                        title="Eliminar paciente de la lista de espera"
+                      >
+                        <Trash2 size={14} />
+                        <span>Eliminar</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}
