@@ -39,8 +39,10 @@ function LoginPage() {
         navigate('/clinica');
       } else if (userRoles.includes('ENFERMERA')) {
         navigate('/recepcion');
+      } else if (userRoles.includes('SOCIAL')) {
+        navigate('/social');
       } else {
-        navigate('/dashboard');
+        navigate('/inicio');
       }
     } catch (err) {
       setErrorMessage(

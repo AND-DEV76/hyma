@@ -45,6 +45,7 @@ import ConfiguracionPage from './features/configuracion/pages/ConfiguracionPage'
 import SocialPortalPage from './features/social/pages/SocialPortalPage';
 import DashboardReferenciasPage from './features/social/pages/DashboardReferenciasPage';
 import ExpedientesSocialPage from './features/social/pages/ExpedientesSocialPage';
+import ContactosReferenciasPage from './features/social/pages/ContactosReferenciasPage';
 
 function App() {
   return (
@@ -96,6 +97,7 @@ function App() {
             <Route path="/social" element={<SocialPortalPage />} />
             <Route path="/social/dashboard-referencias" element={<DashboardReferenciasPage />} />
             <Route path="/social/expedientes" element={<ExpedientesSocialPage />} />
+            <Route path="/social/contactos" element={<ContactosReferenciasPage />} />
 
             <Route path="*" element={<NotFoundPage />} />
           </AppRoutes>

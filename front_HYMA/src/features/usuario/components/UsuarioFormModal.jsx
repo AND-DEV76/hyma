@@ -12,7 +12,7 @@ const ROLES = [
 export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToEdit }) {
   const [selectedRoleIds, setSelectedRoleIds] = useState([3]);
   const [username, setUsername] = useState('');
-  const [hasCorreo, setHasCorreo] = useState(false);
+  const [sinCorreo, setSinCorreo] = useState(false);
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -31,7 +31,7 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
       }
 
       setUsername(usuarioToEdit.username || '');
-      setHasCorreo(Boolean(usuarioToEdit.correo));
+      setSinCorreo(!usuarioToEdit.correo);
       setCorreo(usuarioToEdit.correo || '');
       setEstado(usuarioToEdit.estado ?? true);
       setPassword('');
@@ -39,7 +39,7 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
     } else {
       setSelectedRoleIds([3]);
       setUsername('');
-      setHasCorreo(false);
+      setSinCorreo(false);
       setCorreo('');
       setPassword('');
       setEstado(true);
@@ -78,7 +78,11 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
       return;
     }
 
-    if (hasCorreo) {
+    if (!sinCorreo) {
+      if (!correo.trim()) {
+        setValidationError('Por favor ingrese el correo electrónico o marque la opción "Sin Correo".');
+        return;
+      }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(correo.trim())) {
         setValidationError('Por favor ingrese un formato de correo electrónico válido.');
@@ -102,7 +106,7 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
         idRoles: selectedRoleIds,
         idRol: selectedRoleIds[0], // Por compatibilidad
         username: username.trim(),
-        correo: hasCorreo && correo.trim() ? correo.trim().toLowerCase() : null,
+        correo: !sinCorreo && correo.trim() ? correo.trim().toLowerCase() : null,
       };
 
       if (usuarioToEdit) {
@@ -246,7 +250,7 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
               />
             </div>
 
-            {/* Campo Correo Electrónico con Switch / Checkbox de Activación */}
+            {/* Campo Correo Electrónico */}
             <div className="usuarios-form-group">
               <div style={{
                 display: 'flex',
@@ -265,28 +269,28 @@ export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToE
                   cursor: 'pointer',
                   fontSize: '0.78rem',
                   fontWeight: 600,
-                  color: hasCorreo ? '#0284c7' : '#64748b'
+                  color: sinCorreo ? '#0284c7' : '#64748b'
                 }}>
                   <input
                     type="checkbox"
-                    checked={hasCorreo}
+                    checked={sinCorreo}
                     onChange={(e) => {
-                      setHasCorreo(e.target.checked);
-                      if (!e.target.checked) {
+                      setSinCorreo(e.target.checked);
+                      if (e.target.checked) {
                         setCorreo('');
                       }
                     }}
                     style={{ cursor: 'pointer' }}
                   />
-                  {hasCorreo ? 'Correo Habilitado' : 'Sin Correo'}
+                  Sin Correo
                 </label>
               </div>
 
-              {hasCorreo ? (
+              {!sinCorreo ? (
                 <input
                   type="email"
                   value={correo}
-                  required={hasCorreo}
+                  required={!sinCorreo}
                   onChange={(e) => setCorreo(e.target.value)}
                   placeholder="ejemplo@sanmartin.org"
                   className="usuarios-form-input"

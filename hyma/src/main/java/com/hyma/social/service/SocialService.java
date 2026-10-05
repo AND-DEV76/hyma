@@ -8,8 +8,10 @@ import com.hyma.recepcion.model.Paciente;
 import com.hyma.recepcion.repository.PacienteRepository;
 import com.hyma.recepcion.service.PacienteNotFoundException;
 import com.hyma.social.dto.*;
+import com.hyma.social.model.CentroReferencia;
 import com.hyma.social.model.EspecialidadReferencia;
 import com.hyma.social.model.ReferenciaMedica;
+import com.hyma.social.repository.CentroReferenciaRepository;
 import com.hyma.social.repository.EspecialidadReferenciaRepository;
 import com.hyma.social.repository.ReferenciaMedicaRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ import java.util.List;
 public class SocialService {
 
     private final EspecialidadReferenciaRepository especialidadReferenciaRepository;
+    private final CentroReferenciaRepository centroReferenciaRepository;
     private final ReferenciaMedicaRepository referenciaMedicaRepository;
     private final PacienteRepository pacienteRepository;
     private final ConsultaRepository consultaRepository;
@@ -53,13 +56,161 @@ public class SocialService {
         }
 
         return lista.stream()
-                .map(e -> EspecialidadReferenciaResponse.builder()
-                        .idEspecialidad(e.getIdEspecialidad())
-                        .nombre(e.getNombre())
-                        .descripcion(e.getDescripcion())
-                        .activo(e.getActivo())
-                        .build())
+                .map(this::mapToEspecialidadResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<EspecialidadConContactosResponse> listarEspecialidadesConContactos(String buscar) {
+        List<EspecialidadReferencia> lista;
+        if (buscar != null && !buscar.trim().isEmpty()) {
+            lista = especialidadReferenciaRepository.findByNombreContainingIgnoreCaseAndActivoTrueOrderByNombreAsc(buscar.trim());
+        } else {
+            lista = especialidadReferenciaRepository.findByActivoTrueOrderByNombreAsc();
+        }
+
+        return lista.stream().map(esp -> {
+            List<CentroReferencia> centros = centroReferenciaRepository
+                    .findByEspecialidad_IdEspecialidadAndActivoTrueOrderByIdCentroReferenciaAsc(esp.getIdEspecialidad());
+            List<CentroReferenciaResponse> contactosResp = centros.stream().map(this::mapToCentroResponse).toList();
+            return EspecialidadConContactosResponse.builder()
+                    .idEspecialidad(esp.getIdEspecialidad())
+                    .nombre(esp.getNombre())
+                    .descripcion(esp.getDescripcion())
+                    .activo(esp.getActivo())
+                    .contactos(contactosResp)
+                    .build();
+        }).toList();
+    }
+
+    @Transactional
+    public EspecialidadReferenciaResponse crearEspecialidad(EspecialidadReferenciaRequest request) {
+        String nombreLimpio = request.getNombre().trim();
+        if (especialidadReferenciaRepository.existsByNombreIgnoreCase(nombreLimpio)) {
+            var existente = especialidadReferenciaRepository.findByNombreIgnoreCase(nombreLimpio);
+            if (existente.isPresent()) {
+                EspecialidadReferencia esp = existente.get();
+                esp.setActivo(true);
+                esp.setDescripcion(request.getDescripcion() != null ? request.getDescripcion().trim() : null);
+                EspecialidadReferencia guardado = especialidadReferenciaRepository.save(esp);
+                return mapToEspecialidadResponse(guardado);
+            }
+            throw new IllegalArgumentException("Ya existe una especialidad con el nombre: " + nombreLimpio);
+        }
+
+        EspecialidadReferencia esp = EspecialidadReferencia.builder()
+                .nombre(nombreLimpio)
+                .descripcion(request.getDescripcion() != null ? request.getDescripcion().trim() : null)
+                .activo(true)
+                .build();
+        EspecialidadReferencia guardado = especialidadReferenciaRepository.save(esp);
+        return mapToEspecialidadResponse(guardado);
+    }
+
+    @Transactional
+    public EspecialidadReferenciaResponse actualizarEspecialidad(Long id, EspecialidadReferenciaRequest request) {
+        EspecialidadReferencia esp = especialidadReferenciaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Especialidad no encontrada con id: " + id));
+
+        String nombreLimpio = request.getNombre().trim();
+        if (especialidadReferenciaRepository.existsByNombreIgnoreCaseAndIdEspecialidadNot(nombreLimpio, id)) {
+            throw new IllegalArgumentException("Ya existe otra especialidad con el nombre: " + nombreLimpio);
+        }
+
+        esp.setNombre(nombreLimpio);
+        esp.setDescripcion(request.getDescripcion() != null ? request.getDescripcion().trim() : null);
+        EspecialidadReferencia guardado = especialidadReferenciaRepository.save(esp);
+        return mapToEspecialidadResponse(guardado);
+    }
+
+    @Transactional
+    public void eliminarEspecialidad(Long id) {
+        EspecialidadReferencia esp = especialidadReferenciaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Especialidad no encontrada con id: " + id));
+        esp.setActivo(false);
+        especialidadReferenciaRepository.save(esp);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CentroReferenciaResponse> listarCentrosPorEspecialidad(Long idEspecialidad) {
+        List<CentroReferencia> centros = (idEspecialidad != null)
+                ? centroReferenciaRepository.findByEspecialidad_IdEspecialidadAndActivoTrueOrderByIdCentroReferenciaAsc(idEspecialidad)
+                : centroReferenciaRepository.findByActivoTrueOrderByIdCentroReferenciaDesc();
+        return centros.stream().map(this::mapToCentroResponse).toList();
+    }
+
+    @Transactional
+    public CentroReferenciaResponse crearCentroReferencia(CentroReferenciaRequest request) {
+        EspecialidadReferencia esp = especialidadReferenciaRepository.findById(request.getIdEspecialidad())
+                .orElseThrow(() -> new IllegalArgumentException("Especialidad no encontrada con id: " + request.getIdEspecialidad()));
+
+        CentroReferencia centro = CentroReferencia.builder()
+                .especialidad(esp)
+                .institucion(request.getInstitucion() != null ? request.getInstitucion().trim() : null)
+                .nombreMedico(request.getNombreMedico() != null ? request.getNombreMedico().trim() : null)
+                .precioConsulta(request.getPrecioConsulta())
+                .direccion(request.getDireccion().trim())
+                .diasAtencion(request.getDiasAtencion() != null ? request.getDiasAtencion().trim() : null)
+                .telefono(request.getTelefono() != null ? request.getTelefono().trim() : null)
+                .activo(true)
+                .build();
+
+        CentroReferencia guardado = centroReferenciaRepository.save(centro);
+        return mapToCentroResponse(guardado);
+    }
+
+    @Transactional
+    public CentroReferenciaResponse actualizarCentroReferencia(Long id, CentroReferenciaRequest request) {
+        CentroReferencia centro = centroReferenciaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Centro de referencia no encontrado con id: " + id));
+
+        if (request.getIdEspecialidad() != null && !request.getIdEspecialidad().equals(centro.getEspecialidad().getIdEspecialidad())) {
+            EspecialidadReferencia esp = especialidadReferenciaRepository.findById(request.getIdEspecialidad())
+                    .orElseThrow(() -> new IllegalArgumentException("Especialidad no encontrada con id: " + request.getIdEspecialidad()));
+            centro.setEspecialidad(esp);
+        }
+
+        centro.setInstitucion(request.getInstitucion() != null ? request.getInstitucion().trim() : null);
+        centro.setNombreMedico(request.getNombreMedico() != null ? request.getNombreMedico().trim() : null);
+        centro.setPrecioConsulta(request.getPrecioConsulta());
+        centro.setDireccion(request.getDireccion().trim());
+        centro.setDiasAtencion(request.getDiasAtencion() != null ? request.getDiasAtencion().trim() : null);
+        centro.setTelefono(request.getTelefono() != null ? request.getTelefono().trim() : null);
+
+        CentroReferencia guardado = centroReferenciaRepository.save(centro);
+        return mapToCentroResponse(guardado);
+    }
+
+    @Transactional
+    public void eliminarCentroReferencia(Long id) {
+        CentroReferencia centro = centroReferenciaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Centro de referencia no encontrado con id: " + id));
+        centro.setActivo(false);
+        centroReferenciaRepository.save(centro);
+    }
+
+    private CentroReferenciaResponse mapToCentroResponse(CentroReferencia c) {
+        return CentroReferenciaResponse.builder()
+                .idCentroReferencia(c.getIdCentroReferencia())
+                .idEspecialidad(c.getEspecialidad() != null ? c.getEspecialidad().getIdEspecialidad() : null)
+                .nombreEspecialidad(c.getEspecialidad() != null ? c.getEspecialidad().getNombre() : null)
+                .institucion(c.getInstitucion())
+                .nombreMedico(c.getNombreMedico())
+                .precioConsulta(c.getPrecioConsulta())
+                .direccion(c.getDireccion())
+                .diasAtencion(c.getDiasAtencion())
+                .telefono(c.getTelefono())
+                .activo(c.getActivo())
+                .build();
+    }
+
+    private EspecialidadReferenciaResponse mapToEspecialidadResponse(EspecialidadReferencia e) {
+        return EspecialidadReferenciaResponse.builder()
+                .idEspecialidad(e.getIdEspecialidad())
+                .nombre(e.getNombre())
+                .descripcion(e.getDescripcion())
+                .activo(e.getActivo())
+                .build();
     }
 
     @Transactional(readOnly = true)

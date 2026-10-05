@@ -8,7 +8,8 @@ import {
   HeartHandshake,
   ShieldCheck,
   Building2,
-  Sparkles
+  Sparkles,
+  PhoneCall
 } from 'lucide-react';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
@@ -34,6 +35,14 @@ export default function SocialPortalPage() {
       ruta: '/social/expedientes',
       icono: <FolderArchive size={28} color="#0284c7" />,
       badge: 'Historial'
+    },
+    {
+      id: 'contactos',
+      titulo: 'Contacto de Referencias',
+      descripcion: 'Directorio de especialidades médicas, médicos y centros de referencia con precios y horarios de atención.',
+      ruta: '/social/contactos',
+      icono: <PhoneCall size={28} color="#0284c7" />,
+      badge: 'Directorio'
     },
   ];
 

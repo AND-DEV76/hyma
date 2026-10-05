@@ -108,6 +108,7 @@ export default function AdminNavbar({ onBeforeNavigate }) {
     }
     if (path === '/preconsulta') return location.pathname.startsWith('/preconsulta');
     if (path === '/clinica') return location.pathname.startsWith('/clinica');
+    if (path === '/social') return location.pathname.startsWith('/social');
     if (path === '/configuracion') {
       return (
         location.pathname.startsWith('/configuracion') ||
