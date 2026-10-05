@@ -50,7 +50,7 @@ public class SocialService {
     public List<EspecialidadReferenciaResponse> listarEspecialidades(String buscar) {
         List<EspecialidadReferencia> lista;
         if (buscar != null && !buscar.trim().isEmpty()) {
-            lista = especialidadReferenciaRepository.findByNombreContainingIgnoreCaseAndActivoTrueOrderByNombreAsc(buscar.trim());
+            lista = especialidadReferenciaRepository.buscarPorNombreOdescripcion(buscar.trim());
         } else {
             lista = especialidadReferenciaRepository.findByActivoTrueOrderByNombreAsc();
         }
@@ -64,7 +64,7 @@ public class SocialService {
     public List<EspecialidadConContactosResponse> listarEspecialidadesConContactos(String buscar) {
         List<EspecialidadReferencia> lista;
         if (buscar != null && !buscar.trim().isEmpty()) {
-            lista = especialidadReferenciaRepository.findByNombreContainingIgnoreCaseAndActivoTrueOrderByNombreAsc(buscar.trim());
+            lista = especialidadReferenciaRepository.buscarPorNombreOdescripcion(buscar.trim());
         } else {
             lista = especialidadReferenciaRepository.findByActivoTrueOrderByNombreAsc();
         }

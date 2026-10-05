@@ -72,12 +72,16 @@ export default function VentaExternaPage() {
 
     const existe = itemsVenta.find((it) => it.idMedicamento === med.idMedicamento);
     if (existe) {
-      if (existe.cantidad < stockDisp) {
+      const cantActual = parseInt(existe.cantidad, 10) || 0;
+      if (cantActual < stockDisp) {
+        const nuevaCant = cantActual + 1;
         setItemsVenta(itemsVenta.map((it) =>
           it.idMedicamento === med.idMedicamento
-            ? { ...it, cantidad: it.cantidad + 1, subtotal: Number(((it.cantidad + 1) * it.precioUnitario).toFixed(2)) }
+            ? { ...it, cantidad: nuevaCant, subtotal: Number((nuevaCant * it.precioUnitario).toFixed(2)) }
             : it
         ));
+      } else {
+        alert(`No puedes agregar más unidades de ${med.nombre}. Stock disponible: ${stockDisp} unidades.`);
       }
     } else {
       const precio = Number(med.precio || 0);
@@ -99,10 +103,43 @@ export default function VentaExternaPage() {
 
   // Modificar cantidad en carrito
   const cambiarCantidad = (idMed, nuevaCantidad) => {
-    const cant = parseInt(nuevaCantidad, 10);
     setItemsVenta(itemsVenta.map((it) => {
       if (it.idMedicamento === idMed) {
-        const c = isNaN(cant) || cant < 1 ? 1 : Math.min(cant, it.stockDisponible);
+        if (nuevaCantidad === '' || nuevaCantidad === null) {
+          return {
+            ...it,
+            cantidad: '',
+            subtotal: 0,
+          };
+        }
+        let cant = parseInt(nuevaCantidad, 10);
+        if (isNaN(cant) || cant < 1) {
+          cant = 1;
+        }
+        if (cant > it.stockDisponible) {
+          cant = it.stockDisponible;
+        }
+        return {
+          ...it,
+          cantidad: cant,
+          subtotal: Number((cant * it.precioUnitario).toFixed(2)),
+        };
+      }
+      return it;
+    }));
+  };
+
+  // Al desenfocar el campo de cantidad, asegurar mínimo 1
+  const handleBlurCantidad = (idMed) => {
+    setItemsVenta(itemsVenta.map((it) => {
+      if (it.idMedicamento === idMed) {
+        let c = parseInt(it.cantidad, 10);
+        if (isNaN(c) || c < 1) {
+          c = 1;
+        }
+        if (c > it.stockDisponible) {
+          c = it.stockDisponible;
+        }
         return {
           ...it,
           cantidad: c,
@@ -119,10 +156,11 @@ export default function VentaExternaPage() {
     setItemsVenta(itemsVenta.map((it) => {
       if (it.idMedicamento === idMed) {
         const val = isNaN(p) || p < 0 ? 0 : p;
+        const cant = parseInt(it.cantidad, 10) || 0;
         return {
           ...it,
           precioUnitario: val,
-          subtotal: Number((it.cantidad * val).toFixed(2)),
+          subtotal: Number((cant * val).toFixed(2)),
         };
       }
       return it;
@@ -140,7 +178,7 @@ export default function VentaExternaPage() {
   }, [itemsVenta]);
 
   const totalUnidades = useMemo(() => {
-    return itemsVenta.reduce((acc, it) => acc + (it.cantidad || 0), 0);
+    return itemsVenta.reduce((acc, it) => acc + (parseInt(it.cantidad, 10) || 0), 0);
   }, [itemsVenta]);
 
   // Confirmar y registrar venta externa
@@ -148,8 +186,13 @@ export default function VentaExternaPage() {
     if (itemsVenta.length === 0 || procesando) return;
 
     for (const it of itemsVenta) {
-      if (it.cantidad > it.stockDisponible) {
-        alert(`La cantidad para ${it.nombre} excede el stock disponible (${it.stockDisponible} unidades).`);
+      const cant = parseInt(it.cantidad, 10);
+      if (isNaN(cant) || cant < 1) {
+        alert(`La cantidad para ${it.nombre} debe ser al menos 1.`);
+        return;
+      }
+      if (cant > it.stockDisponible) {
+        alert(`La cantidad para ${it.nombre} (${cant}) excede el stock disponible (${it.stockDisponible} unidades).`);
         return;
       }
     }
@@ -398,6 +441,7 @@ export default function VentaExternaPage() {
                           max={it.stockDisponible}
                           value={it.cantidad}
                           onChange={(e) => cambiarCantidad(it.idMedicamento, e.target.value)}
+                          onBlur={() => handleBlurCantidad(it.idMedicamento)}
                           className="ve-qty-input"
                         />
                       </td>

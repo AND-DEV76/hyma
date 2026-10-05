@@ -196,7 +196,7 @@ export default function DispensarMedicamentosPage() {
             </p>
           </div>
         ) : (
-          <div style={styles.layoutGrid}>
+          <div className="dispensar-workspace-grid" style={styles.layoutGrid}>
             {/* Columna Izquierda: Resumen de Cobro y Acciones */}
             <aside style={styles.leftCol}>
               {/* Tarjeta de Cobro / Resumen Financiero Dinámico */}
@@ -353,7 +353,7 @@ export default function DispensarMedicamentosPage() {
                   <h3 style={styles.infoTitle}>Datos de la Consulta Médica</h3>
                 </div>
 
-                <div style={styles.summaryGrid}>
+                <div className="dispensar-summary-grid" style={styles.summaryGrid}>
                   <div style={styles.summaryItem}>
                     <span style={styles.summaryLabel}>Paciente</span>
                     <span style={styles.summaryVal}>
@@ -404,7 +404,7 @@ export default function DispensarMedicamentosPage() {
                 </div>
 
                 {receta?.medicamentos && receta.medicamentos.length > 0 ? (
-                  <div style={styles.tableResponsive}>
+                  <div className="dispensar-table-responsive" style={styles.tableResponsive}>
                     <table style={styles.table}>
                       <thead>
                         <tr>
@@ -509,7 +509,7 @@ export default function DispensarMedicamentosPage() {
                 </div>
 
                 {receta?.lotesSugeridos && receta.lotesSugeridos.length > 0 ? (
-                  <div style={styles.suggestionTableWrapper}>
+                  <div className="dispensar-table-responsive" style={styles.suggestionTableWrapper}>
                     <table style={styles.table}>
                       <thead>
                         <tr>

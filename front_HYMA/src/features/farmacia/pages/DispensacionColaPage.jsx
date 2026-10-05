@@ -124,7 +124,7 @@ export default function DispensacionColaPage() {
         )}
 
         {/* Espacio de Trabajo en 2 Columnas */}
-        <div style={styles.workspaceGrid}>
+        <div className="dispensacion-workspace-grid" style={styles.workspaceGrid}>
           {/* Columna Izquierda: Tarjeta Gráfica con USER.PNG */}
           <aside style={styles.brandCard}>
             <div style={styles.avatarGlowContainer}>
@@ -173,34 +173,36 @@ export default function DispensacionColaPage() {
             ) : (
               <div style={styles.patientsStack}>
                 {cola.map((item) => (
-                  <div key={item.idCola} style={styles.patientRowCard}>
-                    {/* Avatar miniatura USER.PNG */}
-                    <div style={styles.avatarThumbWrapper}>
-                      <img src={userImg} alt="Paciente" style={styles.avatarThumbImg} />
-                    </div>
-
-                    <div style={styles.verticalDivider} />
-
-                    {/* Información del Paciente */}
-                    <div style={styles.patientInfoCol}>
-                      <div style={styles.nameRow}>
-                        <h3 style={styles.patientName}>
-                          {item.nombresPaciente} {item.apellidosPaciente}
-                        </h3>
-                        <span style={styles.statusBadgeActive}>EN FARMACIA</span>
+                  <div key={item.idCola} className="dispensacion-patient-card" style={styles.patientRowCard}>
+                    <div className="dispensacion-patient-header-group">
+                      {/* Avatar miniatura USER.PNG */}
+                      <div style={styles.avatarThumbWrapper}>
+                        <img src={userImg} alt="Paciente" style={styles.avatarThumbImg} />
                       </div>
 
-                      <div style={styles.metaRow}>
-                        <Clock size={14} color="#0077b6" />
-                        <span style={styles.metaText}>
-                          Derivado de consulta:{' '}
-                          <strong>{formatHora(item.fechaAtencion || item.fechaIngreso)}</strong>
-                        </span>
+                      <div style={styles.verticalDivider} />
+
+                      {/* Información del Paciente */}
+                      <div style={styles.patientInfoCol}>
+                        <div style={styles.nameRow}>
+                          <h3 style={styles.patientName}>
+                            {item.nombresPaciente} {item.apellidosPaciente}
+                          </h3>
+                          <span style={styles.statusBadgeActive}>EN FARMACIA</span>
+                        </div>
+
+                        <div style={styles.metaRow}>
+                          <Clock size={14} color="#0077b6" />
+                          <span style={styles.metaText}>
+                            Derivado de consulta:{' '}
+                            <strong>{formatHora(item.fechaAtencion || item.fechaIngreso)}</strong>
+                          </span>
+                        </div>
                       </div>
                     </div>
 
                     {/* Botones de Acción: Atender y Eliminar */}
-                    <div style={styles.actionsCol}>
+                    <div className="dispensacion-actions-col" style={styles.actionsCol}>
                       <button
                         onClick={() => handleAtender(item)}
                         style={styles.btnAbrir}

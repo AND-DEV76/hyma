@@ -411,9 +411,13 @@ export default function AtencionMedicaPage() {
   const handleSearchDiag = async (e) => {
     const val = e.target.value;
     setSearchDiag(val);
-    if (val.length > 2) {
-      const res = await clinicaService.buscarDiagnosticosCie10(val);
-      setDiagResults(res);
+    if (val.trim().length > 1) {
+      try {
+        const res = await clinicaService.buscarDiagnosticosCie10(val.trim());
+        setDiagResults(res || []);
+      } catch (err) {
+        console.error('Error buscando diagnósticos CIE-10:', err);
+      }
     } else {
       setDiagResults([]);
     }
@@ -440,7 +444,7 @@ export default function AtencionMedicaPage() {
     if (val.trim().length > 1) {
       try {
         const res = await socialService.buscarEspecialidades(val.trim());
-        setEspecialidadResults(res);
+        setEspecialidadResults(res || []);
       } catch (err) {
         console.error('Error buscando especialidades', err);
       }
@@ -1249,7 +1253,7 @@ export default function AtencionMedicaPage() {
           {/* PASO 4: Diagnósticos y Referencia Médica */}
           {pasoActual === 4 && (
             <div style={styles.stepContentFade}>
-              <div className="clinica-step4-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
+              <div className="clinica-step4-grid">
                 
                 {/* COLUMNA 1: Diagnósticos Clínicos */}
                 <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>

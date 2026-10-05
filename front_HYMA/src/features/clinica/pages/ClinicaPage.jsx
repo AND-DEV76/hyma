@@ -209,40 +209,42 @@ export default function ClinicaPage() {
                 >
                   {/* Fila Principal de la Tarjeta */}
                   <div className="clinica-clean-main-row">
-                    {/* Botón Lateral Izquierdo de Prioridad */}
-                    <button
-                      type="button"
-                      onClick={() => handleTogglePrioridad(item)}
-                      disabled={priorizandoId === item.idCola}
-                      className={`clinica-clean-btn-prioridad ${isPrioritario ? 'activa' : ''}`}
-                      title={
-                        isPrioritario
-                          ? 'Paciente prioritario (Prioridad 1) — Clic para bajar a prioridad normal'
-                          : 'Subir prioridad del paciente'
-                      }
-                    >
-                      {priorizandoId === item.idCola ? (
-                        <Loader2 size={16} className="animate-spin" />
-                      ) : isPrioritario ? (
-                        <ArrowDownToLine size={18} />
-                      ) : (
-                        <ArrowUpToLine size={18} />
-                      )}
-                    </button>
+                    <div className="clinica-clean-identity-group">
+                      {/* Botón Lateral Izquierdo de Prioridad */}
+                      <button
+                        type="button"
+                        onClick={() => handleTogglePrioridad(item)}
+                        disabled={priorizandoId === item.idCola}
+                        className={`clinica-clean-btn-prioridad ${isPrioritario ? 'activa' : ''}`}
+                        title={
+                          isPrioritario
+                            ? 'Paciente prioritario (Prioridad 1) — Clic para bajar a prioridad normal'
+                            : 'Subir prioridad del paciente'
+                        }
+                      >
+                        {priorizandoId === item.idCola ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : isPrioritario ? (
+                          <ArrowDownToLine size={18} />
+                        ) : (
+                          <ArrowUpToLine size={18} />
+                        )}
+                      </button>
 
-                    {/* Avatar Circular */}
-                    <div className="clinica-clean-avatar-box">
-                      <img src={userImg} alt="Avatar" className="clinica-clean-avatar-img" />
-                    </div>
+                      {/* Avatar Circular */}
+                      <div className="clinica-clean-avatar-box">
+                        <img src={userImg} alt="Avatar" className="clinica-clean-avatar-img" />
+                      </div>
 
-                    {/* Datos del Paciente: Nombre + Hora */}
-                    <div className="clinica-clean-name-box">
-                      <h3 className="clinica-clean-name">
-                        {item.nombresPaciente} {item.apellidosPaciente}
-                      </h3>
-                      <div className="clinica-clean-hora">
-                        <Clock size={13} color="#0077b6" />
-                        <span>Hora: <strong>{formatHora(item.fechaIngreso)}</strong></span>
+                      {/* Datos del Paciente: Nombre + Hora */}
+                      <div className="clinica-clean-name-box">
+                        <h3 className="clinica-clean-name">
+                          {item.nombresPaciente} {item.apellidosPaciente}
+                        </h3>
+                        <div className="clinica-clean-hora">
+                          <Clock size={13} color="#0077b6" />
+                          <span>Hora: <strong>{formatHora(item.fechaIngreso)}</strong></span>
+                        </div>
                       </div>
                     </div>
 

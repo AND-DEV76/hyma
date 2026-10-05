@@ -1708,3 +1708,102 @@
     gap: 8px;
   }
 }
+
+/* ==========================================================
+   RESPONSIVIDAD DISPENSACIÓN Y COLA DE FARMACIA
+   ========================================================== */
+.dispensacion-workspace-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr !important;
+  gap: 24px;
+  align-items: start;
+}
+
+.dispensacion-patient-card {
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+  gap: 16px;
+}
+
+.dispensacion-patient-header-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dispensacion-actions-col {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.dispensar-workspace-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr !important;
+  gap: 24px;
+  align-items: start;
+}
+
+.dispensar-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+  gap: 12px;
+}
+
+.dispensar-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+}
+
+.dispensar-table-responsive table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+}
+
+@media (max-width: 992px) {
+  .dispensacion-workspace-grid,
+  .dispensar-workspace-grid {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .dispensacion-patient-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 14px 16px !important;
+    gap: 12px !important;
+  }
+  .dispensacion-patient-header-group {
+    width: 100% !important;
+    gap: 12px !important;
+  }
+  .dispensacion-actions-col {
+    width: 100% !important;
+    justify-content: space-between !important;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 10px;
+  }
+  .dispensacion-actions-col button {
+    flex: 1 !important;
+    justify-content: center !important;
+  }
+  .dispensar-table-responsive table {
+    min-width: 520px;
+  }
+}
+

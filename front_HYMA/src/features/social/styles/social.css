@@ -666,6 +666,30 @@
   box-shadow: 0 4px 12px rgba(2, 132, 199, 0.08);
 }
 
+@media (max-width: 640px) {
+  .social-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  .social-search-wrapper {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+  .social-paciente-card {
+    grid-template-columns: 40px 1fr !important;
+    gap: 10px !important;
+    padding: 12px 14px !important;
+  }
+  .social-paciente-actions {
+    grid-column: 1 / -1 !important;
+    justify-content: space-between !important;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 8px;
+    margin-top: 4px;
+  }
+}
+
 .social-paciente-avatar {
   width: 44px;
   height: 44px;
@@ -882,12 +906,15 @@
 
 @media (max-width: 900px) {
   .social-modal-horizontal {
-    height: auto;
-    max-height: 90vh;
+    height: 94vh;
+    max-height: 94vh;
+    width: 96vw;
   }
   .social-modal-horizontal-body {
     grid-template-columns: 1fr;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: calc(94vh - 80px);
   }
 }
 
