@@ -4,6 +4,7 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,40 +30,42 @@ public class SignoVitalCreateRequest {
     @NotNull(message = "El ID de la cola es obligatorio")
     private Long idCola;
 
-    /** Peso del paciente en kg */
+    /** Peso del paciente en kg (Opcional) */
     @DecimalMin(value = "0.50", message = "El peso debe ser mayor a 0.50 kg")
     @DecimalMax(value = "500.00", message = "El peso no puede exceder 500 kg")
     private BigDecimal peso;
 
-    /** Talla o estatura del paciente en cm (ej: 165.00) */
+    /** Talla o estatura del paciente en cm (ej: 165.00) (Opcional) */
     @DecimalMin(value = "20.00", message = "La talla debe ser mayor a 20 cm")
     @DecimalMax(value = "300.00", message = "La talla no puede exceder 300 cm")
     private BigDecimal talla;
 
-    /** Presión arterial sistólica/diastólica (ej: 120/80) */
+    /** Presión arterial sistólica/diastólica (ej: 120/80) (OBLIGATORIA) */
+    @NotBlank(message = "La presión arterial es obligatoria")
     private String presionArterial;
 
-    /** Glucosa en sangre (mg/dL) */
+    /** Glucosa en sangre (mg/dL) (Opcional) */
     @DecimalMin(value = "10.00", message = "La glicemia debe ser mayor a 10 mg/dL")
     @DecimalMax(value = "1000.00", message = "La glicemia no puede exceder 1000 mg/dL")
     private BigDecimal glicemia;
 
-    /** Frecuencia cardíaca (lpm) */
+    /** Frecuencia cardíaca (lpm) (Opcional) */
     @Min(value = 10, message = "La frecuencia cardíaca debe ser mayor o igual a 10 lpm")
     @Max(value = 300, message = "La frecuencia cardíaca no puede exceder 300 lpm")
     private Integer frecuenciaCardiaca;
 
-    /** Frecuencia respiratoria (rpm) */
+    /** Frecuencia respiratoria (rpm) (Opcional) */
     @Min(value = 1, message = "La frecuencia respiratoria debe ser mayor o igual a 1 rpm")
     @Max(value = 100, message = "La frecuencia respiratoria no puede exceder 100 rpm")
     private Integer frecuenciaRespiratoria;
 
-    /** Saturación de oxígeno (%) */
+    /** Saturación de oxígeno (%) (Opcional) */
     @DecimalMin(value = "20.00", message = "La saturación de oxígeno debe ser mayor al 20%")
     @DecimalMax(value = "100.00", message = "La saturación de oxígeno no puede superar el 100%")
     private BigDecimal saturacionOxigeno;
 
-    /** Temperatura corporal (°C) */
+    /** Temperatura corporal (°C) (OBLIGATORIA) */
+    @NotNull(message = "La temperatura es obligatoria")
     @DecimalMin(value = "30.00", message = "La temperatura debe ser mayor a 30°C")
     @DecimalMax(value = "45.00", message = "La temperatura no puede superar 45°C")
     private BigDecimal temperatura;

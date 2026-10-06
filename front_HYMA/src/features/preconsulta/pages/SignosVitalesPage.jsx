@@ -118,6 +118,16 @@ export default function SignosVitalesPage() {
     if (!paciente || guardando || enviando) return;
     setErrorLocal('');
 
+    // Validación de obligatoriedad: Presión Arterial y Temperatura son obligatorias como mínimo
+    if (!formData.presionArterial || !formData.presionArterial.trim()) {
+      setErrorLocal('La Presión Arterial es obligatoria.');
+      return;
+    }
+    if (formData.temperatura === '' || formData.temperatura === null || formData.temperatura === undefined || isNaN(formData.temperatura)) {
+      setErrorLocal('La Temperatura es obligatoria.');
+      return;
+    }
+
     // Validación estricta contra valores negativos
     if (formData.peso !== '' && (parseFloat(formData.peso) < 0 || isNaN(formData.peso))) {
       setErrorLocal('El peso no puede ser un valor negativo.');
@@ -337,11 +347,12 @@ export default function SignosVitalesPage() {
               {/* Presión Arterial */}
               <div style={styles.fieldGroup}>
                 <label style={styles.label}>
-                  <span>Presión Arterial</span>
+                  <span>Presión Arterial <span style={{ color: '#ef4444' }}>*</span></span>
                   <span style={styles.unitTag}>mmHg</span>
                 </label>
                 <input
                   type="text"
+                  required
                   name="presionArterial"
                   placeholder="Ej. 120/80"
                   value={formData.presionArterial}
@@ -392,13 +403,15 @@ export default function SignosVitalesPage() {
               {/* Temperatura */}
               <div style={styles.fieldGroup}>
                 <label style={styles.label}>
-                  <span>Temperatura</span>
+                  <span>Temperatura <span style={{ color: '#ef4444' }}>*</span></span>
                   <span style={styles.unitTag}>°C</span>
                 </label>
                 <input
                   type="number"
+                  required
                   step="0.1"
-                  min="0"
+                  min="30"
+                  max="45"
                   name="temperatura"
                   placeholder="Ej. 36.5"
                   value={formData.temperatura}
