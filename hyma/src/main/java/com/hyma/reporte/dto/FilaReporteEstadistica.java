@@ -34,6 +34,8 @@ public class FilaReporteEstadistica {
     private int totalGenero;           // suma F + M
 
     // Recaudación
+    private BigDecimal recaudadoConsulta;
+    private BigDecimal recaudadoMedicamentos;
     private BigDecimal totalRecaudado;
 
     // Diagnósticos (array o lista de 52 conteos)

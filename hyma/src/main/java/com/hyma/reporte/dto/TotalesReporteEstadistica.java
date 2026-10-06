@@ -30,6 +30,8 @@ public class TotalesReporteEstadistica {
     private int masculino;
     private int totalGenero;
 
+    private BigDecimal recaudadoConsulta;
+    private BigDecimal recaudadoMedicamentos;
     private BigDecimal totalRecaudado;
     private List<Integer> diagnosticos;
 }

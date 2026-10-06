@@ -267,7 +267,7 @@ export default function EstadisticaMensualPage() {
                 <div className="kpi-label">Total Recaudado</div>
                 <div className="kpi-val">{formatearMoneda(data.totales.totalRecaudado)}</div>
                 <div className="kpi-sub">
-                  Promedio diario: {formatearMoneda(data.promedios.totalRecaudado)}
+                  Consultas: {formatearMoneda(data.totales.recaudadoConsulta)} • Medicamentos: {formatearMoneda(data.totales.recaudadoMedicamentos)}
                 </div>
               </div>
             </div>
@@ -353,7 +353,9 @@ export default function EstadisticaMensualPage() {
                   <th colSpan={3}>No DE PACIENTES</th>
                   <th colSpan={6}>GRUPO DE EDADES</th>
                   <th colSpan={3}>GÉNERO</th>
-                  <th rowSpan={2}>TOTAL RECAUDADO</th>
+                  <th rowSpan={2} title="Recaudación por consultas">CONSULTA</th>
+                  <th rowSpan={2} title="Recaudación por medicamentos dispensados y farmacia">MEDICAMENTOS</th>
+                  <th rowSpan={2} title="Total general recaudado">TOTAL RECAUDADO</th>
 
                   {/* Grupos de diagnósticos dinámicos con texto negro y colores pastel */}
                   {bloquesCategorias.map((b, idx) => (
@@ -446,7 +448,13 @@ export default function EstadisticaMensualPage() {
                         {f.totalGenero}
                       </td>
 
-                      <td className="cell-currency">
+                      <td className="cell-currency font-medium">
+                        {formatearMoneda(f.recaudadoConsulta)}
+                      </td>
+                      <td className="cell-currency font-medium">
+                        {formatearMoneda(f.recaudadoMedicamentos)}
+                      </td>
+                      <td className="cell-currency font-bold">
                         {formatearMoneda(f.totalRecaudado)}
                       </td>
 
@@ -486,7 +494,9 @@ export default function EstadisticaMensualPage() {
                   <td>{data.totales.masculino}</td>
                   <td>{data.totales.totalGenero}</td>
 
-                  <td className="cell-currency">{formatearMoneda(data.totales.totalRecaudado)}</td>
+                  <td className="cell-currency font-bold">{formatearMoneda(data.totales.recaudadoConsulta)}</td>
+                  <td className="cell-currency font-bold">{formatearMoneda(data.totales.recaudadoMedicamentos)}</td>
+                  <td className="cell-currency font-bold">{formatearMoneda(data.totales.totalRecaudado)}</td>
 
                   {columnasDiagnosticosFiltradas.map((col) => {
                     const val = data.totales.diagnosticos?.[col.indice] ?? 0;
@@ -523,6 +533,12 @@ export default function EstadisticaMensualPage() {
                   <td className="text-slate-400">-</td>
                   <td className="text-slate-400">-</td>
 
+                  <td className="cell-currency font-semibold">
+                    {formatearMoneda(data.promedios?.recaudadoConsulta || 0)}
+                  </td>
+                  <td className="cell-currency font-semibold">
+                    {formatearMoneda(data.promedios?.recaudadoMedicamentos || 0)}
+                  </td>
                   <td className="cell-currency font-bold">
                     {formatearMoneda(data.promedios?.totalRecaudado || 0)}
                   </td>
