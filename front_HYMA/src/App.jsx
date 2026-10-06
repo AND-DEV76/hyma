@@ -4,6 +4,7 @@ import AppRoutes from './routes/AppRoutes';
 import Navbar from './components/Navbar/Navbar';
 import Hero from './components/Hero/Hero';
 import LoginPage from './features/auth/pages/LoginPage';
+import RecuperarPasswordPage from './features/auth/pages/RecuperarPasswordPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 function RedirectHome() {
@@ -52,6 +53,7 @@ function App() {
           <Routes>
         <Route path="/" element={<><Navbar /><Hero /></>} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/recuperar-password" element={<RecuperarPasswordPage />} />
 
         {/* --- RUTAS PROTEGIDAS Y ROLES --- */}
         <Route path="/*" element={

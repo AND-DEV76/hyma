@@ -45,6 +45,9 @@ services:
       JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
       JWT_EXPIRATION_MS: 86400000
 
+      MAIL_USERNAME: ${MAIL_USERNAME:-angelambrocio777@gmail.com}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-riak diky vhfq qpbl}
+
     depends_on:
       - postgres
 

@@ -256,11 +256,35 @@
   gap: 7px;
 }
 
+.login-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .login-label {
   font-size: 13.5px;
   font-weight: 600;
   color: #1e293b;
 }
+
+.login-forgot-link {
+  background: transparent;
+  border: none;
+  color: #0077b6;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.login-forgot-link:hover {
+  color: #03045e;
+  text-decoration: underline;
+}
+
 
 .login-input-wrapper {
   position: relative;
@@ -391,12 +415,42 @@
   to { transform: rotate(360deg); }
 }
 
+.login-footer-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.login-recovery-shortcut {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  color: #0284c7;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.2s ease;
+}
+
+.login-recovery-shortcut:hover {
+  background: #e0f2fe;
+  color: #03045e;
+  border-color: #7dd3fc;
+}
+
 .login-footer-text {
   text-align: center;
-  margin-top: 24px;
+  margin: 0;
   font-size: 12.5px;
   color: #94a3b8;
 }
+
 
 /* ==========================================================
    RESPONSIVE

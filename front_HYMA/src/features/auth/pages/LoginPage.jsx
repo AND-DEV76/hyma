@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, LogIn, Eye, EyeOff, ArrowLeft, AlertCircle } from 'lucide-react';
+import { User, Lock, LogIn, Eye, EyeOff, ArrowLeft, AlertCircle, KeyRound } from 'lucide-react';
 import { loginService } from '../services/authService';
+import CaptchaBox from '../components/CaptchaBox';
 import saludLogo from '../../../assets/images/log1.png';
 import './LoginPage.css';
 
@@ -12,12 +13,38 @@ function LoginPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Control de intentos fallidos y Captcha
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaExpected, setCaptchaExpected] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
+
   const navigate = useNavigate();
+
+  const handleCaptchaChange = (inputValue, expectedValue) => {
+    setCaptchaInput(inputValue);
+    if (expectedValue) {
+      setCaptchaExpected(expectedValue);
+    }
+    if (captchaError) {
+      setCaptchaError('');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
+
+    // Validación de Captcha si se han alcanzado 3 o más intentos fallidos
+    if (failedAttempts >= 3) {
+      if (!captchaInput || captchaInput.trim().toUpperCase() !== captchaExpected.trim().toUpperCase()) {
+        setCaptchaError('El código de seguridad no coincide. Por favor ingrésalo nuevamente.');
+        return;
+      }
+    }
+
     setErrorMessage('');
+    setCaptchaError('');
     setLoading(true);
 
     try {
@@ -28,6 +55,9 @@ function LoginPage() {
         localStorage.setItem('token', data.token);
       }
       localStorage.setItem('user', JSON.stringify(data.usuario));
+
+      // Resetear intentos en éxito
+      setFailedAttempts(0);
 
       const userRoles = (data.usuario.roles && data.usuario.roles.length > 0)
         ? data.usuario.roles
@@ -45,9 +75,15 @@ function LoginPage() {
         navigate('/inicio');
       }
     } catch (err) {
-      setErrorMessage(
-        err.response?.data?.message || 'Credenciales incorrectas. Por favor verifica tus datos.'
-      );
+      // Incrementar contador de intentos fallidos
+      const nextAttempts = failedAttempts + 1;
+      setFailedAttempts(nextAttempts);
+
+      let msg = err.response?.data?.message || 'Credenciales incorrectas. Por favor verifica tus datos.';
+      if (nextAttempts >= 3) {
+        msg = `${msg} (Se requiere verificación de seguridad por múltiples intentos).`;
+      }
+      setErrorMessage(msg);
     } finally {
       setLoading(false);
     }
@@ -57,6 +93,7 @@ function LoginPage() {
     setUsername('');
     setPassword('');
     setErrorMessage('');
+    setCaptchaError('');
     navigate('/');
   };
 
@@ -78,7 +115,7 @@ function LoginPage() {
             <h2 className="login-brand-title">Programa de Salud</h2>
             <p className="login-brand-subtitle">Hombre y Mujer en Acción</p>
             <p className="login-brand-desc">
-              
+              Atención médica integral, farmacia comunitaria y asistencia social.
             </p>
           </div>
         </div>
@@ -133,9 +170,18 @@ function LoginPage() {
               </div>
 
               <div className="login-field">
-                <label className="login-label" htmlFor="password">
-                  Contraseña
-                </label>
+                <div className="login-label-row">
+                  <label className="login-label" htmlFor="password">
+                    Contraseña
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/recuperar-password')}
+                    className="login-forgot-link"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
                 <div className="login-input-wrapper">
                   <Lock size={18} className="login-input-icon" />
                   <input
@@ -158,6 +204,15 @@ function LoginPage() {
                   </button>
                 </div>
               </div>
+
+              {/* Bloque Captcha cuando hay 3 o más intentos fallidos */}
+              {failedAttempts >= 3 && (
+                <CaptchaBox
+                  captchaValue={captchaInput}
+                  onCaptchaChange={handleCaptchaChange}
+                  captchaError={captchaError}
+                />
+              )}
 
               <div className="login-actions">
                 <button
@@ -189,9 +244,19 @@ function LoginPage() {
             </form>
           </div>
 
-          <p className="login-footer-text">
-            © {new Date().getFullYear()} HYMA — Fundación Hombre y Mujer en Acción
-          </p>
+          <div className="login-footer-section">
+            <button
+              type="button"
+              onClick={() => navigate('/recuperar-password')}
+              className="login-recovery-shortcut"
+            >
+              <KeyRound size={15} />
+              <span>Recuperar acceso a mi cuenta</span>
+            </button>
+            <p className="login-footer-text">
+              © {new Date().getFullYear()} HYMA — Fundación Hombre y Mujer en Acción
+            </p>
+          </div>
         </div>
 
       </div>

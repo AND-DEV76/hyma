@@ -15,8 +15,8 @@ public interface EspecialidadReferenciaRepository extends JpaRepository<Especial
         SELECT e FROM EspecialidadReferencia e
         WHERE e.activo = true
           AND (
-            FUNCTION('TRANSLATE', LOWER(e.nombre), 'áéíóúüÁÉÍÓÚÜ', 'aeiouuAEIOUU') LIKE FUNCTION('TRANSLATE', LOWER(CONCAT('%', :buscar, '%')), 'áéíóúüÁÉÍÓÚÜ', 'aeiouuAEIOUU')
-            OR (e.descripcion IS NOT NULL AND FUNCTION('TRANSLATE', LOWER(e.descripcion), 'áéíóúüÁÉÍÓÚÜ', 'aeiouuAEIOUU') LIKE FUNCTION('TRANSLATE', LOWER(CONCAT('%', :buscar, '%')), 'áéíóúüÁÉÍÓÚÜ', 'aeiouuAEIOUU'))
+            LOWER(e.nombre) LIKE LOWER(CONCAT('%', :buscar, '%'))
+            OR (e.descripcion IS NOT NULL AND LOWER(e.descripcion) LIKE LOWER(CONCAT('%', :buscar, '%')))
           )
         ORDER BY e.nombre ASC
         """)

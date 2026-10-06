@@ -23,9 +23,9 @@ public interface CatalogoCie10Repository extends JpaRepository<CatalogoCie10, Lo
         SELECT c FROM CatalogoCie10 c
         LEFT JOIN c.categoria cat
         WHERE (
-            FUNCTION('TRANSLATE', LOWER(c.codigo), 'áéíóúüÁÉÍÓÚÜ', 'aeiouuAEIOUU') LIKE FUNCTION('TRANSLATE', LOWER(CONCAT('%', :query, '%')), 'áéíóúüÁÉÍÓÚÜ', 'aeiouuAEIOUU')
-            OR FUNCTION('TRANSLATE', LOWER(c.descripcion), 'áéíóúüÁÉÍÓÚÜ', 'aeiouuAEIOUU') LIKE FUNCTION('TRANSLATE', LOWER(CONCAT('%', :query, '%')), 'áéíóúüÁÉÍÓÚÜ', 'aeiouuAEIOUU')
-            OR (cat IS NOT NULL AND FUNCTION('TRANSLATE', LOWER(cat.nombre), 'áéíóúüÁÉÍÓÚÜ', 'aeiouuAEIOUU') LIKE FUNCTION('TRANSLATE', LOWER(CONCAT('%', :query, '%')), 'áéíóúüÁÉÍÓÚÜ', 'aeiouuAEIOUU'))
+            LOWER(c.codigo) LIKE LOWER(CONCAT('%', :query, '%'))
+            OR LOWER(c.descripcion) LIKE LOWER(CONCAT('%', :query, '%'))
+            OR (cat IS NOT NULL AND LOWER(cat.nombre) LIKE LOWER(CONCAT('%', :query, '%')))
         )
         ORDER BY c.codigo ASC
         """)
@@ -36,8 +36,8 @@ public interface CatalogoCie10Repository extends JpaRepository<CatalogoCie10, Lo
         LEFT JOIN c.categoria cat
         WHERE cat.idCategoria = :idCategoria
           AND (
-            FUNCTION('TRANSLATE', LOWER(c.codigo), 'áéíóúüÁÉÍÓÚÜ', 'aeiouuAEIOUU') LIKE FUNCTION('TRANSLATE', LOWER(CONCAT('%', :query, '%')), 'áéíóúüÁÉÍÓÚÜ', 'aeiouuAEIOUU')
-            OR FUNCTION('TRANSLATE', LOWER(c.descripcion), 'áéíóúüÁÉÍÓÚÜ', 'aeiouuAEIOUU') LIKE FUNCTION('TRANSLATE', LOWER(CONCAT('%', :query, '%')), 'áéíóúüÁÉÍÓÚÜ', 'aeiouuAEIOUU')
+            LOWER(c.codigo) LIKE LOWER(CONCAT('%', :query, '%'))
+            OR LOWER(c.descripcion) LIKE LOWER(CONCAT('%', :query, '%'))
           )
         ORDER BY c.codigo ASC
         """)
