@@ -34,12 +34,14 @@ export default function DispensarMedicamentosPage() {
 
   const [confirmandoEntrega, setConfirmandoEntrega] = useState(false);
   const [entregaFinalizada, setEntregaFinalizada] = useState(false);
-  const [tipoCobro, setTipoCobro] = useState('NORMAL'); // 'NORMAL' | 'NO_PAGA_CONSULTA' | 'CASO_ESPECIAL'
+  const [tipoCobro, setTipoCobro] = useState('NORMAL'); // 'NORMAL' | 'NO_PAGA_CONSULTA' | 'SR' | 'BECADO'
   const [duplicarEnHoja, setDuplicarEnHoja] = useState(false);
   const [procesandoEntrega, setProcesandoEntrega] = useState(false);
 
-  const esCasoEspecial = tipoCobro === 'CASO_ESPECIAL';
-  const noPagaConsulta = tipoCobro === 'NO_PAGA_CONSULTA' || esCasoEspecial;
+  const esSR = tipoCobro === 'SR' || tipoCobro === 'CASO_ESPECIAL';
+  const esBecado = tipoCobro === 'BECADO';
+  const esExoneracionTotal = esSR || esBecado;
+  const noPagaConsulta = tipoCobro === 'NO_PAGA_CONSULTA' || esExoneracionTotal;
 
   const tieneMedicamentos = Boolean(
     (receta?.medicamentos && receta.medicamentos.length > 0) ||
@@ -55,7 +57,7 @@ export default function DispensarMedicamentosPage() {
     return acc + (cant * precio);
   }, 0);
 
-  const totalMedicamentosCobrar = esCasoEspecial ? 0 : totalMedicamentosOriginal;
+  const totalMedicamentosCobrar = esExoneracionTotal ? 0 : totalMedicamentosOriginal;
   const totalMedicamentos = totalMedicamentosCobrar;
   const totalAPagar = costoConsultaCobrar + totalMedicamentosCobrar;
 
@@ -75,8 +77,10 @@ export default function DispensarMedicamentosPage() {
     }
 
     let observaciones = null;
-    if (esCasoEspecial) {
-      observaciones = 'Caso Especial: Exoneración total de consulta y medicamentos';
+    if (esBecado) {
+      observaciones = 'Becado: Exoneración total de consulta y medicamentos';
+    } else if (esSR) {
+      observaciones = 'S/R: Exoneración total de consulta y medicamentos';
     } else if (noPagaConsulta) {
       observaciones = 'Exonerado de consulta médica';
     }
@@ -85,7 +89,8 @@ export default function DispensarMedicamentosPage() {
     try {
       const res = await entregarMedicamentos(Number(idCola), {
         noPagaConsulta,
-        esCasoEspecial,
+        esCasoEspecial: esExoneracionTotal,
+        modalidadCobro: tipoCobro,
         observaciones,
       });
       if (res.success) {
@@ -211,7 +216,13 @@ export default function DispensarMedicamentosPage() {
                 <div style={styles.billingDivider} />
 
                 <div style={styles.billingRow}>
-                  <span style={styles.billingLabel}>Tarifa Consulta:</span>
+                  <span style={styles.billingLabel}>
+                    {receta?.nombreTarifaConsulta ? `${receta.nombreTarifaConsulta}:` : (
+                      (receta?.edad !== null && receta?.edad !== undefined && receta?.edad < 13)
+                        ? 'Tarifa de Consulta Médica Niño:'
+                        : 'Tarifa de Consulta Médica:'
+                    )}
+                  </span>
                   <div style={{ textAlign: 'right' }}>
                     {noPagaConsulta ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
@@ -233,7 +244,7 @@ export default function DispensarMedicamentosPage() {
                 <div style={styles.billingRow}>
                   <span style={styles.billingLabel}>Medicamentos:</span>
                   <div style={{ textAlign: 'right' }}>
-                    {esCasoEspecial ? (
+                    {esExoneracionTotal ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
                         <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '12px' }}>
                           Q {totalMedicamentosOriginal.toFixed(2)}
@@ -278,23 +289,42 @@ export default function DispensarMedicamentosPage() {
                     <span style={styles.radioText}>Exonerar solo Consulta</span>
                   </label>
 
-                  <label style={{ ...styles.radioLabelWrapper, color: esCasoEspecial ? '#b45309' : '#334155' }}>
+                  <label style={{ ...styles.radioLabelWrapper, color: esSR ? '#b45309' : '#334155' }}>
                     <input
                       type="radio"
                       name="tipoCobro"
-                      value="CASO_ESPECIAL"
-                      checked={tipoCobro === 'CASO_ESPECIAL'}
-                      onChange={() => setTipoCobro('CASO_ESPECIAL')}
+                      value="SR"
+                      checked={esSR}
+                      onChange={() => setTipoCobro('SR')}
                       style={styles.radioInput}
                     />
-                    <span style={{ ...styles.radioText, fontWeight: esCasoEspecial ? '700' : '500' }}>
-                      ★ Caso Especial (Exoneración Total)
+                    <span style={{ ...styles.radioText, fontWeight: esSR ? '700' : '500' }}>
+                      ★ S/R
                     </span>
                   </label>
 
-                  {esCasoEspecial && (
-                    <div style={styles.casoEspecialBadge}>
-                      ✓ 100% Exonerado (Valor absorbido: Q {totalMedicamentosOriginal.toFixed(2)})
+                  <label style={{ ...styles.radioLabelWrapper, color: esBecado ? '#0284c7' : '#334155' }}>
+                    <input
+                      type="radio"
+                      name="tipoCobro"
+                      value="BECADO"
+                      checked={esBecado}
+                      onChange={() => setTipoCobro('BECADO')}
+                      style={styles.radioInput}
+                    />
+                    <span style={{ ...styles.radioText, fontWeight: esBecado ? '700' : '500' }}>
+                      ★ Becado
+                    </span>
+                  </label>
+
+                  {esExoneracionTotal && (
+                    <div style={{
+                      ...styles.casoEspecialBadge,
+                      backgroundColor: esBecado ? '#f0f9ff' : '#fef3c7',
+                      borderColor: esBecado ? '#bae6fd' : '#fde68a',
+                      color: esBecado ? '#0369a1' : '#b45309'
+                    }}>
+                      ✓ {esBecado ? 'Becado' : 'S/R'}: 100% Exonerado (Valor absorbido: Q {totalMedicamentosOriginal.toFixed(2)})
                     </div>
                   )}
 
@@ -371,9 +401,27 @@ export default function DispensarMedicamentosPage() {
                   <div style={styles.summaryItem}>
                     <span style={styles.summaryLabel}>Edad</span>
                     <span style={styles.summaryVal}>
-                      {receta?.edad !== null && receta?.edad !== undefined
-                        ? `${receta.edad} años`
-                        : 'No especificada'}
+                      {receta?.edad !== null && receta?.edad !== undefined ? (
+                        <>
+                          {receta.edad} años
+                          {receta.edad < 13 && (
+                            <span style={{
+                              marginLeft: '6px',
+                              fontSize: '11px',
+                              fontWeight: '700',
+                              color: '#047857',
+                              backgroundColor: '#ecfdf5',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              border: '1px solid #a7f3d0'
+                            }}>
+                              Niño (&lt; 13)
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        'No especificada'
+                      )}
                     </span>
                   </div>
                 </div>
@@ -643,7 +691,13 @@ export default function DispensarMedicamentosPage() {
                 {/* Desglose de cobro en modal */}
                 <div style={styles.modalSummaryBox}>
                   <div style={styles.modalSummaryRow}>
-                    <span>Tarifa Consulta Médica:</span>
+                    <span>
+                      {receta?.nombreTarifaConsulta ? `${receta.nombreTarifaConsulta}:` : (
+                        (receta?.edad !== null && receta?.edad !== undefined && receta?.edad < 13)
+                          ? 'Tarifa de Consulta Médica Niño:'
+                          : 'Tarifa Consulta Médica:'
+                      )}
+                    </span>
                     <strong style={{ color: noPagaConsulta ? '#059669' : '#1e293b' }}>
                       {noPagaConsulta ? 'Q 0.00 (Exonerada)' : `Q ${precioConsultaOriginal.toFixed(2)}`}
                     </strong>
@@ -651,8 +705,8 @@ export default function DispensarMedicamentosPage() {
                   {tieneMedicamentos && (
                     <div style={styles.modalSummaryRow}>
                       <span>Total Medicamentos Prescritos:</span>
-                      <strong style={{ color: esCasoEspecial ? '#059669' : '#1e293b' }}>
-                        {esCasoEspecial
+                      <strong style={{ color: esExoneracionTotal ? '#059669' : '#1e293b' }}>
+                        {esExoneracionTotal
                           ? `Q 0.00 (Exonerado - Valor: Q ${totalMedicamentosOriginal.toFixed(2)})`
                           : `Q ${totalMedicamentos.toFixed(2)}`}
                       </strong>
@@ -660,8 +714,8 @@ export default function DispensarMedicamentosPage() {
                   )}
                   <div style={{ ...styles.modalSummaryRow, borderTop: '1px solid #cbd5e1', paddingTop: '8px', marginTop: '6px' }}>
                     <span style={{ fontWeight: '700', color: '#03045e' }}>Total a Cobrar al Paciente:</span>
-                    <span style={{ fontWeight: '800', color: esCasoEspecial ? '#059669' : '#0077b6', fontSize: '16px' }}>
-                      Q {totalAPagar.toFixed(2)} {esCasoEspecial && '(Caso Especial)'}
+                    <span style={{ fontWeight: '800', color: esExoneracionTotal ? '#059669' : '#0077b6', fontSize: '16px' }}>
+                      Q {totalAPagar.toFixed(2)} {esExoneracionTotal && `(${esBecado ? 'Becado' : 'S/R'})`}
                     </span>
                   </div>
                 </div>

@@ -45,11 +45,18 @@ export default function AdminNavbar({ onBeforeNavigate }) {
     nombreRol: 'INVITADO',
   };
 
-  const userRoles = (user.roles && user.roles.length > 0)
-    ? user.roles
-    : (user.nombreRol ? [user.nombreRol] : ['INVITADO']);
+  const normalizeRole = (r) => {
+    if (!r) return '';
+    const str = String(r).trim().toUpperCase();
+    return str.startsWith('ROLE_') ? str.substring(5) : str;
+  };
 
-  const hasRole = (role) => userRoles.includes(role);
+  const userRoles = [
+    ...(Array.isArray(user.roles) ? user.roles : []),
+    ...(user.nombreRol ? [user.nombreRol] : ['INVITADO'])
+  ].map(normalizeRole);
+
+  const hasRole = (role) => userRoles.includes(normalizeRole(role));
 
   const isAdmin = hasRole('ADMIN');
   const isEnfermera = hasRole('ENFERMERA');

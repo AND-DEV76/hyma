@@ -6,7 +6,8 @@ import {
   FlaskConical,
   ChevronRight,
   Settings,
-  Sliders
+  Sliders,
+  Percent,
 } from 'lucide-react';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
@@ -20,17 +21,38 @@ export default function ConfiguracionPage() {
     nombreRol: 'INVITADO',
   };
 
-  const isAdmin = user.nombreRol === 'ADMIN';
-  const isFarmacia = user.nombreRol === 'FARMACIA';
-  const isMedico = user.nombreRol === 'MEDICO';
+  const normalizeRole = (r) => {
+    if (!r) return '';
+    const str = String(r).trim().toUpperCase();
+    return str.startsWith('ROLE_') ? str.substring(5) : str;
+  };
+
+  const userRoles = [
+    ...(Array.isArray(user.roles) ? user.roles : []),
+    ...(user.nombreRol ? [user.nombreRol] : ['INVITADO'])
+  ].map(normalizeRole);
+
+  const hasRole = (role) => userRoles.includes(normalizeRole(role));
+
+  const isAdmin = hasRole('ADMIN');
+  const isFarmacia = hasRole('FARMACIA');
+  const isMedico = hasRole('MEDICO');
 
   const opciones = [
     {
       id: 'tarifas',
       titulo: 'Tarifas de Consulta Médica',
-      descripcion: 'Configuración de precios y aranceles de consulta médica general.',
+      descripcion: 'Configuración de precios de consulta médica general y pediátrica (< 13 años).',
       ruta: '/tarifas',
       icono: <CircleDollarSign size={26} />,
+      show: isAdmin || isFarmacia,
+    },
+    {
+      id: 'porcentaje-medicamento',
+      titulo: 'Porcentaje de Medicamento',
+      descripcion: 'Configuración del margen porcentual sobre costo unitario para calcular el precio final de venta.',
+      ruta: '/configuracion/porcentaje-medicamento',
+      icono: <Percent size={26} />,
       show: isAdmin || isFarmacia,
     },
     {

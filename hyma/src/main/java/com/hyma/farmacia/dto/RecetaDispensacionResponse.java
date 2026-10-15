@@ -25,6 +25,11 @@ public class RecetaDispensacionResponse {
     private String observacionesTratamiento;
 
     @Builder.Default
+    private String nombreTarifaConsulta = "Tarifa de Consulta Médica";
+    @Builder.Default
+    private Boolean esNino = false;
+
+    @Builder.Default
     private BigDecimal precioConsulta = BigDecimal.ZERO;
     @Builder.Default
     private BigDecimal totalMedicamentos = BigDecimal.ZERO;

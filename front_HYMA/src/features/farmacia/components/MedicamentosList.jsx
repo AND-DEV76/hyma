@@ -62,13 +62,13 @@ function MedicamentosList({
       unidades = item.unidades ?? 0;
     }
 
-    // 2. Precio unitario
+    // 2. Precio final de venta
     let precio = item.precio;
     if (medLotes.length > 0) {
-      const conPrecio = medLotes.filter((l) => l.precioUnitario != null);
+      const conPrecio = medLotes.filter((l) => l.precioVenta != null || l.precioUnitario != null);
       if (conPrecio.length > 0) {
         const masReciente = conPrecio.reduce((prev, curr) => (curr.idLote > prev.idLote ? curr : prev), conPrecio[0]);
-        precio = masReciente.precioUnitario;
+        precio = masReciente.precioVenta != null ? masReciente.precioVenta : masReciente.precioUnitario;
       }
     }
 

@@ -17,6 +17,9 @@ public interface SalidaMedicamentoRepository extends JpaRepository<SalidaMedicam
 
     List<SalidaMedicamento> findByTipoSalidaIgnoreCaseAndFechaSalidaBetweenOrderByFechaSalidaDesc(String tipoSalida, java.time.LocalDateTime inicio, java.time.LocalDateTime fin);
 
+    @org.springframework.data.jpa.repository.Query("SELECT s FROM SalidaMedicamento s WHERE UPPER(s.tipoSalida) IN :tipos AND s.fechaSalida BETWEEN :inicio AND :fin ORDER BY s.fechaSalida DESC")
+    List<SalidaMedicamento> buscarPorTiposYFechas(@org.springframework.data.repository.query.Param("tipos") Collection<String> tipos, @org.springframework.data.repository.query.Param("inicio") java.time.LocalDateTime inicio, @org.springframework.data.repository.query.Param("fin") java.time.LocalDateTime fin);
+
     List<SalidaMedicamento> findByFechaSalidaBetweenOrderByFechaSalidaDesc(java.time.LocalDateTime inicio, java.time.LocalDateTime fin);
 
     List<SalidaMedicamento> findAllByOrderByFechaSalidaDesc();

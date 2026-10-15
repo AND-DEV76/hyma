@@ -264,3 +264,18 @@ INSERT INTO especialidad_referencia (nombre, descripcion, activo) VALUES
 ('Medicina Preventiva', 'Promoción de la salud, control de epidemias y prevención de enfermedades.', TRUE),
 ('Nutriología Clínica', 'Tratamiento nutricional y dietético en pacientes con condiciones médicas.', TRUE),
 ('Medicina del Deporte', 'Prevención, diagnóstico y tratamiento de lesiones por actividad física.', TRUE);
+
+-- ==========================================================
+-- TARIFAS INICIALES DE CONSULTA
+-- ==========================================================
+INSERT INTO tarifa_servicio (nombre, precio, activo) VALUES
+('Consulta General', 50.00, TRUE),
+('Consulta Médica Niño', 40.00, TRUE)
+ON CONFLICT (nombre) DO NOTHING;
+
+-- ==========================================================
+-- PARÁMETROS INICIALES DE FARMACIA
+-- ==========================================================
+INSERT INTO parametro_farmacia (clave, valor, descripcion) VALUES
+('PORCENTAJE_MEDICAMENTO', '25.00', 'Porcentaje de incremento sobre el costo unitario para precio final de venta')
+ON CONFLICT (clave) DO NOTHING;

@@ -32,4 +32,7 @@ public class DetalleEntradaMedicamento {
 
     @Column(name = "precio_unitario", precision = 12, scale = 2)
     private BigDecimal precioUnitario;
+
+    @Column(name = "precio_venta", precision = 12, scale = 2)
+    private BigDecimal precioVenta;
 }

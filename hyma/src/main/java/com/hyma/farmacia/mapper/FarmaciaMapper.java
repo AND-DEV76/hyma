@@ -47,6 +47,7 @@ public class FarmaciaMapper {
                 .numeroLote(entity.getNumeroLote())
                 .fechaExpiracion(entity.getFechaExpiracion())
                 .precioUnitario(entity.getPrecioUnitario())
+                .precioVenta(entity.getPrecioVenta() != null ? entity.getPrecioVenta() : entity.getPrecioUnitario())
                 .cantidadInicial(entity.getCantidadInicial())
                 .stockDisponible(entity.getCantidadInicial())
                 .estado(entity.getEstado() == null ? null : entity.getEstado().name())
@@ -80,6 +81,7 @@ public class FarmaciaMapper {
                 .fechaExpiracion(lote.getFechaExpiracion())
                 .cantidad(entity.getCantidad())
                 .precioUnitario(entity.getPrecioUnitario())
+                .precioVenta(entity.getPrecioVenta() != null ? entity.getPrecioVenta() : (lote.getPrecioVenta() != null ? lote.getPrecioVenta() : entity.getPrecioUnitario()))
                 .build();
     }
 

@@ -34,6 +34,7 @@ public class FilaReporteInventarioFarmacia {
     private Integer inventarioFisico;        // Conteo físico auditoría
     private Integer diferencia;              // Saldo Actual - Inventario Físico (0)
     private BigDecimal precioPorUnidad;      // Precio / costo unitario
+    private BigDecimal precioVenta;          // Precio final venta al público
     private BigDecimal total;                // Diferencia * Precio (0.00)
     private BigDecimal valorSaldoActual;     // Saldo Actual * Precio
 }

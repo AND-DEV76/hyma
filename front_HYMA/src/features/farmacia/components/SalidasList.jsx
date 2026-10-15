@@ -162,7 +162,12 @@ export default function SalidasList() {
                           <span>{formatDate(s.fechaSalida)}</span>
                         </div>
                         <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
-                          Tipo: {s.tipoSalida || 'DISPENSACION'}
+                          Tipo: {
+                            (s.tipoSalida === 'SR' || s.tipoSalida === 'S/R' || s.tipoSalida === 'CASO_ESPECIAL') ? '★ S/R'
+                            : s.tipoSalida === 'BECADO' ? '★ Becado'
+                            : s.tipoSalida === 'VENTA_EXTERNA' ? 'Venta Externa'
+                            : (s.tipoSalida || 'DISPENSACION')
+                          }
                         </span>
                       </td>
 

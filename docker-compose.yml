@@ -23,6 +23,10 @@ services:
     restart: "no"
     ports:
       - "8080:8080"
+    networks:
+      default:
+        aliases:
+          - hyma_backend
     environment:
       TZ: America/Guatemala
       JAVA_TOOL_OPTIONS: "-Duser.timezone=America/Guatemala"

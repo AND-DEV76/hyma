@@ -268,6 +268,7 @@ export default function InventarioFarmaciaReportePage() {
                     <th style={{ background: '#CA8A04', color: '#fff', padding: '10px 8px', textAlign: 'center', minWidth: '85px', position: 'sticky', top: 0, zIndex: 5 }}>INVENTARIO FÍSICO</th>
                     <th style={{ background: '#0D9488', color: '#fff', padding: '10px 6px', textAlign: 'center', minWidth: '75px', position: 'sticky', top: 0, zIndex: 5 }}>DIFERENCIA</th>
                     <th style={{ background: '#4F46E5', color: '#fff', padding: '10px 10px', textAlign: 'right', minWidth: '85px', position: 'sticky', top: 0, zIndex: 5 }}>PRECIO POR UNIDAD</th>
+                    <th style={{ background: '#4338CA', color: '#fff', padding: '10px 10px', textAlign: 'right', minWidth: '95px', position: 'sticky', top: 0, zIndex: 5 }}>PRECIO FINAL VENTA</th>
                     <th style={{ background: '#4F46E5', color: '#fff', padding: '10px 10px', textAlign: 'right', minWidth: '80px', position: 'sticky', top: 0, zIndex: 5 }}>TOTAL</th>
                   </tr>
                 </thead>
@@ -337,6 +338,9 @@ export default function InventarioFarmaciaReportePage() {
                       <td style={{ padding: '8px 10px', textAlign: 'right', color: '#1e293b' }}>
                         {Number(f.precioPorUnidad || 0).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
+                      <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, color: '#047857' }}>
+                        {Number(f.precioVenta || 0).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
                       <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, color: '#1e293b' }}>
                         {Number(f.total || 0).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
@@ -398,6 +402,9 @@ export default function InventarioFarmaciaReportePage() {
                       </td>
                       <td style={{ padding: '12px 6px', textAlign: 'center', color: '#0f766e' }}>
                         {totales.sumDiferencia.toLocaleString('es-GT')}
+                      </td>
+                      <td style={{ padding: '12px 10px', textAlign: 'right', color: '#64748b' }}>
+                        —
                       </td>
                       <td style={{ padding: '12px 10px', textAlign: 'right', color: '#64748b' }}>
                         —

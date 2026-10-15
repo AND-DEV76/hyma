@@ -22,8 +22,10 @@ import com.hyma.consulta.repository.ConsultaRepository;
 import com.hyma.clinica.model.Tratamiento;
 import com.hyma.clinica.model.DetalleTratamiento;
 import com.hyma.clinica.repository.TratamientoRepository;
+import com.hyma.tarifa.service.TarifaServicioService;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,6 +50,7 @@ public class FarmaciaService {
     private final PacienteRepository pacienteRepository;
     private final SalidaMedicamentoRepository salidaMedicamentoRepository;
     private final DetalleSalidaMedicamentoRepository detalleSalidaMedicamentoRepository;
+    private final TarifaServicioService tarifaServicioService;
 
     @Transactional(readOnly = true)
     public List<CatalogoFarmaciaResponse> listarCategorias() {
@@ -155,9 +158,9 @@ public class FarmaciaService {
                             .mapToInt(l -> l.getCantidadInicial() != null ? l.getCantidadInicial() : 0)
                             .sum();
                     java.math.BigDecimal ultimoPrecio = lotes.stream()
-                            .filter(l -> l.getPrecioUnitario() != null)
+                            .filter(l -> l.getPrecioVenta() != null || l.getPrecioUnitario() != null)
                             .reduce((first, second) -> second)
-                            .map(LoteMedicamento::getPrecioUnitario)
+                            .map(l -> l.getPrecioVenta() != null ? l.getPrecioVenta() : l.getPrecioUnitario())
                             .orElse(null);
                     LocalDate proximoVenc = lotes.stream()
                             .filter(l -> l.getEstado() == EstadoLote.ACTIVO && l.getFechaExpiracion() != null)
@@ -241,6 +244,10 @@ public class FarmaciaService {
             String numeroLote = limpiar(detalleRequest.getNumeroLote());
             LocalDate fechaExpiracion = detalleRequest.getFechaExpiracion();
             BigDecimal precioUnitario = detalleRequest.getPrecioUnitario();
+            BigDecimal precioVenta = detalleRequest.getPrecioVenta();
+            if (precioVenta == null && precioUnitario != null) {
+                precioVenta = calcularPrecioVenta(precioUnitario, obtenerPorcentajeMedicamento());
+            }
 
             // Clave única basada en medicamento, número de lote, fecha de vencimiento y costo unitario
             String claveLote = generarClaveLote(medicamento.getIdMedicamento(), numeroLote, fechaExpiracion, precioUnitario);
@@ -257,6 +264,7 @@ public class FarmaciaService {
                         .numeroLote(numeroLote)
                         .fechaExpiracion(fechaExpiracion)
                         .precioUnitario(precioUnitario)
+                        .precioVenta(precioVenta)
                         .cantidadInicial(detalleRequest.getCantidad())
                         .estado(EstadoLote.ACTIVO)
                         .build();
@@ -264,6 +272,11 @@ public class FarmaciaService {
                 // Caso 1: Mismo medicamento, mismo número de lote, mismo vencimiento y mismo costo unitario -> acumular cantidad en el mismo id_lote
                 int cantidadActual = lote.getCantidadInicial() == null ? 0 : lote.getCantidadInicial();
                 lote.setCantidadInicial(cantidadActual + detalleRequest.getCantidad());
+                if (precioVenta != null) {
+                    lote.setPrecioVenta(precioVenta);
+                } else if (lote.getPrecioVenta() == null && precioUnitario != null) {
+                    lote.setPrecioVenta(calcularPrecioVenta(precioUnitario, obtenerPorcentajeMedicamento()));
+                }
                 lote.setEstado(EstadoLote.ACTIVO);
             }
 
@@ -277,6 +290,7 @@ public class FarmaciaService {
                     .precioUnitario(detalleRequest.getPrecioUnitario() == null
                             ? loteGuardado.getPrecioUnitario()
                             : detalleRequest.getPrecioUnitario())
+                    .precioVenta(precioVenta != null ? precioVenta : loteGuardado.getPrecioVenta())
                     .build();
             entrada.getDetalles().add(detalle);
         }
@@ -398,6 +412,54 @@ public class FarmaciaService {
         return mapper.toParametroResponse(parametroRepository.save(parametro));
     }
 
+    @Transactional(readOnly = true)
+    public BigDecimal obtenerPorcentajeMedicamento() {
+        return parametroRepository.findByClaveIgnoreCase("PORCENTAJE_MEDICAMENTO")
+                .map(p -> {
+                    try {
+                        return new BigDecimal(p.getValor().trim());
+                    } catch (Exception e) {
+                        return BigDecimal.valueOf(25.00);
+                    }
+                })
+                .orElse(BigDecimal.valueOf(25.00));
+    }
+
+    @Transactional
+    public BigDecimal actualizarPorcentajeMedicamento(BigDecimal porcentaje) {
+        if (porcentaje == null || porcentaje.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("El porcentaje no puede ser negativo");
+        }
+        BigDecimal rounded = porcentaje.setScale(2, RoundingMode.HALF_UP);
+        ParametroFarmacia param = parametroRepository.findByClaveIgnoreCase("PORCENTAJE_MEDICAMENTO")
+                .orElseGet(() -> ParametroFarmacia.builder()
+                        .clave("PORCENTAJE_MEDICAMENTO")
+                        .descripcion("Porcentaje de incremento sobre el costo unitario para precio final de venta")
+                        .build());
+        param.setValor(rounded.stripTrailingZeros().toPlainString());
+        parametroRepository.save(param);
+
+        // Recalcular el precio de venta en todos los lotes existentes que tengan costo unitario
+        List<LoteMedicamento> todosLotes = loteRepository.findAll();
+        for (LoteMedicamento l : todosLotes) {
+            if (l.getPrecioUnitario() != null) {
+                l.setPrecioVenta(calcularPrecioVenta(l.getPrecioUnitario(), rounded));
+            }
+        }
+        loteRepository.saveAll(todosLotes);
+
+        return rounded;
+    }
+
+    public BigDecimal calcularPrecioVenta(BigDecimal costoUnitario, BigDecimal porcentaje) {
+        if (costoUnitario == null) return null;
+        if (porcentaje == null || porcentaje.compareTo(BigDecimal.ZERO) <= 0) {
+            return costoUnitario.setScale(2, RoundingMode.HALF_UP);
+        }
+        BigDecimal factor = BigDecimal.ONE.add(porcentaje.divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP));
+        return costoUnitario.multiply(factor).setScale(2, RoundingMode.HALF_UP);
+    }
+
     private void validarNombreCategoria(String nombre, Long id) {
         boolean existe = id == null
                 ? categoriaRepository.existsByNombreIgnoreCase(nombre)
@@ -465,6 +527,9 @@ public class FarmaciaService {
             edad = Period.between(paciente.getFechaNacimiento(), LocalDate.now()).getYears();
         }
 
+        boolean esNino = edad != null && edad < 13;
+        String nombreTarifa = esNino ? "Tarifa de Consulta Médica Niño" : "Tarifa de Consulta Médica";
+
         String nombreCompleto = (paciente.getNombres() != null ? paciente.getNombres() : "") + " " +
                 (paciente.getApellidos() != null ? paciente.getApellidos() : "");
 
@@ -475,6 +540,8 @@ public class FarmaciaService {
                 .edad(edad)
                 .sexo(paciente.getSexo() != null ? paciente.getSexo().name() : null)
                 .comunidad(paciente.getComunidad())
+                .nombreTarifaConsulta(nombreTarifa)
+                .esNino(esNino)
                 .build();
 
         if (consulta != null) {
@@ -484,7 +551,12 @@ public class FarmaciaService {
                 response.setNombreMedico(consulta.getMedico().getNombres() + " " + consulta.getMedico().getApellidos());
             }
 
-            BigDecimal precioConsulta = consulta.getPrecioConsulta() != null ? consulta.getPrecioConsulta() : BigDecimal.ZERO;
+            BigDecimal precioConsulta = consulta.getPrecioConsulta();
+            if (precioConsulta == null || precioConsulta.compareTo(BigDecimal.ZERO) <= 0) {
+                precioConsulta = esNino
+                        ? tarifaServicioService.obtenerPrecioConsultaNino()
+                        : tarifaServicioService.obtenerPrecioConsultaGeneral();
+            }
             response.setPrecioConsulta(precioConsulta);
 
             Tratamiento tratamiento = tratamientoRepository.findByConsultaIdWithDetalles(consulta.getIdConsulta()).orElse(null);
@@ -510,8 +582,11 @@ public class FarmaciaService {
                                 .sum();
 
                         BigDecimal precioUnitario = BigDecimal.ZERO;
-                        if (!lotesActivos.isEmpty() && lotesActivos.get(0).getPrecioUnitario() != null) {
-                            precioUnitario = lotesActivos.get(0).getPrecioUnitario();
+                        if (!lotesActivos.isEmpty()) {
+                            LoteMedicamento lAct = lotesActivos.get(0);
+                            precioUnitario = lAct.getPrecioVenta() != null
+                                    ? lAct.getPrecioVenta()
+                                    : (lAct.getPrecioUnitario() != null ? lAct.getPrecioUnitario() : BigDecimal.ZERO);
                         }
                         BigDecimal subtotalDetalle = precioUnitario.multiply(BigDecimal.valueOf(cantidadPedida));
 
@@ -535,7 +610,9 @@ public class FarmaciaService {
                                     ? java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), loteSugerido.getFechaExpiracion())
                                     : 0L;
                             int aDescontar = Math.min(cantidadPedida, loteSugerido.getCantidadInicial());
-                            BigDecimal pUnitLote = loteSugerido.getPrecioUnitario() != null ? loteSugerido.getPrecioUnitario() : BigDecimal.ZERO;
+                            BigDecimal pUnitLote = loteSugerido.getPrecioVenta() != null
+                                    ? loteSugerido.getPrecioVenta()
+                                    : (loteSugerido.getPrecioUnitario() != null ? loteSugerido.getPrecioUnitario() : BigDecimal.ZERO);
                             BigDecimal subtotalLote = pUnitLote.multiply(BigDecimal.valueOf(aDescontar));
                             totalMedicamentos = totalMedicamentos.add(subtotalLote);
 
@@ -597,11 +674,35 @@ public class FarmaciaService {
                     usuario = usuarioRepository.findByUsername(username).orElse(null);
                 }
 
-                boolean noPagaConsulta = request != null && (request.isNoPagaConsulta() || request.isEsCasoEspecial());
-                boolean esCasoEspecial = request != null && request.isEsCasoEspecial();
+                String modalidad = request != null && request.getModalidadCobro() != null ? request.getModalidadCobro().trim().toUpperCase() : "";
+                boolean esExoneracionTotal = request != null && (
+                        request.isEsCasoEspecial() ||
+                        "SR".equals(modalidad) ||
+                        "S/R".equals(modalidad) ||
+                        "BECADO".equals(modalidad) ||
+                        "CASO_ESPECIAL".equals(modalidad)
+                );
+                boolean noPagaConsulta = request != null && (request.isNoPagaConsulta() || esExoneracionTotal);
+                boolean esCasoEspecial = esExoneracionTotal;
+
+                Integer edad = null;
+                if (consulta.getPaciente() != null && consulta.getPaciente().getFechaNacimiento() != null) {
+                    edad = Period.between(consulta.getPaciente().getFechaNacimiento(), LocalDate.now()).getYears();
+                }
+                boolean esNino = edad != null && edad < 13;
+
+                BigDecimal precioConsulta = consulta.getPrecioConsulta();
+                if ((precioConsulta == null || precioConsulta.compareTo(BigDecimal.ZERO) <= 0) && !noPagaConsulta) {
+                    precioConsulta = esNino
+                            ? tarifaServicioService.obtenerPrecioConsultaNino()
+                            : tarifaServicioService.obtenerPrecioConsultaGeneral();
+                    consulta.setPrecioConsulta(precioConsulta);
+                    consultaRepository.save(consulta);
+                }
+
                 BigDecimal costoConsulta = noPagaConsulta
                         ? BigDecimal.ZERO
-                        : (consulta.getPrecioConsulta() != null ? consulta.getPrecioConsulta() : BigDecimal.ZERO);
+                        : (precioConsulta != null ? precioConsulta : BigDecimal.ZERO);
 
                 if (noPagaConsulta) {
                     consulta.setPrecioConsulta(BigDecimal.ZERO);
@@ -613,11 +714,21 @@ public class FarmaciaService {
                         && tratamiento.getDetalles().stream().anyMatch(d -> d.getMedicamento() != null && d.getCantidad() != null && d.getCantidad() > 0);
 
                 if (tieneMedicamentos) {
-                    String tipoSalida = esCasoEspecial ? "CASO_ESPECIAL" : "DISPENSACION";
+                    String tipoSalida = "DISPENSACION";
+                    if ("BECADO".equals(modalidad)) {
+                        tipoSalida = "BECADO";
+                    } else if ("SR".equals(modalidad) || "S/R".equals(modalidad) || esExoneracionTotal) {
+                        tipoSalida = "SR";
+                    }
+
                     String observaciones = request != null && request.getObservaciones() != null && !request.getObservaciones().isBlank()
                             ? request.getObservaciones()
-                            : (esCasoEspecial ? "Dispensación de caso especial (Exoneración total)" : "Dispensación de medicamentos de consulta médica");
-                    if (noPagaConsulta && !esCasoEspecial && !observaciones.contains("Exonerada")) {
+                            : ("BECADO".equals(tipoSalida)
+                                    ? "Dispensación Becado (Exoneración total)"
+                                    : ("SR".equals(tipoSalida)
+                                            ? "Dispensación S/R (Exoneración total)"
+                                            : "Dispensación de medicamentos de consulta médica"));
+                    if (noPagaConsulta && !esExoneracionTotal && !observaciones.contains("Exonerada")) {
                         observaciones += " [Consulta Exonerada]";
                     }
 
@@ -654,7 +765,9 @@ public class FarmaciaService {
                                 loteRepository.save(lote);
 
                                 // Registrar detalle de salida del lote
-                                BigDecimal precioUnit = lote.getPrecioUnitario() != null ? lote.getPrecioUnitario() : BigDecimal.ZERO;
+                                BigDecimal precioUnit = lote.getPrecioVenta() != null
+                                        ? lote.getPrecioVenta()
+                                        : (lote.getPrecioUnitario() != null ? lote.getPrecioUnitario() : BigDecimal.ZERO);
                                 DetalleSalidaMedicamento detalleSalida = DetalleSalidaMedicamento.builder()
                                         .salida(salida)
                                         .lote(lote)
@@ -842,7 +955,9 @@ public class FarmaciaService {
                 // Precio unitario: si se envió en la petición se usa, de lo contrario el del lote
                 BigDecimal precioUnit = itemReq.getPrecioUnitario() != null
                         ? itemReq.getPrecioUnitario()
-                        : (lote.getPrecioUnitario() != null ? lote.getPrecioUnitario() : BigDecimal.ZERO);
+                        : (lote.getPrecioVenta() != null
+                                ? lote.getPrecioVenta()
+                                : (lote.getPrecioUnitario() != null ? lote.getPrecioUnitario() : BigDecimal.ZERO));
                 BigDecimal subtotal = precioUnit.multiply(BigDecimal.valueOf(aDescontar));
 
                 DetalleSalidaMedicamento detalleSalida = DetalleSalidaMedicamento.builder()

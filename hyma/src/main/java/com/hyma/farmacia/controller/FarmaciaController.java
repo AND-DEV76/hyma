@@ -11,8 +11,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/farmacia")
@@ -127,15 +129,36 @@ public class FarmaciaController {
     }
 
     @GetMapping("/parametros")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA') or hasAnyAuthority('ROLE_ADMIN', 'ROLE_FARMACIA', 'ADMIN', 'FARMACIA')")
     public ResponseEntity<List<ParametroFarmaciaResponse>> listarParametros() {
         return ResponseEntity.ok(farmaciaService.listarParametros());
     }
 
     @PutMapping("/parametros/{clave}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA') or hasAnyAuthority('ROLE_ADMIN', 'ROLE_FARMACIA', 'ADMIN', 'FARMACIA')")
     public ResponseEntity<ParametroFarmaciaResponse> actualizarParametro(
             @PathVariable(name = "clave") String clave,
             @Valid @RequestBody ParametroFarmaciaRequest request) {
         return ResponseEntity.ok(farmaciaService.actualizarParametro(clave, request));
+    }
+
+    @GetMapping("/parametros/porcentaje-medicamento")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA') or hasAnyAuthority('ROLE_ADMIN', 'ROLE_FARMACIA', 'ADMIN', 'FARMACIA')")
+    public ResponseEntity<Map<String, Object>> obtenerPorcentajeMedicamento() {
+        BigDecimal porcentaje = farmaciaService.obtenerPorcentajeMedicamento();
+        return ResponseEntity.ok(Map.of("porcentaje", porcentaje));
+    }
+
+    @PutMapping("/parametros/porcentaje-medicamento")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA') or hasAnyAuthority('ROLE_ADMIN', 'ROLE_FARMACIA', 'ADMIN', 'FARMACIA')")
+    public ResponseEntity<Map<String, Object>> actualizarPorcentajeMedicamento(@RequestBody Map<String, Object> payload) {
+        Object val = payload.get("porcentaje");
+        if (val == null) {
+            throw new IllegalArgumentException("El porcentaje es requerido");
+        }
+        BigDecimal porcentaje = new BigDecimal(val.toString().trim());
+        BigDecimal actualizado = farmaciaService.actualizarPorcentajeMedicamento(porcentaje);
+        return ResponseEntity.ok(Map.of("porcentaje", actualizado));
     }
 
     // ==========================================

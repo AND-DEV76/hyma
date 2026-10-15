@@ -18,6 +18,7 @@ public class LoteResponse {
     private String numeroLote;
     private LocalDate fechaExpiracion;
     private BigDecimal precioUnitario;
+    private BigDecimal precioVenta;
     private Integer cantidadInicial;
     private Integer stockDisponible;
     private String estado;

@@ -36,6 +36,7 @@ public class ReporteCasosEspecialesResponse {
         private BigDecimal subtotalConsulta;
         private BigDecimal subtotalMedicamentos;
         private BigDecimal totalExonerado;
+        private String tipoSalida;
         private String observaciones;
     }
 

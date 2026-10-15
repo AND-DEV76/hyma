@@ -33,6 +33,9 @@ public class LoteMedicamento {
     @Column(name = "precio_unitario", precision = 12, scale = 2)
     private BigDecimal precioUnitario;
 
+    @Column(name = "precio_venta", precision = 12, scale = 2)
+    private BigDecimal precioVenta;
+
     @Column(name = "cantidad_inicial", nullable = false)
     @Builder.Default
     private Integer cantidadInicial = 0;

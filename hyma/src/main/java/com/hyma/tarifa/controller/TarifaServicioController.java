@@ -38,7 +38,7 @@ public class TarifaServicioController {
     }
 
     @PutMapping("/consulta-general")
-    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA') or hasAnyAuthority('ROLE_ADMIN', 'ROLE_FARMACIA', 'ADMIN', 'FARMACIA')")
     public ResponseEntity<TarifaDTO> actualizarPrecioConsultaGeneral(@RequestBody Map<String, Object> payload) {
         Object precioObj = payload.get("precio");
         if (precioObj == null) {
@@ -46,6 +46,26 @@ public class TarifaServicioController {
         }
         BigDecimal nuevoPrecio = new BigDecimal(precioObj.toString());
         return ResponseEntity.ok(tarifaService.actualizarPrecioConsultaGeneral(nuevoPrecio));
+    }
+
+    @GetMapping("/consulta-nino")
+    public ResponseEntity<Map<String, Object>> obtenerPrecioConsultaNino() {
+        BigDecimal precio = tarifaService.obtenerPrecioConsultaNino();
+        return ResponseEntity.ok(Map.of(
+                "nombre", "Consulta Médica Niño",
+                "precio", precio
+        ));
+    }
+
+    @PutMapping("/consulta-nino")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA') or hasAnyAuthority('ROLE_ADMIN', 'ROLE_FARMACIA', 'ADMIN', 'FARMACIA')")
+    public ResponseEntity<TarifaDTO> actualizarPrecioConsultaNino(@RequestBody Map<String, Object> payload) {
+        Object precioObj = payload.get("precio");
+        if (precioObj == null) {
+            throw new IllegalArgumentException("El campo 'precio' es requerido");
+        }
+        BigDecimal nuevoPrecio = new BigDecimal(precioObj.toString());
+        return ResponseEntity.ok(tarifaService.actualizarPrecioConsultaNino(nuevoPrecio));
     }
 
     @PutMapping("/{id}")

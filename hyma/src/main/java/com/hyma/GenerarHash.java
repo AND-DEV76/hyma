@@ -14,7 +14,7 @@ public class GenerarHash {
                 3
         );
 
-        String password = "Admin123!";
+        String password = "Prueba123#";
 
         String hash = encoder.encode(password);
 

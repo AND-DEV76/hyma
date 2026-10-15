@@ -19,4 +19,5 @@ public class EntradaDetalleResponse {
     private LocalDate fechaExpiracion;
     private Integer cantidad;
     private BigDecimal precioUnitario;
+    private BigDecimal precioVenta;
 }

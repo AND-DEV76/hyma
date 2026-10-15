@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -104,12 +105,24 @@ public class SecurityConfig {
 
             // 5. Reglas de autorización por URL y Rol
             .authorizeHttpRequests(auth -> auth
-                // Rutas públicas de autenticación (Login)
+                // Peticiones preflight CORS (OPTIONS) permitidas sin autenticación para evitar bloqueos del navegador
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                // Rutas públicas de autenticación (Login, recuperación de contraseña)
                 .requestMatchers("/api/auth/**").permitAll()
 
                 // Gestión de usuarios: Solo accesible por Administradores
                 .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
-                .requestMatchers("/api/clinica/**", "/api/diagnosticos/**", "/api/social/**").authenticated()
+
+                // Módulos protegidos con sesión válida (la autorización fina por rol se delega a @PreAuthorize)
+                .requestMatchers(
+                    "/api/clinica/**",
+                    "/api/diagnosticos/**",
+                    "/api/social/**",
+                    "/api/tarifas/**",
+                    "/api/farmacia/**",
+                    "/api/reportes/**"
+                ).authenticated()
 
                 // Todas las demás rutas de la API requieren autenticación válida
                 .requestMatchers("/api/**").authenticated()

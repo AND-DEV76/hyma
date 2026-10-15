@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowDownToLine, Plus, Trash2, CheckCircle2, AlertCircle, PackagePlus, FileText, Loader2 } from 'lucide-react';
 import MedicamentoSearchInput from './MedicamentoSearchInput';
 import { listarLotes } from '../services/loteService';
+import { obtenerPorcentajeMedicamento } from '../services/parametroService';
 
 const newDetail = {
   idMedicamento: '',
@@ -12,12 +13,35 @@ const newDetail = {
 };
 
 function EntradaMedicamentoForm({ medicamentos, lotes = [], onSave, onNavigateHistorial }) {
-  const [tipoEntrada, setTipoEntrada] = useState('COMPRA');
+  const [tipoEntrada, setTipoEntrada] = useState('PEDIDO');
   const [observaciones, setObservaciones] = useState('');
   const [detalles, setDetalles] = useState([{ ...newDetail }]);
+  const [porcentajeGanancia, setPorcentajeGanancia] = useState(25.0);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const cargarPorcentaje = async () => {
+      try {
+        const data = await obtenerPorcentajeMedicamento();
+        if (data?.porcentaje != null) {
+          setPorcentajeGanancia(Number(data.porcentaje));
+        }
+      } catch (e) {
+        console.warn('No se pudo cargar el porcentaje de medicamento:', e);
+      }
+    };
+    cargarPorcentaje();
+  }, []);
+
+  const calcularPrecioVenta = (costo) => {
+    if (costo === '' || costo === null || costo === undefined) return '';
+    const num = parseFloat(costo);
+    if (isNaN(num) || num < 0) return '';
+    const factor = 1 + (Number(porcentajeGanancia) || 0) / 100;
+    return (num * factor).toFixed(2);
+  };
 
   const updateDetail = (index, field, value) => {
     setDetalles((prev) => prev.map((item, idx) => (idx === index ? { ...item, [field]: value } : item)));
@@ -93,6 +117,11 @@ function EntradaMedicamentoForm({ medicamentos, lotes = [], onSave, onNavigateHi
     const precio = Number(curr.precioUnitario) || 0;
     return acc + cant * precio;
   }, 0);
+  const totalVentaEstimado = detalles.reduce((acc, curr) => {
+    const cant = Number(curr.cantidad) || 0;
+    const pVenta = Number(calcularPrecioVenta(curr.precioUnitario)) || 0;
+    return acc + cant * pVenta;
+  }, 0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -112,19 +141,24 @@ function EntradaMedicamentoForm({ medicamentos, lotes = [], onSave, onNavigateHi
       const payload = {
         tipoEntrada,
         observaciones: observaciones.trim() || null,
-        detalles: detalles.map((d) => ({
-          idMedicamento: Number(d.idMedicamento),
-          numeroLote: d.numeroLote.trim() || null,
-          fechaExpiracion: d.fechaExpiracion,
-          cantidad: Number(d.cantidad),
-          precioUnitario: d.precioUnitario === '' ? null : Number(d.precioUnitario),
-        })),
+        detalles: detalles.map((d) => {
+          const costo = d.precioUnitario === '' ? null : Number(d.precioUnitario);
+          const pVenta = costo != null ? Number(calcularPrecioVenta(costo)) : null;
+          return {
+            idMedicamento: Number(d.idMedicamento),
+            numeroLote: d.numeroLote.trim() || null,
+            fechaExpiracion: d.fechaExpiracion,
+            cantidad: Number(d.cantidad),
+            precioUnitario: costo,
+            precioVenta: pVenta,
+          };
+        }),
       };
 
       const result = await onSave(payload);
       if (result.success) {
         setSuccessMsg('¡Entrada de inventario registrada con éxito!');
-        setTipoEntrada('COMPRA');
+        setTipoEntrada('PEDIDO');
         setObservaciones('');
         setDetalles([{ ...newDetail }]);
         setTimeout(() => setSuccessMsg(''), 5000);
@@ -193,9 +227,8 @@ function EntradaMedicamentoForm({ medicamentos, lotes = [], onSave, onNavigateHi
                 onChange={(e) => setTipoEntrada(e.target.value)}
                 required
               >
-                <option value="COMPRA">Compra directa</option>
-                <option value="DONACION">Donación</option>
                 <option value="PEDIDO">Pedido o Reabastecimiento</option>
+                <option value="DONACION">Donación</option>
               </select>
             </div>
 
@@ -226,7 +259,7 @@ function EntradaMedicamentoForm({ medicamentos, lotes = [], onSave, onNavigateHi
               </div>
               <div>
                 <h3>Detalle de Medicamentos</h3>
-                <p>Indica el lote, vencimiento, unidades y costo unitario.</p>
+                <p>Indica el lote, vencimiento, unidades y costo unitario. El precio final de venta se calcula automáticamente (+{porcentajeGanancia}%).</p>
               </div>
             </div>
             <span className="farmacia-count-pill sm">
@@ -238,12 +271,13 @@ function EntradaMedicamentoForm({ medicamentos, lotes = [], onSave, onNavigateHi
             <table className="farmacia-table farmacia-detalles-table">
               <thead>
                 <tr>
-                  <th style={{ width: '38%' }}>Medicamento *</th>
-                  <th style={{ width: '16%' }}>Número de Lote</th>
-                  <th style={{ width: '15%' }}>Vencimiento *</th>
-                  <th style={{ width: '12%' }}>Unidad *</th>
+                  <th style={{ width: '30%' }}>Medicamento *</th>
+                  <th style={{ width: '15%' }}>Número de Lote</th>
+                  <th style={{ width: '13%' }}>Vencimiento *</th>
+                  <th style={{ width: '10%' }}>Unidad *</th>
                   <th style={{ width: '13%' }}>Costo Unitario (Q)</th>
-                  <th style={{ width: '6%', textAlign: 'center' }}></th>
+                  <th style={{ width: '14%' }}>Precio Final Venta (Q)</th>
+                  <th style={{ width: '5%', textAlign: 'center' }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -308,6 +342,24 @@ function EntradaMedicamentoForm({ medicamentos, lotes = [], onSave, onNavigateHi
                       />
                     </td>
 
+                    {/* Precio Final Venta */}
+                    <td>
+                      <input
+                        className="farmacia-input"
+                        type="text"
+                        readOnly
+                        value={detail.precioUnitario !== '' ? `Q ${calcularPrecioVenta(detail.precioUnitario)}` : '—'}
+                        style={{
+                          background: '#f8fafc',
+                          color: '#047857',
+                          fontWeight: '700',
+                          cursor: 'default',
+                          textAlign: 'right',
+                        }}
+                        title={`Calculado automáticamente con el +${porcentajeGanancia}% sobre el Costo Unitario`}
+                      />
+                    </td>
+
                     {/* Acción Quitar */}
                     <td style={{ textAlign: 'center' }}>
                       <button
@@ -346,7 +398,12 @@ function EntradaMedicamentoForm({ medicamentos, lotes = [], onSave, onNavigateHi
               </span>
               {costoTotal > 0 && (
                 <span className="farmacia-total-item">
-                  Costo Total Estimado: <strong>Q {costoTotal.toFixed(2)}</strong>
+                  Costo Total Entrada: <strong>Q {costoTotal.toFixed(2)}</strong>
+                </span>
+              )}
+              {totalVentaEstimado > 0 && (
+                <span className="farmacia-total-item" style={{ color: '#047857' }}>
+                  Valor Venta Estimado (+{porcentajeGanancia}%): <strong>Q {totalVentaEstimado.toFixed(2)}</strong>
                 </span>
               )}
             </div>

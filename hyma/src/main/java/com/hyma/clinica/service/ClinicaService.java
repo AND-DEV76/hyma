@@ -30,7 +30,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.List;
 import java.util.Optional;
 
@@ -197,10 +199,16 @@ public class ClinicaService {
         ColaAtencion cola = colaAtencionRepository.findById(request.getIdCola())
                 .orElseThrow(() -> new ColaAtencionNotFoundException(request.getIdCola()));
 
-        // 1. Crear Consulta
+        // 1. Crear Consulta (detectar si es menor de 13 años para aplicar tarifa niño)
+        boolean esNino = false;
+        if (paciente.getFechaNacimiento() != null) {
+            int edad = Period.between(paciente.getFechaNacimiento(), LocalDate.now()).getYears();
+            esNino = edad < 13;
+        }
+
         BigDecimal precio = request.getPrecioConsulta() != null && request.getPrecioConsulta().compareTo(BigDecimal.ZERO) > 0
                 ? request.getPrecioConsulta()
-                : tarifaServicioService.obtenerPrecioConsultaGeneral();
+                : (esNino ? tarifaServicioService.obtenerPrecioConsultaNino() : tarifaServicioService.obtenerPrecioConsultaGeneral());
 
         Consulta consulta = Consulta.builder()
                 .paciente(paciente)

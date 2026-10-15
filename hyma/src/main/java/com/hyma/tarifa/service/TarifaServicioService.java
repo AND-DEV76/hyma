@@ -46,6 +46,15 @@ public class TarifaServicioService {
                 .orElse(new BigDecimal("50.00"));
     }
 
+    @Transactional(readOnly = true)
+    public BigDecimal obtenerPrecioConsultaNino() {
+        return tarifaRepository.findByNombreIgnoreCase("Consulta Médica Niño")
+                .or(() -> tarifaRepository.findByNombreIgnoreCase("Consulta Niño"))
+                .filter(t -> Boolean.TRUE.equals(t.getActivo()))
+                .map(TarifaServicio::getPrecio)
+                .orElse(new BigDecimal("40.00"));
+    }
+
     @Transactional
     public TarifaDTO actualizar(Long id, TarifaDTO dto) {
         TarifaServicio t = tarifaRepository.findById(id)
@@ -81,6 +90,27 @@ public class TarifaServicioService {
                         .activo(true)
                         .build());
 
+        t.setPrecio(nuevoPrecio);
+        t.setActivo(true);
+        t.setFechaActualizacion(LocalDateTime.now());
+        return toDTO(tarifaRepository.save(t));
+    }
+
+    @Transactional
+    public TarifaDTO actualizarPrecioConsultaNino(BigDecimal nuevoPrecio) {
+        if (nuevoPrecio == null || nuevoPrecio.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("El precio no puede ser nulo ni negativo");
+        }
+
+        TarifaServicio t = tarifaRepository.findByNombreIgnoreCase("Consulta Médica Niño")
+                .or(() -> tarifaRepository.findByNombreIgnoreCase("Consulta Niño"))
+                .orElseGet(() -> TarifaServicio.builder()
+                        .nombre("Consulta Médica Niño")
+                        .precio(nuevoPrecio)
+                        .activo(true)
+                        .build());
+
+        t.setNombre("Consulta Médica Niño");
         t.setPrecio(nuevoPrecio);
         t.setActivo(true);
         t.setFechaActualizacion(LocalDateTime.now());

@@ -372,7 +372,8 @@ public class ReporteService {
                 // Recaudado: Costo Consulta (o 0 si exonerada) + Total Medicamentos Dispensados
                 SalidaMedicamento salida = c.getIdConsulta() != null ? salidaPorConsulta.get(c.getIdConsulta()) : null;
                 if (salida != null) {
-                    boolean esCasoEspecial = "CASO_ESPECIAL".equalsIgnoreCase(salida.getTipoSalida());
+                    String tSal = salida.getTipoSalida() != null ? salida.getTipoSalida().trim().toUpperCase() : "";
+                    boolean esCasoEspecial = "CASO_ESPECIAL".equals(tSal) || "SR".equals(tSal) || "S/R".equals(tSal) || "BECADO".equals(tSal);
                     if (!esCasoEspecial) {
                         BigDecimal costoConsulta = salida.getCostoConsulta() != null ? salida.getCostoConsulta() : BigDecimal.ZERO;
                         recaudadoConsulta = recaudadoConsulta.add(costoConsulta);
@@ -1360,7 +1361,8 @@ public class ReporteService {
             List<SalidaMedicamento> salidas = salidaMedicamentoRepository.findByConsulta_IdConsultaIn(idsConsultasMes);
             Map<Long, SalidaMedicamento> salidaMap = salidas.stream().collect(Collectors.toMap(SalidaMedicamento::getIdSalida, s -> s, (s1, s2) -> s1));
             for (SalidaMedicamento s : salidas) {
-                boolean esCasoEsp = "CASO_ESPECIAL".equalsIgnoreCase(s.getTipoSalida());
+                String tSal = s.getTipoSalida() != null ? s.getTipoSalida().trim().toUpperCase() : "";
+                boolean esCasoEsp = "CASO_ESPECIAL".equals(tSal) || "SR".equals(tSal) || "S/R".equals(tSal) || "BECADO".equals(tSal);
                 if (!esCasoEsp && s.getCostoConsulta() != null) {
                     totalRecaudacionConsultas = totalRecaudacionConsultas.add(s.getCostoConsulta());
                 }
@@ -1375,7 +1377,8 @@ public class ReporteService {
                     BigDecimal sub = pUnit.multiply(BigDecimal.valueOf(cant));
 
                     SalidaMedicamento parent = d.getSalida() != null ? salidaMap.get(d.getSalida().getIdSalida()) : null;
-                    boolean esCasoEsp = parent != null && "CASO_ESPECIAL".equalsIgnoreCase(parent.getTipoSalida());
+                    String pSal = parent != null && parent.getTipoSalida() != null ? parent.getTipoSalida().trim().toUpperCase() : "";
+                    boolean esCasoEsp = "CASO_ESPECIAL".equals(pSal) || "SR".equals(pSal) || "S/R".equals(pSal) || "BECADO".equals(pSal);
                     if (!esCasoEsp) {
                         totalRecaudacionMeds = totalRecaudacionMeds.add(sub);
                     }
@@ -1593,7 +1596,7 @@ public class ReporteService {
         LocalDateTime finMes = ym.atEndOfMonth().atTime(23, 59, 59, 999999999);
 
         List<SalidaMedicamento> salidas = salidaMedicamentoRepository
-                .findByTipoSalidaIgnoreCaseAndFechaSalidaBetweenOrderByFechaSalidaDesc("CASO_ESPECIAL", inicioMes, finMes);
+                .buscarPorTiposYFechas(List.of("CASO_ESPECIAL", "SR", "S/R", "BECADO"), inicioMes, finMes);
 
         List<ReporteCasosEspecialesResponse.ItemCasoEspecial> items = new ArrayList<>();
         BigDecimal totalMontoExonerado = BigDecimal.ZERO;
@@ -1666,6 +1669,7 @@ public class ReporteService {
                     .subtotalConsulta(subtotalConsulta)
                     .subtotalMedicamentos(subtotalMeds)
                     .totalExonerado(totalCaso)
+                    .tipoSalida(s.getTipoSalida())
                     .observaciones(s.getObservaciones() != null ? s.getObservaciones() : "")
                     .build());
         }
@@ -1969,6 +1973,7 @@ public class ReporteService {
             int inventarioFisico = saldoActual;
             int diferencia = saldoActual - inventarioFisico; // 0
             BigDecimal precioUnit = lote.getPrecioUnitario() != null ? lote.getPrecioUnitario() : BigDecimal.ZERO;
+            BigDecimal precioVenta = lote.getPrecioVenta() != null ? lote.getPrecioVenta() : precioUnit;
             BigDecimal total = BigDecimal.valueOf(diferencia).multiply(precioUnit);
             BigDecimal valorSaldoActual = BigDecimal.valueOf(saldoActual).multiply(precioUnit);
 
@@ -2008,6 +2013,7 @@ public class ReporteService {
                     .inventarioFisico(inventarioFisico)
                     .diferencia(diferencia)
                     .precioPorUnidad(precioUnit)
+                    .precioVenta(precioVenta)
                     .total(total)
                     .valorSaldoActual(valorSaldoActual)
                     .build());
@@ -2136,7 +2142,7 @@ public class ReporteService {
                     "TOTAL FISICO DEL MES ANTERIOR", "PEDIDOS / COMPRAS", "DONACIÓN",
                     "TOTAL FISICO PARA EL MES", "SEMANA 1", "SEMANA 2", "SEMANA 3", "SEMANA 4",
                     "MEDICAMENTO VENCIDO", "TOTAL ENTREGADO", "SALDO ACTUAL",
-                    "INVENTARIO FÍSICO", "DIFERENCIA", "PRECIO POR UNIDAD", "TOTAL"
+                    "INVENTARIO FÍSICO", "DIFERENCIA", "PRECIO POR UNIDAD", "PRECIO FINAL VENTA", "TOTAL"
             };
 
             XSSFCellStyle[] estilosH = {
@@ -2144,7 +2150,7 @@ public class ReporteService {
                     hVerdeOsc, hNaranja, hRosa,
                     hVerde, hMorado, hMorado, hMorado, hMorado,
                     hRojoOsc, hRojoOsc, hAzul,
-                    hDorado, hTeal, hCeleste, hCeleste
+                    hDorado, hTeal, hCeleste, hCeleste, hCeleste
             };
 
             for (int i = 0; i < titulos.length; i++) {
@@ -2181,7 +2187,8 @@ public class ReporteService {
                 crearCeldaNum(row, 16, f.getDiferencia(), cellNumber);
 
                 crearCeldaMoney(row, 17, f.getPrecioPorUnidad(), cellCurrency);
-                crearCeldaMoney(row, 18, f.getTotal(), cellCurrency);
+                crearCeldaMoney(row, 18, f.getPrecioVenta(), cellCurrency);
+                crearCeldaMoney(row, 19, f.getTotal(), cellCurrency);
             }
 
             // Fila de Totales
@@ -2211,10 +2218,12 @@ public class ReporteService {
             crearCeldaNum(rowTot, 15, t.getSumInventarioFisico(), totalNumber);
             crearCeldaNum(rowTot, 16, t.getSumDiferencia(), totalNumber);
 
-            Cell cVacio = rowTot.createCell(17);
-            cVacio.setCellStyle(totalLabel);
+            Cell cVacio1 = rowTot.createCell(17);
+            cVacio1.setCellStyle(totalLabel);
+            Cell cVacio2 = rowTot.createCell(18);
+            cVacio2.setCellStyle(totalLabel);
 
-            crearCeldaMoney(rowTot, 18, t.getSumTotal(), totalCurrency);
+            crearCeldaMoney(rowTot, 19, t.getSumTotal(), totalCurrency);
 
             // Ajustar anchos de columnas
             int[] anchos = {
@@ -2222,7 +2231,7 @@ public class ReporteService {
                     3800, 3600, 3400,
                     3800, 2600, 2600, 2600, 2600,
                     3500, 3600, 3400,
-                    3600, 2800, 3600, 3600
+                    3600, 2800, 3600, 3600, 3600
             };
             for (int i = 0; i < anchos.length; i++) {
                 sheet.setColumnWidth(i, anchos[i]);

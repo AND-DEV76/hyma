@@ -20,11 +20,20 @@ export default function ProtectedRoute({ children, allowedRoles }) {
 
   // 2. Validar autorización por rol si se especifican roles permitidos
   if (allowedRoles && allowedRoles.length > 0) {
-    const userRoles = (user.roles && user.roles.length > 0)
-      ? user.roles
-      : (user.nombreRol ? [user.nombreRol] : []);
+    const normalizeRole = (r) => {
+      if (!r) return '';
+      const str = String(r).trim().toUpperCase();
+      return str.startsWith('ROLE_') ? str.substring(5) : str;
+    };
 
-    const hasAccess = userRoles.some((r) => allowedRoles.includes(r));
+    const userRoles = [
+      ...(Array.isArray(user.roles) ? user.roles : []),
+      ...(user.nombreRol ? [user.nombreRol] : [])
+    ].map(normalizeRole);
+
+    const normalizedAllowed = allowedRoles.map(normalizeRole);
+
+    const hasAccess = userRoles.some((r) => normalizedAllowed.includes(r));
     if (!hasAccess) {
       if (userRoles.includes('MEDICO')) return <Navigate to="/clinica" replace />;
       if (userRoles.includes('ENFERMERA')) return <Navigate to="/recepcion" replace />;

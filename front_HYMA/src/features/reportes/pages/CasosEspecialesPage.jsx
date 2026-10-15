@@ -351,8 +351,11 @@ export default function CasosEspecialesPage() {
                         <strong style={{ color: '#059669', fontSize: '14px' }}>
                           {formatearMoneda(item.totalExonerado)}
                         </strong>
-                        <span className="badge-exonerado">
-                          ★ Caso Especial
+                        <span className="badge-exonerado" style={{
+                          backgroundColor: item.tipoSalida === 'BECADO' ? '#e0f2fe' : '#fef3c7',
+                          color: item.tipoSalida === 'BECADO' ? '#0369a1' : '#b45309'
+                        }}>
+                          {item.tipoSalida === 'BECADO' ? '★ Becado' : '★ S/R'}
                         </span>
                       </div>
                     </td>

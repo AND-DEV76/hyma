@@ -21,6 +21,16 @@ export const tarifaService = {
     return response.data;
   },
 
+  obtenerPrecioConsultaNino: async () => {
+    const response = await api.get('/tarifas/consulta-nino');
+    return response.data;
+  },
+
+  actualizarPrecioConsultaNino: async (precio) => {
+    const response = await api.put('/tarifas/consulta-nino', { precio });
+    return response.data;
+  },
+
   actualizar: async (id, data) => {
     const response = await api.put(`/tarifas/${id}`, data);
     return response.data;

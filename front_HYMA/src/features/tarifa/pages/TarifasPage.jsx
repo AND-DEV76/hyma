@@ -4,7 +4,10 @@ import {
   CheckCircle2,
   AlertCircle,
   RefreshCw,
-  Check
+  Check,
+  UserCheck,
+  Baby,
+  Info
 } from 'lucide-react';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
@@ -12,32 +15,55 @@ import tarifaService from '../../reportes/services/tarifaService';
 import '../styles/tarifas.css';
 
 export default function TarifasPage() {
-  const [precioActual, setPrecioActual] = useState(50.0);
-  const [precioConsulta, setPrecioConsulta] = useState('50.00');
+  const [tabActiva, setTabActiva] = useState('GENERAL'); // 'GENERAL' | 'NINO'
+
+  // Precios guardados en BD
+  const [precioActualGeneral, setPrecioActualGeneral] = useState(50.0);
+  const [precioActualNino, setPrecioActualNino] = useState(40.0);
+
+  // Valores de los campos de entrada
+  const [precioConsultaGeneral, setPrecioConsultaGeneral] = useState('50.00');
+  const [precioConsultaNino, setPrecioConsultaNino] = useState('40.00');
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const cargarTarifa = async () => {
+  const cargarTarifas = async () => {
     setLoading(true);
     setErrorMsg('');
     try {
-      const res = await tarifaService.obtenerPrecioConsultaGeneral();
-      const p = res?.precio ?? 50.0;
-      setPrecioActual(p);
-      setPrecioConsulta(Number(p).toFixed(2));
+      const [resGen, resNino] = await Promise.all([
+        tarifaService.obtenerPrecioConsultaGeneral(),
+        tarifaService.obtenerPrecioConsultaNino(),
+      ]);
+
+      const pGen = resGen?.precio ?? 50.0;
+      const pNino = resNino?.precio ?? 40.0;
+
+      setPrecioActualGeneral(pGen);
+      setPrecioConsultaGeneral(Number(pGen).toFixed(2));
+
+      setPrecioActualNino(pNino);
+      setPrecioConsultaNino(Number(pNino).toFixed(2));
     } catch (err) {
-      console.error('Error al cargar tarifa:', err);
-      setErrorMsg('No se pudo cargar la tarifa desde el servidor.');
+      console.error('Error al cargar tarifas:', err);
+      setErrorMsg('No se pudieron cargar las tarifas desde el servidor.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    cargarTarifa();
+    cargarTarifas();
   }, []);
+
+  const handleCambiarTab = (tab) => {
+    setTabActiva(tab);
+    setSuccessMsg('');
+    setErrorMsg('');
+  };
 
   // Bloqueo estricto de teclas de signo negativo y notación exponencial
   const handleKeyDownPrecio = (e) => {
@@ -47,7 +73,7 @@ export default function TarifasPage() {
   };
 
   // Filtrado y sanitización en tiempo real: nunca permitir números negativos
-  const handlePrecioChange = (e) => {
+  const handlePrecioChange = (e, setter) => {
     let val = e.target.value;
     // Eliminar cualquier signo negativo o caracter no numérico (excepto punto decimal)
     val = val.replace(/[^0-9.]/g, '');
@@ -63,23 +89,28 @@ export default function TarifasPage() {
       val = `${partes[0]}.${partes[1].slice(0, 2)}`;
     }
 
-    setPrecioConsulta(val);
+    setter(val);
     if (errorMsg) setErrorMsg('');
   };
 
-  const handleGuardarPrecioConsulta = async (e) => {
+  const handleGuardarTarifa = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     if (saving || loading) return;
+
     setSaving(true);
     setSuccessMsg('');
     setErrorMsg('');
 
+    const esGeneral = tabActiva === 'GENERAL';
+    const precioStr = esGeneral ? precioConsultaGeneral : precioConsultaNino;
+    const nombreTarifa = esGeneral ? 'Tarifa de Consulta Médica' : 'Tarifa de Consulta Médica Niño';
+
     try {
-      if (precioConsulta === '' || precioConsulta === null) {
-        throw new Error('Debe ingresar un monto para la tarifa.');
+      if (precioStr === '' || precioStr === null) {
+        throw new Error(`Debe ingresar un monto para ${nombreTarifa.toLowerCase()}.`);
       }
 
-      const num = parseFloat(precioConsulta);
+      const num = parseFloat(precioStr);
       if (isNaN(num)) {
         throw new Error('Ingrese un precio numérico válido.');
       }
@@ -88,10 +119,17 @@ export default function TarifasPage() {
         throw new Error('El precio no puede ser negativo. Debe ser un monto mayor o igual a 0.');
       }
 
-      await tarifaService.actualizarPrecioConsultaGeneral(num);
-      setPrecioActual(num);
-      setSuccessMsg(`Tarifa actualizada a Q ${num.toFixed(2)} correctamente.`);
-      await cargarTarifa();
+      if (esGeneral) {
+        await tarifaService.actualizarPrecioConsultaGeneral(num);
+        setPrecioActualGeneral(num);
+        setSuccessMsg(`Tarifa de Consulta Médica actualizada a Q ${num.toFixed(2)} correctamente.`);
+      } else {
+        await tarifaService.actualizarPrecioConsultaNino(num);
+        setPrecioActualNino(num);
+        setSuccessMsg(`Tarifa de Consulta Médica Niño actualizada a Q ${num.toFixed(2)} correctamente.`);
+      }
+
+      await cargarTarifas();
     } catch (err) {
       console.error('Error al actualizar tarifa:', err);
       const msg = err.response?.data?.message || err.message || 'Error al actualizar la tarifa.';
@@ -100,6 +138,11 @@ export default function TarifasPage() {
       setSaving(false);
     }
   };
+
+  const esGeneral = tabActiva === 'GENERAL';
+  const precioActualMostrado = esGeneral ? precioActualGeneral : precioActualNino;
+  const precioInputMostrado = esGeneral ? precioConsultaGeneral : precioConsultaNino;
+  const setPrecioInputMostrado = esGeneral ? setPrecioConsultaGeneral : setPrecioConsultaNino;
 
   return (
     <div className="tarifas-container">
@@ -110,7 +153,7 @@ export default function TarifasPage() {
         <Breadcrumb
           items={[
             { label: 'Configuración', to: '/configuracion' },
-            { label: 'Tarifa de Consulta' }
+            { label: 'Tarifas de Consulta' }
           ]}
         />
 
@@ -119,19 +162,44 @@ export default function TarifasPage() {
           <div className="tarifas-header-info">
             <h1>
               <CircleDollarSign size={24} className="text-emerald-600" />
-              Tarifa de Consulta Médica
+              Tarifas de Consulta Médica
             </h1>
-            <p>Precio estándar de atención médica</p>
+            <p>Configuración de precios de atención general y pediátrica</p>
           </div>
 
           <div className="tarifas-header-actions">
             <button
               className="btn-refresh-tarifa"
-              onClick={cargarTarifa}
+              onClick={cargarTarifas}
               disabled={loading}
-              title="Recargar tarifa"
+              title="Recargar tarifas"
             >
               <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+            </button>
+          </div>
+        </div>
+
+        {/* Pestañas de Navegación: Tarifa de Consulta Médica | Tarifa de Consulta Médica Niño */}
+        <div className="tarifas-nav-container">
+          <div className="tarifas-nav-tabs">
+            <button
+              type="button"
+              className={`tarifa-nav-btn ${esGeneral ? 'active' : ''}`}
+              onClick={() => handleCambiarTab('GENERAL')}
+            >
+              <UserCheck size={18} />
+              <span>Tarifa de Consulta Médica</span>
+            </button>
+
+            <span className="tarifa-nav-divider">|</span>
+
+            <button
+              type="button"
+              className={`tarifa-nav-btn ${!esGeneral ? 'active' : ''}`}
+              onClick={() => handleCambiarTab('NINO')}
+            >
+              <Baby size={18} />
+              <span>Tarifa de Consulta Médica Niño</span>
             </button>
           </div>
         </div>
@@ -141,20 +209,26 @@ export default function TarifasPage() {
           {/* Tarjeta de Precio Actual */}
           <div className="tarifa-hero-card">
             <div className="tarifa-hero-info">
-              <span className="hero-tag">Precio Actual</span>
-              <h3>Consulta General</h3>
+              <span className="hero-tag">
+                {esGeneral ? 'Precio Actual (≥ 13 años)' : 'Precio Actual (< 13 años)'}
+              </span>
+              <h3>
+                {esGeneral ? 'Tarifa de Consulta Médica' : 'Tarifa de Consulta Médica Niño'}
+              </h3>
             </div>
 
             <div className="tarifa-hero-badge">
-              Q {Number(precioActual ?? 0).toFixed(2)}
+              Q {Number(precioActualMostrado ?? 0).toFixed(2)}
             </div>
           </div>
 
           {/* Formulario de actualización */}
           <div className="tarifa-form-section">
-            <form onSubmit={handleGuardarPrecioConsulta}>
+            <form onSubmit={handleGuardarTarifa}>
               <label htmlFor="precioInput">
-                Modificar precio (Quetzales):
+                {esGeneral
+                  ? 'Modificar precio de Consulta Médica (Quetzales):'
+                  : 'Modificar precio de Consulta Médica Niño (Quetzales):'}
               </label>
 
               <div className="tarifa-input-wrap">
@@ -167,8 +241,8 @@ export default function TarifasPage() {
                     step="0.50"
                     min="0"
                     max="99999.99"
-                    value={precioConsulta}
-                    onChange={handlePrecioChange}
+                    value={precioInputMostrado}
+                    onChange={(e) => handlePrecioChange(e, setPrecioInputMostrado)}
                     onKeyDown={handleKeyDownPrecio}
                     className="tarifa-input-field"
                     required
@@ -211,6 +285,16 @@ export default function TarifasPage() {
                 <span>{errorMsg}</span>
               </div>
             )}
+          </div>
+
+          {/* Nota informativa de regla de negocio automática */}
+          <div className="tarifa-info-note">
+            <Info size={16} className="text-sky-600 flex-shrink-0" />
+            <span>
+              {esGeneral
+                ? 'El sistema aplica esta tarifa automáticamente a todos los pacientes de 13 años en adelante (≥ 13 años).'
+                : 'El sistema detecta automáticamente la edad del paciente según su fecha de nacimiento y aplica esta tarifa en Farmacia cuando el paciente es menor de 13 años (< 13 años).'}
+            </span>
           </div>
         </div>
       </main>

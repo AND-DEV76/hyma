@@ -42,6 +42,7 @@ import InventarioFarmaciaReportePage from './features/reportes/pages/InventarioF
 import HospitalDashboardPage from './features/reportes/pages/HospitalDashboardPage';
 import TarifasPage from './features/tarifa/pages/TarifasPage';
 import ConfiguracionPage from './features/configuracion/pages/ConfiguracionPage';
+import PorcentajeMedicamentoPage from './features/farmacia/pages/PorcentajeMedicamentoPage';
 
 import SocialPortalPage from './features/social/pages/SocialPortalPage';
 import DashboardReferenciasPage from './features/social/pages/DashboardReferenciasPage';
@@ -94,6 +95,7 @@ function App() {
             <Route path="/reportes/casos-especiales" element={<CasosEspecialesPage />} />
             <Route path="/tarifas" element={<TarifasPage />} />
             <Route path="/configuracion" element={<ConfiguracionPage />} />
+            <Route path="/configuracion/porcentaje-medicamento" element={<PorcentajeMedicamentoPage />} />
             
             {/* TRABAJO SOCIAL */}
             <Route path="/social" element={<SocialPortalPage />} />

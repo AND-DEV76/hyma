@@ -29,4 +29,7 @@ public class EntradaDetalleRequest {
 
     @DecimalMin(value = "0.00", message = "El precio no puede ser negativo")
     private BigDecimal precioUnitario;
+
+    @DecimalMin(value = "0.00", message = "El precio de venta no puede ser negativo")
+    private BigDecimal precioVenta;
 }

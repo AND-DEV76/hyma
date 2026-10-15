@@ -10,5 +10,6 @@ import lombok.*;
 public class EntregaMedicamentosRequest {
     private boolean noPagaConsulta;
     private boolean esCasoEspecial;
+    private String modalidadCobro;
     private String observaciones;
 }
