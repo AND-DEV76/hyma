@@ -56,6 +56,8 @@ public class ClinicaService {
     private final TarifaServicioService tarifaServicioService;
     private final com.hyma.social.repository.EspecialidadReferenciaRepository especialidadReferenciaRepository;
     private final com.hyma.social.repository.ReferenciaMedicaRepository referenciaMedicaRepository;
+    private final com.hyma.procedimiento.repository.ProcedimientoRepository procedimientoRepository;
+    private final com.hyma.procedimiento.repository.ConsultaProcedimientoRepository consultaProcedimientoRepository;
 
     @Transactional
     public PacienteConsultaResponse obtenerDatosPacienteParaConsulta(Long idPaciente, Long idCola) {
@@ -300,6 +302,36 @@ public class ClinicaService {
                         .motivoReferencia(motivo)
                         .build();
                 referenciaMedicaRepository.save(ref);
+            }
+        }
+
+        // 6.5. Crear Procedimientos Clínicos (si aplica)
+        if (request.getProcedimientos() != null && !request.getProcedimientos().isEmpty()) {
+            for (var procReq : request.getProcedimientos()) {
+                if (procReq == null || procReq.getIdProcedimiento() == null) continue;
+                com.hyma.procedimiento.model.Procedimiento procedimiento = procedimientoRepository
+                        .findById(procReq.getIdProcedimiento())
+                        .orElse(null);
+                if (procedimiento != null) {
+                    int cant = procReq.getCantidad() != null && procReq.getCantidad() > 0 ? procReq.getCantidad() : 1;
+                    BigDecimal precioUnit = procReq.getPrecioUnitario() != null
+                            ? procReq.getPrecioUnitario()
+                            : (procedimiento.getPrecio() != null ? procedimiento.getPrecio() : BigDecimal.ZERO);
+                    BigDecimal subtotal = precioUnit.multiply(BigDecimal.valueOf(cant));
+
+                    com.hyma.procedimiento.model.ConsultaProcedimiento cp = com.hyma.procedimiento.model.ConsultaProcedimiento.builder()
+                            .consulta(consulta)
+                            .paciente(paciente)
+                            .procedimiento(procedimiento)
+                            .cantidad(cant)
+                            .precioUnitario(precioUnit)
+                            .subtotal(subtotal)
+                            .instrucciones(procReq.getInstrucciones())
+                            .estado("ESPERA")
+                            .fechaRegistro(LocalDateTime.now())
+                            .build();
+                    consultaProcedimientoRepository.save(cp);
+                }
             }
         }
 

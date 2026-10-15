@@ -34,10 +34,14 @@ public class RecetaDispensacionResponse {
     @Builder.Default
     private BigDecimal totalMedicamentos = BigDecimal.ZERO;
     @Builder.Default
+    private BigDecimal totalProcedimientos = BigDecimal.ZERO;
+    @Builder.Default
     private BigDecimal totalPagar = BigDecimal.ZERO;
 
     @Builder.Default
     private List<DetalleDispensacionResponse> medicamentos = new ArrayList<>();
     @Builder.Default
     private List<LoteSugeridoResponse> lotesSugeridos = new ArrayList<>();
+    @Builder.Default
+    private List<com.hyma.procedimiento.dto.ConsultaProcedimientoResponse> procedimientos = new ArrayList<>();
 }

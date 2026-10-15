@@ -16,11 +16,15 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Menu,
   X,
-  LayoutDashboard
+  LayoutDashboard,
+  Activity
 } from 'lucide-react';
 import saludLogo from '../../assets/images/log1.png';
+import * as procedimientoService from '../../features/procedimiento/services/procedimientoService';
 import './AdminNavbar.css';
 
 export default function AdminNavbar({ onBeforeNavigate }) {
@@ -63,6 +67,41 @@ export default function AdminNavbar({ onBeforeNavigate }) {
   const isFarmacia = hasRole('FARMACIA');
   const isMedico = hasRole('MEDICO');
   const isSocial = hasRole('SOCIAL');
+
+  const [pendientesProcedimientos, setPendientesProcedimientos] = useState(0);
+  const [procedimientosSubmenuOpen, setProcedimientosSubmenuOpen] = useState(() => {
+    return location.pathname.startsWith('/procedimientos');
+  });
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/procedimientos')) {
+      setProcedimientosSubmenuOpen(true);
+    }
+  }, [location.pathname]);
+
+  // Notificación de procedimientos pendientes para Farmacia y Enfermera
+  useEffect(() => {
+    if (!isFarmacia && !isEnfermera) return;
+
+    let mounted = true;
+    const fetchPendientes = async () => {
+      try {
+        const res = await procedimientoService.conteoPendientes();
+        if (mounted && res && typeof res.pendientes === 'number') {
+          setPendientesProcedimientos(res.pendientes);
+        }
+      } catch (err) {
+        // Silencio para no interrumpir navegación
+      }
+    };
+
+    fetchPendientes();
+    const interval = setInterval(fetchPendientes, 25000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [isFarmacia, isEnfermera, location.pathname]);
 
   // Sincronizar CSS variable en :root y body class
   useEffect(() => {
@@ -107,6 +146,7 @@ export default function AdminNavbar({ onBeforeNavigate }) {
         !location.pathname.startsWith('/farmacia/informes')
       );
     }
+    if (path === '/procedimientos') return location.pathname.startsWith('/procedimientos');
     if (path === '/reportes') {
       return (
         location.pathname.startsWith('/reportes') ||
@@ -164,6 +204,25 @@ export default function AdminNavbar({ onBeforeNavigate }) {
       path: '/farmacia',
       icon: Pill,
       show: isAdmin || isFarmacia,
+    },
+    {
+      label: 'Procedimientos',
+      path: '/procedimientos',
+      icon: Activity,
+      show: isAdmin || isMedico || isFarmacia || isEnfermera,
+      hasSubmenu: true,
+      subItems: [
+        {
+          label: 'Pacientes por Aplicar',
+          path: '/procedimientos',
+          show: isAdmin || isMedico || isFarmacia || isEnfermera,
+        },
+        {
+          label: 'Configuración',
+          path: '/procedimientos/configuracion',
+          show: isAdmin || isEnfermera,
+        },
+      ],
     },
     {
       label: 'Trabajo Social',
@@ -261,19 +320,70 @@ export default function AdminNavbar({ onBeforeNavigate }) {
               .map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.path);
+                const hasSub = item.hasSubmenu && item.subItems && item.subItems.some((s) => s.show);
+                const isSubmenuOpen = hasSub && procedimientosSubmenuOpen;
 
                 return (
-                  <li key={item.path}>
+                  <li key={item.path} style={{ position: 'relative' }}>
                     <button
                       className={`sidebar-nav-item ${active ? 'active' : ''}`}
-                      onClick={() => handleNav(item.path)}
+                      onClick={() => {
+                        if (hasSub && !isCollapsed) {
+                          setProcedimientosSubmenuOpen((prev) => !prev);
+                        }
+                        handleNav(item.path);
+                      }}
                       title={isCollapsed ? item.label : undefined}
                     >
                       <div className="nav-icon-box">
                         <Icon size={19} className="nav-icon" />
                       </div>
                       {!isCollapsed && <span className="nav-label">{item.label}</span>}
+
+                      {/* Notificación para Farmacia y Enfermera */}
+                      {item.path === '/procedimientos' && (isFarmacia || isEnfermera) && pendientesProcedimientos > 0 && (
+                        !isCollapsed ? (
+                          <span className="sidebar-nav-badge" title={`${pendientesProcedimientos} paciente(s) con procedimiento pendiente`}>
+                            {pendientesProcedimientos}
+                          </span>
+                        ) : (
+                          <span className="sidebar-badge-dot" title={`${pendientesProcedimientos} pendiente(s)`} />
+                        )
+                      )}
+
+                      {/* Flecha indicadora de submenú si no está colapsado */}
+                      {hasSub && !isCollapsed && (
+                        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                          {isSubmenuOpen ? <ChevronUp size={14} color="#90e0ef" /> : <ChevronDown size={14} color="#90e0ef" />}
+                        </div>
+                      )}
                     </button>
+
+                    {/* Submenú desplegable si no está colapsado */}
+                    {hasSub && isSubmenuOpen && !isCollapsed && (
+                      <ul className="sidebar-submenu">
+                        {item.subItems
+                          .filter((sub) => sub.show)
+                          .map((sub) => {
+                            const isSubActive = location.pathname === sub.path;
+                            return (
+                              <li key={sub.path}>
+                                <button
+                                  className={`sidebar-submenu-item ${isSubActive ? 'active' : ''}`}
+                                  onClick={() => handleNav(sub.path)}
+                                >
+                                  <span>{sub.label}</span>
+                                  {sub.path === '/procedimientos' && (isFarmacia || isEnfermera) && pendientesProcedimientos > 0 && (
+                                    <span className="sidebar-nav-badge" style={{ fontSize: '10px', padding: '1px 5px' }}>
+                                      {pendientesProcedimientos}
+                                    </span>
+                                  )}
+                                </button>
+                              </li>
+                            );
+                          })}
+                      </ul>
+                    )}
                   </li>
                 );
               })}

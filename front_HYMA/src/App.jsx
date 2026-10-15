@@ -43,6 +43,8 @@ import HospitalDashboardPage from './features/reportes/pages/HospitalDashboardPa
 import TarifasPage from './features/tarifa/pages/TarifasPage';
 import ConfiguracionPage from './features/configuracion/pages/ConfiguracionPage';
 import PorcentajeMedicamentoPage from './features/farmacia/pages/PorcentajeMedicamentoPage';
+import PacientesProcedimientosPage from './features/procedimiento/pages/PacientesProcedimientosPage';
+import ConfiguracionProcedimientosPage from './features/procedimiento/pages/ConfiguracionProcedimientosPage';
 
 import SocialPortalPage from './features/social/pages/SocialPortalPage';
 import DashboardReferenciasPage from './features/social/pages/DashboardReferenciasPage';
@@ -96,6 +98,8 @@ function App() {
             <Route path="/tarifas" element={<TarifasPage />} />
             <Route path="/configuracion" element={<ConfiguracionPage />} />
             <Route path="/configuracion/porcentaje-medicamento" element={<PorcentajeMedicamentoPage />} />
+            <Route path="/procedimientos" element={<PacientesProcedimientosPage />} />
+            <Route path="/procedimientos/configuracion" element={<ConfiguracionProcedimientosPage />} />
             
             {/* TRABAJO SOCIAL */}
             <Route path="/social" element={<SocialPortalPage />} />

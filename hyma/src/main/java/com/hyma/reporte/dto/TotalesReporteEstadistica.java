@@ -32,6 +32,7 @@ public class TotalesReporteEstadistica {
 
     private BigDecimal recaudadoConsulta;
     private BigDecimal recaudadoMedicamentos;
+    private BigDecimal recaudadoProcedimientos;
     private BigDecimal totalRecaudado;
     private List<Integer> diagnosticos;
 }

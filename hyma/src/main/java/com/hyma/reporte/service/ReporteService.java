@@ -64,6 +64,7 @@ public class ReporteService {
     private final LoteMedicamentoRepository loteMedicamentoRepository;
     private final MedicamentoRepository medicamentoRepository;
     private final EntradaMedicamentoRepository entradaMedicamentoRepository;
+    private final com.hyma.procedimiento.repository.ConsultaProcedimientoRepository consultaProcedimientoRepository;
 
 
     // Paleta base institucional de colores pastel para categorías
@@ -258,6 +259,18 @@ public class ReporteService {
             }
         }
 
+        // Procedimientos del mes por consulta
+        Map<Long, List<com.hyma.procedimiento.model.ConsultaProcedimiento>> procsPorConsulta = new HashMap<>();
+        if (!idsConsultas.isEmpty()) {
+            List<com.hyma.procedimiento.model.ConsultaProcedimiento> todosProcs =
+                    consultaProcedimientoRepository.findByConsulta_IdConsultaIn(idsConsultas);
+            for (com.hyma.procedimiento.model.ConsultaProcedimiento cp : todosProcs) {
+                if (cp != null && cp.getConsulta() != null && cp.getConsulta().getIdConsulta() != null) {
+                    procsPorConsulta.computeIfAbsent(cp.getConsulta().getIdConsulta(), k -> new ArrayList<>()).add(cp);
+                }
+            }
+        }
+
         // Cargar salidas externas (sin consulta) para sumarlas a la recaudación del día
         List<SalidaMedicamento> salidasExternas = salidaMedicamentoRepository.findByTipoSalidaIgnoreCaseAndFechaSalidaBetweenOrderByFechaSalidaDesc("VENTA_EXTERNA", inicioMes, finMes);
         Map<Integer, BigDecimal> ventasExternasPorDia = new HashMap<>();
@@ -317,6 +330,7 @@ public class ReporteService {
                         .totalGenero(0)
                         .recaudadoConsulta(BigDecimal.ZERO)
                         .recaudadoMedicamentos(recaudadoVentaExt)
+                        .recaudadoProcedimientos(BigDecimal.ZERO)
                         .totalRecaudado(recaudadoVentaExt)
                         .diagnosticos(diagsCero)
                         .build());
@@ -334,6 +348,7 @@ public class ReporteService {
             int masc = 0;
             BigDecimal recaudadoConsulta = BigDecimal.ZERO;
             BigDecimal recaudadoMedicamento = BigDecimal.ZERO;
+            BigDecimal recaudadoProcedimiento = BigDecimal.ZERO;
             int[] conteoDiag = new int[totalDiagCols];
 
             for (Consulta c : consultasDia) {
@@ -369,11 +384,12 @@ public class ReporteService {
                     masc++;
                 }
 
-                // Recaudado: Costo Consulta (o 0 si exonerada) + Total Medicamentos Dispensados
+                // Recaudado: Costo Consulta (o 0 si exonerada) + Total Medicamentos Dispensados + Procedimientos
                 SalidaMedicamento salida = c.getIdConsulta() != null ? salidaPorConsulta.get(c.getIdConsulta()) : null;
+                boolean esCasoEspecial = false;
                 if (salida != null) {
                     String tSal = salida.getTipoSalida() != null ? salida.getTipoSalida().trim().toUpperCase() : "";
-                    boolean esCasoEspecial = "CASO_ESPECIAL".equals(tSal) || "SR".equals(tSal) || "S/R".equals(tSal) || "BECADO".equals(tSal);
+                    esCasoEspecial = "CASO_ESPECIAL".equals(tSal) || "SR".equals(tSal) || "S/R".equals(tSal) || "BECADO".equals(tSal);
                     if (!esCasoEspecial) {
                         BigDecimal costoConsulta = salida.getCostoConsulta() != null ? salida.getCostoConsulta() : BigDecimal.ZERO;
                         recaudadoConsulta = recaudadoConsulta.add(costoConsulta);
@@ -394,6 +410,17 @@ public class ReporteService {
                     }
                 }
 
+                if (!esCasoEspecial && c.getIdConsulta() != null) {
+                    List<com.hyma.procedimiento.model.ConsultaProcedimiento> procs = procsPorConsulta.getOrDefault(c.getIdConsulta(), Collections.emptyList());
+                    for (var cp : procs) {
+                        if (cp != null && (cp.getEstado() == null || !"CANCELADO".equalsIgnoreCase(cp.getEstado()))) {
+                            if (cp.getSubtotal() != null) {
+                                recaudadoProcedimiento = recaudadoProcedimiento.add(cp.getSubtotal());
+                            }
+                        }
+                    }
+                }
+
                 // Diagnósticos dinámicos
                 if (c.getIdConsulta() != null) {
                     List<Diagnostico> diags = diagPorConsulta.getOrDefault(c.getIdConsulta(), Collections.emptyList());
@@ -408,7 +435,7 @@ public class ReporteService {
             }
 
             recaudadoMedicamento = recaudadoMedicamento.add(recaudadoVentaExt);
-            BigDecimal recaudado = recaudadoConsulta.add(recaudadoMedicamento);
+            BigDecimal recaudado = recaudadoConsulta.add(recaudadoMedicamento).add(recaudadoProcedimiento);
 
             int totalPac = nuevos + reconsulta;
             int totalEdades = e0a5 + e6a12 + e13a17 + e18a59 + e60mas;
@@ -437,6 +464,7 @@ public class ReporteService {
                     .totalGenero(totalGen)
                     .recaudadoConsulta(recaudadoConsulta)
                     .recaudadoMedicamentos(recaudadoMedicamento)
+                    .recaudadoProcedimientos(recaudadoProcedimiento)
                     .totalRecaudado(recaudado)
                     .diagnosticos(listDiag)
                     .build());
@@ -464,10 +492,11 @@ public class ReporteService {
                 .map(FilaReporteEstadistica::getRecaudadoMedicamentos)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal sumRecaudado = filas.stream()
-                .map(FilaReporteEstadistica::getTotalRecaudado)
+        BigDecimal sumRecaudadoProcedimientos = filas.stream()
+                .map(FilaReporteEstadistica::getRecaudadoProcedimientos)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal sumRecaudado = sumRecaudadoConsulta.add(sumRecaudadoMedicamentos).add(sumRecaudadoProcedimientos);
 
         int[] sumDiags = new int[totalDiagCols];
         for (FilaReporteEstadistica f : filas) {
@@ -502,6 +531,7 @@ public class ReporteService {
                 .totalGenero(sumTotalGen)
                 .recaudadoConsulta(sumRecaudadoConsulta)
                 .recaudadoMedicamentos(sumRecaudadoMedicamentos)
+                .recaudadoProcedimientos(sumRecaudadoProcedimientos)
                 .totalRecaudado(sumRecaudado)
                 .diagnosticos(listTotDiags)
                 .build();
@@ -512,6 +542,9 @@ public class ReporteService {
                 : BigDecimal.ZERO;
         BigDecimal promRecaudadoMedicamentos = totDiasAtencion > 0
                 ? sumRecaudadoMedicamentos.divide(BigDecimal.valueOf(totDiasAtencion), 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+        BigDecimal promRecaudadoProcedimientos = totDiasAtencion > 0
+                ? sumRecaudadoProcedimientos.divide(BigDecimal.valueOf(totDiasAtencion), 2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
         BigDecimal promRecaudado = totDiasAtencion > 0
                 ? sumRecaudado.divide(BigDecimal.valueOf(totDiasAtencion), 2, RoundingMode.HALF_UP)
@@ -534,6 +567,7 @@ public class ReporteService {
                 .totalGenero(0)
                 .recaudadoConsulta(promRecaudadoConsulta)
                 .recaudadoMedicamentos(promRecaudadoMedicamentos)
+                .recaudadoProcedimientos(promRecaudadoProcedimientos)
                 .totalRecaudado(promRecaudado)
                 .diagnosticos(new ArrayList<>(Collections.nCopies(totalDiagCols, 0)))
                 .build();
@@ -738,7 +772,7 @@ public class ReporteService {
                 }
             }
 
-            int lastColIdx = 16 + totalDiagCols;
+            int lastColIdx = 17 + totalDiagCols;
 
             // -------------------------------------------------------------
             // FILA 0: Título principal
@@ -754,22 +788,22 @@ public class ReporteService {
             cTitulo.setCellValue(data.getTitulo());
             cTitulo.setCellStyle(styleTitleMain);
 
-            for (int col = 2; col <= 16; col++) {
+            for (int col = 2; col <= 17; col++) {
                 Cell c = row0.createCell(col);
                 c.setCellStyle(styleTitleMain);
             }
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 1, 16));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 1, 17));
 
             // Merge de clasificación de diagnósticos
-            Cell cDiagTitle = row0.createCell(17);
+            Cell cDiagTitle = row0.createCell(18);
             cDiagTitle.setCellValue("CLASIFICACIÓN DE DIAGNÓSTICOS");
             cDiagTitle.setCellStyle(styleTitleDiag);
-            for (int col = 18; col <= lastColIdx; col++) {
+            for (int col = 19; col <= lastColIdx; col++) {
                 Cell c = row0.createCell(col);
                 c.setCellStyle(styleTitleDiag);
             }
-            if (lastColIdx >= 17) {
-                sheet.addMergedRegion(new CellRangeAddress(0, 0, 17, lastColIdx));
+            if (lastColIdx >= 18) {
+                sheet.addMergedRegion(new CellRangeAddress(0, 0, 18, lastColIdx));
             }
 
             // -------------------------------------------------------------
@@ -797,18 +831,19 @@ public class ReporteService {
 
             crearCeldaConBorde(row1, 14, "CONSULTA", styleSubHeader);
             crearCeldaConBorde(row1, 15, "MEDICAMENTOS", styleSubHeader);
-            crearCeldaConBorde(row1, 16, "TOTAL RECAUDADO", styleSubHeader);
+            crearCeldaConBorde(row1, 16, "PROCEDIMIENTOS", styleSubHeader);
+            crearCeldaConBorde(row1, 17, "TOTAL RECAUDADO", styleSubHeader);
 
             // Generar bloques de categorías dinámicamente con texto negro y fondo pastel
-            int startCatCol = 17;
+            int startCatCol = 18;
             while (startCatCol <= lastColIdx) {
-                int colIdx = startCatCol - 17;
+                int colIdx = startCatCol - 18;
                 String catName = columnasDiag.get(colIdx).getCategoria();
                 CellStyle styleCat = estilosCategoriaHeader.get(catName);
 
                 int endCatCol = startCatCol;
                 while (endCatCol + 1 <= lastColIdx &&
-                        columnasDiag.get(endCatCol + 1 - 17).getCategoria().equalsIgnoreCase(catName)) {
+                        columnasDiag.get(endCatCol + 1 - 18).getCategoria().equalsIgnoreCase(catName)) {
                     endCatCol++;
                 }
 
@@ -849,12 +884,13 @@ public class ReporteService {
             crearCeldaConBorde(row2, 14, "Q", styleSubHeader);
             crearCeldaConBorde(row2, 15, "Q", styleSubHeader);
             crearCeldaConBorde(row2, 16, "Q", styleSubHeader);
+            crearCeldaConBorde(row2, 17, "Q", styleSubHeader);
 
             // Nombres de diagnósticos (descripción, texto negro y fondo pastel)
             for (int i = 0; i < totalDiagCols; i++) {
                 DiagnosticoColumnaInfo colInfo = columnasDiag.get(i);
                 CellStyle styleDiag = estilosDiagnosticoSubheader.get(colInfo.getNombre());
-                crearCeldaConBorde(row2, 17 + i, colInfo.getNombre(), styleDiag != null ? styleDiag : styleSubHeader);
+                crearCeldaConBorde(row2, 18 + i, colInfo.getNombre(), styleDiag != null ? styleDiag : styleSubHeader);
             }
 
             // -------------------------------------------------------------
@@ -890,14 +926,18 @@ public class ReporteService {
                 cRecMed.setCellValue(f.getRecaudadoMedicamentos() != null ? f.getRecaudadoMedicamentos().doubleValue() : 0.0);
                 cRecMed.setCellStyle(styleCurrency);
 
-                Cell cRec = r.createCell(16);
+                Cell cRecProc = r.createCell(16);
+                cRecProc.setCellValue(f.getRecaudadoProcedimientos() != null ? f.getRecaudadoProcedimientos().doubleValue() : 0.0);
+                cRecProc.setCellStyle(styleCurrency);
+
+                Cell cRec = r.createCell(17);
                 cRec.setCellValue(f.getTotalRecaudado() != null ? f.getTotalRecaudado().doubleValue() : 0.0);
                 cRec.setCellStyle(styleCurrency);
 
                 for (int i = 0; i < totalDiagCols; i++) {
                     int val = (f.getDiagnosticos() != null && f.getDiagnosticos().size() > i)
                             ? f.getDiagnosticos().get(i) : 0;
-                    crearCeldaNumerica(r, 17 + i, val, styleDataNum);
+                    crearCeldaNumerica(r, 18 + i, val, styleDataNum);
                 }
             }
 
@@ -933,14 +973,18 @@ public class ReporteService {
             cTotMed.setCellValue(tot.getRecaudadoMedicamentos() != null ? tot.getRecaudadoMedicamentos().doubleValue() : 0.0);
             cTotMed.setCellStyle(styleTotalCurrency);
 
-            Cell cTotRec = rTot.createCell(16);
+            Cell cTotProc = rTot.createCell(16);
+            cTotProc.setCellValue(tot.getRecaudadoProcedimientos() != null ? tot.getRecaudadoProcedimientos().doubleValue() : 0.0);
+            cTotProc.setCellStyle(styleTotalCurrency);
+
+            Cell cTotRec = rTot.createCell(17);
             cTotRec.setCellValue(tot.getTotalRecaudado() != null ? tot.getTotalRecaudado().doubleValue() : 0.0);
             cTotRec.setCellStyle(styleTotalCurrency);
 
             for (int i = 0; i < totalDiagCols; i++) {
                 int val = (tot.getDiagnosticos() != null && tot.getDiagnosticos().size() > i)
                         ? tot.getDiagnosticos().get(i) : 0;
-                crearCeldaNumerica(rTot, 17 + i, val, styleTotal);
+                crearCeldaNumerica(rTot, 18 + i, val, styleTotal);
             }
 
             // -------------------------------------------------------------
@@ -992,8 +1036,16 @@ public class ReporteService {
             cPromMed.setCellValue(promMedValue);
             cPromMed.setCellStyle(stylePromCurrency);
 
-            // Col 16: Promedio de recaudación diaria
-            Cell cPromRec = rProm.createCell(16);
+            // Col 16: Promedio de procedimientos diarios
+            Cell cPromProc = rProm.createCell(16);
+            double promProcValue = data.getPromedios().getRecaudadoProcedimientos() != null
+                    ? data.getPromedios().getRecaudadoProcedimientos().doubleValue()
+                    : 0.0;
+            cPromProc.setCellValue(promProcValue);
+            cPromProc.setCellStyle(stylePromCurrency);
+
+            // Col 17: Promedio de recaudación diaria
+            Cell cPromRec = rProm.createCell(17);
             double promRecValue = data.getPromedios().getTotalRecaudado() != null
                     ? data.getPromedios().getTotalRecaudado().doubleValue()
                     : 0.0;
@@ -1002,7 +1054,7 @@ public class ReporteService {
 
             // Diagnósticos vacíos en fila de promedio
             for (int i = 0; i < totalDiagCols; i++) {
-                crearCeldaConBorde(rProm, 17 + i, "", stylePromNum);
+                crearCeldaConBorde(rProm, 18 + i, "", stylePromNum);
             }
 
             // Anchos de columnas
@@ -1013,8 +1065,9 @@ public class ReporteService {
             }
             sheet.setColumnWidth(14, 3400); // CONSULTA
             sheet.setColumnWidth(15, 3600); // MEDICAMENTOS
-            sheet.setColumnWidth(16, 3800); // TOTAL RECAUDADO
-            for (int c = 17; c <= lastColIdx; c++) {
+            sheet.setColumnWidth(16, 3600); // PROCEDIMIENTOS
+            sheet.setColumnWidth(17, 3800); // TOTAL RECAUDADO
+            for (int c = 18; c <= lastColIdx; c++) {
                 sheet.setColumnWidth(c, 4200); // Diagnósticos legibles
             }
 

@@ -121,7 +121,8 @@ public class SecurityConfig {
                     "/api/social/**",
                     "/api/tarifas/**",
                     "/api/farmacia/**",
-                    "/api/reportes/**"
+                    "/api/reportes/**",
+                    "/api/procedimientos/**"
                 ).authenticated()
 
                 // Todas las demás rutas de la API requieren autenticación válida

@@ -51,6 +51,8 @@ public class FarmaciaService {
     private final SalidaMedicamentoRepository salidaMedicamentoRepository;
     private final DetalleSalidaMedicamentoRepository detalleSalidaMedicamentoRepository;
     private final TarifaServicioService tarifaServicioService;
+    private final com.hyma.procedimiento.repository.ConsultaProcedimientoRepository consultaProcedimientoRepository;
+    private final com.hyma.procedimiento.service.ProcedimientoService procedimientoService;
 
     @Transactional(readOnly = true)
     public List<CatalogoFarmaciaResponse> listarCategorias() {
@@ -559,13 +561,13 @@ public class FarmaciaService {
             }
             response.setPrecioConsulta(precioConsulta);
 
+            BigDecimal totalMedicamentos = BigDecimal.ZERO;
             Tratamiento tratamiento = tratamientoRepository.findByConsultaIdWithDetalles(consulta.getIdConsulta()).orElse(null);
             if (tratamiento != null) {
                 response.setObservacionesTratamiento(tratamiento.getObservaciones());
 
                 List<DetalleDispensacionResponse> medList = new ArrayList<>();
                 List<LoteSugeridoResponse> lotesSugeridosList = new ArrayList<>();
-                BigDecimal totalMedicamentos = BigDecimal.ZERO;
 
                 if (tratamiento.getDetalles() != null) {
                     for (DetalleTratamiento d : tratamiento.getDetalles()) {
@@ -585,7 +587,7 @@ public class FarmaciaService {
                         if (!lotesActivos.isEmpty()) {
                             LoteMedicamento lAct = lotesActivos.get(0);
                             precioUnitario = lAct.getPrecioVenta() != null
-                                    ? lAct.getPrecioVenta()
+                                     ? lAct.getPrecioVenta()
                                     : (lAct.getPrecioUnitario() != null ? lAct.getPrecioUnitario() : BigDecimal.ZERO);
                         }
                         BigDecimal subtotalDetalle = precioUnitario.multiply(BigDecimal.valueOf(cantidadPedida));
@@ -648,8 +650,26 @@ public class FarmaciaService {
                 response.setMedicamentos(medList);
                 response.setLotesSugeridos(lotesSugeridosList);
                 response.setTotalMedicamentos(totalMedicamentos);
-                response.setTotalPagar(precioConsulta.add(totalMedicamentos));
             }
+
+            // Procedimientos Clínicos Prescritos
+            List<com.hyma.procedimiento.model.ConsultaProcedimiento> procedimientosList =
+                    consultaProcedimientoRepository.findByConsultaIdWithDetails(consulta.getIdConsulta());
+            List<com.hyma.procedimiento.dto.ConsultaProcedimientoResponse> procResponses = new ArrayList<>();
+            BigDecimal totalProcedimientos = BigDecimal.ZERO;
+            if (procedimientosList != null) {
+                for (var cp : procedimientosList) {
+                    if (cp != null && (cp.getEstado() == null || !"CANCELADO".equalsIgnoreCase(cp.getEstado()))) {
+                        procResponses.add(procedimientoService.toResponse(cp));
+                        if (cp.getSubtotal() != null) {
+                            totalProcedimientos = totalProcedimientos.add(cp.getSubtotal());
+                        }
+                    }
+                }
+            }
+            response.setProcedimientos(procResponses);
+            response.setTotalProcedimientos(totalProcedimientos);
+            response.setTotalPagar(precioConsulta.add(totalMedicamentos).add(totalProcedimientos));
         }
 
         return response;
@@ -785,6 +805,22 @@ public class FarmaciaService {
                     // Si no se pudo descontar ninguna unidad del stock, no dejar registro fantasma
                     if (totalUnidadesDescontadas == 0) {
                         salidaMedicamentoRepository.delete(salida);
+                    }
+                }
+
+                // Actualizar procedimientos de consulta a ATENDIDO
+                List<com.hyma.procedimiento.model.ConsultaProcedimiento> procs =
+                        consultaProcedimientoRepository.findByConsulta_IdConsulta(consulta.getIdConsulta());
+                if (procs != null) {
+                    for (var cp : procs) {
+                        if (cp != null && "ESPERA".equalsIgnoreCase(cp.getEstado())) {
+                            cp.setEstado("ATENDIDO");
+                            cp.setFechaAtencion(LocalDateTime.now());
+                            if (usuario != null) {
+                                cp.setUsuarioAtendio(usuario);
+                            }
+                            consultaProcedimientoRepository.save(cp);
+                        }
                     }
                 }
             }

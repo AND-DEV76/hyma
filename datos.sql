@@ -279,3 +279,18 @@ ON CONFLICT (nombre) DO NOTHING;
 INSERT INTO parametro_farmacia (clave, valor, descripcion) VALUES
 ('PORCENTAJE_MEDICAMENTO', '25.00', 'Porcentaje de incremento sobre el costo unitario para precio final de venta')
 ON CONFLICT (clave) DO NOTHING;
+
+-- ==========================================================
+-- PROCEDIMIENTOS CLÍNICOS
+-- ==========================================================
+INSERT INTO procedimiento (nombre, precio, activo) VALUES
+('Toma de glucosa', 10.00, TRUE),
+('Retiro de puntos', 30.00, TRUE),
+('Nebulización', 20.00, TRUE),
+('Papanicolau', 50.00, TRUE),
+('Colocación de suero IV', 50.00, TRUE),
+('Sutura de heridas', 50.00, TRUE),
+('Curación de heridas', 50.00, TRUE),
+('Lavado de oído', 20.00, TRUE),
+('Colocación de yeso', 50.00, TRUE)
+ON CONFLICT (nombre) DO UPDATE SET precio = EXCLUDED.precio;

@@ -28,6 +28,8 @@ export default function AppRoutes({ children }) {
         else if (path.startsWith('/tarifas')) allowedRoles = ['ADMIN', 'FARMACIA'];
         else if (path === '/configuracion/porcentaje-medicamento') allowedRoles = ['ADMIN', 'FARMACIA'];
         else if (path.startsWith('/configuracion')) allowedRoles = ['ADMIN', 'MEDICO', 'FARMACIA'];
+        else if (path === '/procedimientos/configuracion') allowedRoles = ['ADMIN', 'ENFERMERA'];
+        else if (path.startsWith('/procedimientos')) allowedRoles = ['ADMIN', 'MEDICO', 'FARMACIA', 'ENFERMERA'];
         else if (path.startsWith('/social')) allowedRoles = ['ADMIN', 'SOCIAL'];
         
         return (

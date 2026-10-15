@@ -267,7 +267,7 @@ export default function EstadisticaMensualPage() {
                 <div className="kpi-label">Total Recaudado</div>
                 <div className="kpi-val">{formatearMoneda(data.totales.totalRecaudado)}</div>
                 <div className="kpi-sub">
-                  Consultas: {formatearMoneda(data.totales.recaudadoConsulta)} • Medicamentos: {formatearMoneda(data.totales.recaudadoMedicamentos)}
+                  Consultas: {formatearMoneda(data.totales.recaudadoConsulta)} • Medicamentos: {formatearMoneda(data.totales.recaudadoMedicamentos)} • Procedimientos: {formatearMoneda(data.totales.recaudadoProcedimientos)}
                 </div>
               </div>
             </div>
@@ -355,6 +355,7 @@ export default function EstadisticaMensualPage() {
                   <th colSpan={3}>GÉNERO</th>
                   <th rowSpan={2} title="Recaudación por consultas">CONSULTA</th>
                   <th rowSpan={2} title="Recaudación por medicamentos dispensados y farmacia">MEDICAMENTOS</th>
+                  <th rowSpan={2} title="Recaudación por procedimientos clínicos aplicados">PROCEDIMIENTOS</th>
                   <th rowSpan={2} title="Total general recaudado">TOTAL RECAUDADO</th>
 
                   {/* Grupos de diagnósticos dinámicos con texto negro y colores pastel */}
@@ -454,6 +455,9 @@ export default function EstadisticaMensualPage() {
                       <td className="cell-currency font-medium">
                         {formatearMoneda(f.recaudadoMedicamentos)}
                       </td>
+                      <td className="cell-currency font-medium">
+                        {formatearMoneda(f.recaudadoProcedimientos)}
+                      </td>
                       <td className="cell-currency font-bold">
                         {formatearMoneda(f.totalRecaudado)}
                       </td>
@@ -496,6 +500,7 @@ export default function EstadisticaMensualPage() {
 
                   <td className="cell-currency font-bold">{formatearMoneda(data.totales.recaudadoConsulta)}</td>
                   <td className="cell-currency font-bold">{formatearMoneda(data.totales.recaudadoMedicamentos)}</td>
+                  <td className="cell-currency font-bold">{formatearMoneda(data.totales.recaudadoProcedimientos)}</td>
                   <td className="cell-currency font-bold">{formatearMoneda(data.totales.totalRecaudado)}</td>
 
                   {columnasDiagnosticosFiltradas.map((col) => {

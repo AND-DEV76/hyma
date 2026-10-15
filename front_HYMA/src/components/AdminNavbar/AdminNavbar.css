@@ -448,3 +448,77 @@ body.has-admin-sidebar {
     z-index: 998;
   }
 }
+
+/* ==========================================================
+   SUBMENÚ Y BADGES DE PROCEDIMIENTOS
+   ========================================================== */
+.sidebar-nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  margin-left: auto;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+  animation: pulseBadge 2.2s infinite;
+}
+
+.sidebar-badge-dot {
+  position: absolute;
+  top: 8px;
+  right: 18px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+  animation: pulseBadge 2s infinite;
+}
+
+@keyframes pulseBadge {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.85; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.sidebar-submenu {
+  list-style: none;
+  margin: 3px 0 6px;
+  padding: 0 0 0 38px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-submenu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #caf0f8;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s ease;
+}
+
+.sidebar-submenu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.sidebar-submenu-item.active {
+  background: rgba(0, 180, 216, 0.22);
+  color: #00b4d8;
+  font-weight: 700;
+}
+

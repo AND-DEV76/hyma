@@ -36,6 +36,7 @@ public class FilaReporteEstadistica {
     // Recaudación
     private BigDecimal recaudadoConsulta;
     private BigDecimal recaudadoMedicamentos;
+    private BigDecimal recaudadoProcedimientos;
     private BigDecimal totalRecaudado;
 
     // Diagnósticos (array o lista de 52 conteos)

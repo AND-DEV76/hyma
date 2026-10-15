@@ -11,6 +11,7 @@ import {
   FileText,
   Printer,
   Loader2,
+  Activity,
 } from 'lucide-react';
 import { useDispensacion } from '../hooks/useDispensacion';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
@@ -59,7 +60,12 @@ export default function DispensarMedicamentosPage() {
 
   const totalMedicamentosCobrar = esExoneracionTotal ? 0 : totalMedicamentosOriginal;
   const totalMedicamentos = totalMedicamentosCobrar;
-  const totalAPagar = costoConsultaCobrar + totalMedicamentosCobrar;
+
+  const procedimientosOriginal = receta?.procedimientos || [];
+  const totalProcedimientosOriginal = Number(receta?.totalProcedimientos ?? procedimientosOriginal.reduce((acc, p) => acc + (Number(p.subtotal) || 0), 0));
+  const totalProcedimientosCobrar = esExoneracionTotal ? 0 : totalProcedimientosOriginal;
+
+  const totalAPagar = costoConsultaCobrar + totalMedicamentosCobrar + totalProcedimientosCobrar;
 
   useEffect(() => {
     if (idCola || idPaciente) {
@@ -261,6 +267,28 @@ export default function DispensarMedicamentosPage() {
                   </div>
                 </div>
 
+                {totalProcedimientosOriginal > 0 && (
+                  <div style={styles.billingRow}>
+                    <span style={styles.billingLabel}>Procedimientos:</span>
+                    <div style={{ textAlign: 'right' }}>
+                      {esExoneracionTotal ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                          <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '12px' }}>
+                            Q {totalProcedimientosOriginal.toFixed(2)}
+                          </span>
+                          <span style={{ color: '#059669', fontWeight: '800', fontSize: '13px' }}>
+                            Q 0.00
+                          </span>
+                        </div>
+                      ) : (
+                        <span style={styles.billingVal}>
+                          Q {totalProcedimientosOriginal.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Modalidades de Cobro / Exoneración */}
                 <div style={styles.modalidadCobroBox}>
                   <span style={styles.modalidadTitle}>Modalidad de Cobro:</span>
@@ -324,7 +352,7 @@ export default function DispensarMedicamentosPage() {
                       borderColor: esBecado ? '#bae6fd' : '#fde68a',
                       color: esBecado ? '#0369a1' : '#b45309'
                     }}>
-                      ✓ {esBecado ? 'Becado' : 'S/R'}: 100% Exonerado (Valor absorbido: Q {totalMedicamentosOriginal.toFixed(2)})
+                      ✓ {esBecado ? 'Becado' : 'S/R'}: 100% Exonerado (Valor absorbido: Q {(totalMedicamentosOriginal + totalProcedimientosOriginal).toFixed(2)})
                     </div>
                   )}
 
@@ -344,8 +372,8 @@ export default function DispensarMedicamentosPage() {
                   disabled={entregando || procesandoEntrega}
                   style={styles.btnDar}
                   title={
-                    tieneMedicamentos
-                      ? 'Dispensar medicamentos, registrar cobro e imprimir receta'
+                    tieneMedicamentos || totalProcedimientosOriginal > 0
+                      ? 'Dispensar medicamentos, registrar cobro e imprimir comprobante'
                       : 'Registrar cobro de consulta y finalizar turno'
                   }
                 >
@@ -357,7 +385,7 @@ export default function DispensarMedicamentosPage() {
                   ) : (
                     <>
                       <CheckCircle2 size={18} />
-                      <span>{tieneMedicamentos ? 'Dispensar y Cobrar' : 'Cobrar Consulta'}</span>
+                      <span>{tieneMedicamentos || totalProcedimientosOriginal > 0 ? 'Dispensar y Cobrar' : 'Cobrar Consulta'}</span>
                     </>
                   )}
                 </button>
@@ -656,6 +684,98 @@ export default function DispensarMedicamentosPage() {
                 )}
 
               </div>
+
+              {/* Tarjeta de Procedimientos Clínicos Prescritos */}
+              {procedimientosOriginal.length > 0 && (
+                <div style={{ ...styles.tableCard, marginTop: '20px' }}>
+                  <div style={styles.tableHeaderBar}>
+                    <Activity size={18} color="#0077b6" />
+                    <h3 style={styles.tableTitle}>
+                      Procedimientos Clínicos Prescritos
+                    </h3>
+                  </div>
+
+                  <div className="dispensar-table-responsive" style={styles.tableResponsive}>
+                    <table style={styles.table}>
+                      <thead>
+                        <tr>
+                          <th style={{ ...styles.th, width: '34%' }}>Procedimiento</th>
+                          <th style={{ ...styles.th, width: '30%' }}>Instrucciones del Médico</th>
+                          <th style={{ ...styles.th, width: '12%', textAlign: 'center' }}>Cantidad</th>
+                          <th style={{ ...styles.th, width: '12%', textAlign: 'right' }}>Precio Unit.</th>
+                          <th style={{ ...styles.th, width: '12%', textAlign: 'right' }}>Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {procedimientosOriginal.map((proc, pIdx) => {
+                          const pUnit = Number(proc.precioUnitario || 0);
+                          const cant = Number(proc.cantidad || 1);
+                          const subtotal = Number(proc.subtotal ?? (pUnit * cant));
+
+                          return (
+                            <tr key={proc.idConsultaProcedimiento || pIdx} style={styles.tr}>
+                              <td style={styles.td}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                  <strong style={{ color: '#03045e', fontSize: '13.5px' }}>
+                                    {proc.nombreProcedimiento}
+                                  </strong>
+                                  <span style={{
+                                    display: 'inline-block',
+                                    fontSize: '11px',
+                                    fontWeight: '700',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    width: 'fit-content',
+                                    background: proc.estado === 'ATENDIDO' ? '#ecfdf5' : '#eff6ff',
+                                    color: proc.estado === 'ATENDIDO' ? '#047857' : '#0284c7',
+                                    border: `1px solid ${proc.estado === 'ATENDIDO' ? '#a7f3d0' : '#bfdbfe'}`
+                                  }}>
+                                    {proc.estado || 'ESPERA'}
+                                  </span>
+                                </div>
+                              </td>
+
+                              <td style={styles.td}>
+                                <span style={{ color: proc.instrucciones ? '#334155' : '#94a3b8', fontSize: '13px', fontStyle: proc.instrucciones ? 'normal' : 'italic' }}>
+                                  {proc.instrucciones || 'Sin instrucciones adicionales'}
+                                </span>
+                              </td>
+
+                              <td style={{ ...styles.td, textAlign: 'center' }}>
+                                <span style={styles.qtyBadge}>
+                                  {cant} {cant === 1 ? 'servicio' : 'servicios'}
+                                </span>
+                              </td>
+
+                              <td style={{ ...styles.td, textAlign: 'right' }}>
+                                <span style={{ color: '#475569', fontWeight: '600', fontSize: '13px' }}>
+                                  Q {pUnit.toFixed(2)}
+                                </span>
+                              </td>
+
+                              <td style={{ ...styles.td, textAlign: 'right' }}>
+                                <strong style={{ color: '#059669', fontSize: '13.5px' }}>
+                                  Q {subtotal.toFixed(2)}
+                                </strong>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px 16px', background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: '13.5px', fontWeight: '700', color: '#03045e' }}>
+                      Subtotal Procedimientos:{' '}
+                      <strong style={{ color: '#059669', fontSize: '14px' }}>
+                        Q {totalProcedimientosOriginal.toFixed(2)}
+                      </strong>
+                    </span>
+                  </div>
+                </div>
+              )}
+
             </section>
           </div>
         )}
@@ -672,19 +792,21 @@ export default function DispensarMedicamentosPage() {
                   <h3 style={styles.modalTitle}>
                     {tieneMedicamentos
                       ? 'Confirmar Entrega y Salida de Medicamentos'
+                      : totalProcedimientosOriginal > 0
+                      ? 'Confirmar Cobro de Procedimientos y Consulta'
                       : 'Confirmar Cobro de Consulta'}
                   </h3>
                   <p style={styles.modalSub}>
                     {tieneMedicamentos
                       ? 'Esta acción descontará el stock de inventario, registrará la salida y finalizará el turno.'
-                      : 'Esta acción registrará el pago de la consulta médica y finalizará el turno del paciente.'}
+                      : 'Esta acción registrará el pago de la consulta y procedimientos, finalizando el turno del paciente.'}
                   </p>
                 </div>
               </div>
 
               <div style={styles.modalBody}>
                 <p style={{ margin: '0 0 14px', color: '#334155', fontSize: '14px', lineHeight: '1.5' }}>
-                  ¿Confirmas {tieneMedicamentos ? 'la entrega de medicamentos' : 'el cobro de la consulta'} para{' '}
+                  ¿Confirmas {tieneMedicamentos ? 'la entrega de medicamentos' : 'el cobro de los servicios'} para{' '}
                   <strong>{receta?.nombreCompletoPaciente}</strong>?
                 </p>
 
@@ -709,6 +831,16 @@ export default function DispensarMedicamentosPage() {
                         {esExoneracionTotal
                           ? `Q 0.00 (Exonerado - Valor: Q ${totalMedicamentosOriginal.toFixed(2)})`
                           : `Q ${totalMedicamentos.toFixed(2)}`}
+                      </strong>
+                    </div>
+                  )}
+                  {totalProcedimientosOriginal > 0 && (
+                    <div style={styles.modalSummaryRow}>
+                      <span>Total Procedimientos:</span>
+                      <strong style={{ color: esExoneracionTotal ? '#059669' : '#1e293b' }}>
+                        {esExoneracionTotal
+                          ? `Q 0.00 (Exonerado - Valor: Q ${totalProcedimientosOriginal.toFixed(2)})`
+                          : `Q ${totalProcedimientosOriginal.toFixed(2)}`}
                       </strong>
                     </div>
                   )}

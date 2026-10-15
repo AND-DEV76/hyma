@@ -34,4 +34,7 @@ public class ConsultaCompletaRequest {
 
     @Valid
     private com.hyma.social.dto.ReferenciaMedicaRequest referenciaMedica;
+
+    @Valid
+    private List<com.hyma.procedimiento.dto.ConsultaProcedimientoRequest> procedimientos;
 }
