@@ -136,6 +136,11 @@ function BoletaReceta({ receta, medicamentos }) {
                   <span className="receta-med-index">{idx + 1}.</span>
                   <span className="receta-med-name">
                     {m.nombre} {m.presentacion ? m.presentacion : ''} {m.concentracion ? m.concentracion : ''}
+                    {m.esUsoClinica && (
+                      <span style={{ fontSize: '11px', color: '#b45309', fontWeight: '700', marginLeft: '6px' }}>
+                        (Uso en clínica / Ya administrado)
+                      </span>
+                    )}
                   </span>
                   {m.cantidad && (
                     <span className="receta-med-qty">
@@ -145,7 +150,9 @@ function BoletaReceta({ receta, medicamentos }) {
                 </div>
                 <div className="receta-med-uso">
                   <span className="receta-uso-label">Uso: </span>
-                  <span className="receta-uso-val">{formatUsoTexto(m)}</span>
+                  <span className="receta-uso-val">
+                    {m.esUsoClinica ? 'Dosis administrada en clínica médica' : formatUsoTexto(m)}
+                  </span>
                 </div>
               </div>
             ))}

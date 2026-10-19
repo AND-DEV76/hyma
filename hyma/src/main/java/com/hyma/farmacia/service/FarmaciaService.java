@@ -606,6 +606,7 @@ public class FarmaciaService {
                                 .stockDisponible(stock)
                                 .precioUnitario(precioUnitario)
                                 .subtotal(subtotalDetalle)
+                                .esUsoClinica(Boolean.TRUE.equals(d.getEsUsoClinica()))
                                 .build());
 
                         if (!lotesActivos.isEmpty()) {
@@ -756,6 +757,7 @@ public class FarmaciaService {
                                         .frecuencia(mReq.getFrecuencia() != null ? mReq.getFrecuencia().trim() : "")
                                         .duracion(mReq.getDuracion() != null ? mReq.getDuracion().trim() : "")
                                         .cantidad(cant)
+                                        .esUsoClinica(Boolean.TRUE.equals(mReq.getEsUsoClinica()))
                                         .build();
                                 tratamiento.getDetalles().add(det);
                             }

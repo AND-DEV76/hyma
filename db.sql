@@ -177,7 +177,7 @@ CREATE TABLE signo_vital (
     peso DECIMAL(5,2),
     talla DECIMAL(5,2),
     presion_arterial VARCHAR(20),
-    glicemia DECIMAL(6,2),
+    glicemia VARCHAR(30),
     frecuencia_cardiaca INT,
     frecuencia_respiratoria INT,
     saturacion_oxigeno DECIMAL(5,2),
@@ -320,6 +320,7 @@ CREATE TABLE detalle_tratamiento (
     frecuencia VARCHAR(100),
     duracion VARCHAR(100),
     cantidad INT NOT NULL,
+    es_uso_clinica BOOLEAN DEFAULT FALSE,
     CONSTRAINT fk_detalle_tratamiento_tratamiento
         FOREIGN KEY (id_tratamiento)
         REFERENCES tratamiento(id_tratamiento),

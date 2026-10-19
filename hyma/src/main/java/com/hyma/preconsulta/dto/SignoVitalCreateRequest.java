@@ -43,10 +43,9 @@ public class SignoVitalCreateRequest {
     /** Presión arterial sistólica/diastólica (ej: 120/80) (Opcional) */
     private String presionArterial;
 
-    /** Glucosa en sangre (mg/dL) (Opcional) */
-    @DecimalMin(value = "10.00", message = "La glicemia debe ser mayor a 10 mg/dL")
-    @DecimalMax(value = "1000.00", message = "La glicemia no puede exceder 1000 mg/dL")
-    private BigDecimal glicemia;
+    /** Glucosa en sangre (mg/dL) con posible sufijo PRE o POST (ej: 110 PRE, 140 POST, 95) (Opcional) */
+    @jakarta.validation.constraints.Size(max = 30, message = "La glicemia no puede exceder 30 caracteres")
+    private String glicemia;
 
     /** Frecuencia cardíaca (lpm) (Opcional) */
     @Min(value = 10, message = "La frecuencia cardíaca debe ser mayor o igual a 10 lpm")

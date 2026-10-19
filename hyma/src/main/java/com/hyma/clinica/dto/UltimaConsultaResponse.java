@@ -1,5 +1,6 @@
 package com.hyma.clinica.dto;
 
+import com.hyma.preconsulta.dto.SignoVitalResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,6 +28,7 @@ public class UltimaConsultaResponse {
     private String indicacionesTratamiento;
     private List<MedicamentoRecetadoItemResponse> medicamentos;
     private ExamenFisicoItemResponse examenFisico;
+    private SignoVitalResponse signoVital;
 
     @Data
     @Builder
@@ -49,6 +51,7 @@ public class UltimaConsultaResponse {
         private String frecuencia;
         private String duracion;
         private Integer cantidad;
+        private Boolean esUsoClinica;
     }
 
     @Data

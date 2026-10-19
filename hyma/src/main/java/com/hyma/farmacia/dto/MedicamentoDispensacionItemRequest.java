@@ -13,4 +13,5 @@ public class MedicamentoDispensacionItemRequest {
     private String frecuencia;
     private String duracion;
     private Integer cantidad;
+    private Boolean esUsoClinica;
 }

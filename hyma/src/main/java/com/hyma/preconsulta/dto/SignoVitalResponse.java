@@ -26,7 +26,7 @@ public class SignoVitalResponse {
     private BigDecimal peso;
     private BigDecimal talla;
     private String presionArterial;
-    private BigDecimal glicemia;
+    private String glicemia;
     private Integer frecuenciaCardiaca;
     private Integer frecuenciaRespiratoria;
     private BigDecimal saturacionOxigeno;

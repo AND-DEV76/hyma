@@ -62,9 +62,9 @@ public class SignoVital {
     @Column(name = "presion_arterial", length = 20)
     private String presionArterial;
 
-    /** Nivel de Glucosa / Glicemia en sangre (mg/dL), ej: 95.00 */
-    @Column(name = "glicemia", precision = 6, scale = 2)
-    private BigDecimal glicemia;
+    /** Nivel de Glucosa / Glicemia en sangre (mg/dL), ej: '95', '110 PRE', '140 POST' */
+    @Column(name = "glicemia", length = 30)
+    private String glicemia;
 
     /** Frecuencia Cardíaca (latidos por minuto - lpm), ej: 75 */
     @Column(name = "frecuencia_cardiaca")

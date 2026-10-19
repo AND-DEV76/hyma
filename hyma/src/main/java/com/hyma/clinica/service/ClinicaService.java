@@ -85,75 +85,14 @@ public class ClinicaService {
         PacienteResponse pacienteResp = pacienteMapper.toResponse(paciente);
         SignoVitalResponse signoResp = ultimoSigno != null ? signoVitalMapper.toResponse(ultimoSigno) : null;
 
-        // Obtener última consulta completada si existe
-        UltimaConsultaResponse ultimaConsultaResp = null;
-        Optional<Consulta> ultimaConsultaOpt = consultaRepository.findTopByPacienteOrderByFechaConsultaDesc(paciente);
-        if (ultimaConsultaOpt.isPresent()) {
-            Consulta c = ultimaConsultaOpt.get();
-            
-            // Diagnósticos
-            List<Diagnostico> diags = diagnosticoRepository.findByConsulta_IdConsulta(c.getIdConsulta());
-            List<UltimaConsultaResponse.DiagnosticoItemResponse> diagList = diags.stream()
-                    .map(d -> UltimaConsultaResponse.DiagnosticoItemResponse.builder()
-                            .codigoCie10(d.getCodigoCie10())
-                            .descripcion(d.getDescripcion())
-                            .build())
-                    .toList();
+        // Obtener historial completo de consultas del paciente ordenadas por fecha descendente
+        List<Consulta> listaConsultas = consultaRepository.findByPacienteOrderByFechaConsultaDesc(paciente);
+        List<UltimaConsultaResponse> historialConsultas = listaConsultas.stream()
+                .map(c -> mapearConsultaAResponse(c, idPaciente, ultimoSigno))
+                .toList();
 
-            // Tratamiento
-            Optional<Tratamiento> tratOpt = tratamientoRepository.findByConsultaIdWithDetalles(c.getIdConsulta());
-            String indicaciones = tratOpt.map(Tratamiento::getObservaciones).orElse(null);
-            List<UltimaConsultaResponse.MedicamentoRecetadoItemResponse> medsList = tratOpt
-                    .map(t -> t.getDetalles().stream()
-                            .map(det -> UltimaConsultaResponse.MedicamentoRecetadoItemResponse.builder()
-                                    .medicamento(det.getMedicamento() != null ? det.getMedicamento().getNombre() : "Medicamento")
-                                    .presentacion(det.getMedicamento() != null ? det.getMedicamento().getPresentacion() : null)
-                                    .concentracion(det.getMedicamento() != null ? det.getMedicamento().getConcentracion() : null)
-                                    .dosis(det.getDosis())
-                                    .frecuencia(det.getFrecuencia())
-                                    .duracion(det.getDuracion())
-                                    .cantidad(det.getCantidad())
-                                    .build())
-                            .toList())
-                    .orElse(List.of());
+        UltimaConsultaResponse ultimaConsultaResp = !historialConsultas.isEmpty() ? historialConsultas.get(0) : null;
 
-            // Examen Físico
-            Optional<ExamenFisico> efOpt = examenFisicoRepository.findByConsulta_IdConsulta(c.getIdConsulta());
-            UltimaConsultaResponse.ExamenFisicoItemResponse efResp = efOpt
-                    .map(ef -> UltimaConsultaResponse.ExamenFisicoItemResponse.builder()
-                            .piel(ef.getPiel())
-                            .conciencia(ef.getConciencia())
-                            .cardiopulmonar(ef.getCardiopulmonar())
-                            .abdomen(ef.getAbdomen())
-                            .soma(ef.getSoma())
-                            .build())
-                    .orElse(null);
-
-            String medicoNombre = null;
-            String medicoEspecialidad = null;
-            if (c.getMedico() != null) {
-                medicoNombre = ((c.getMedico().getNombres() != null ? c.getMedico().getNombres() : "") + " " +
-                               (c.getMedico().getApellidos() != null ? c.getMedico().getApellidos() : "")).trim();
-                medicoEspecialidad = c.getMedico().getEspecialidad();
-            }
-
-            ultimaConsultaResp = UltimaConsultaResponse.builder()
-                    .idConsulta(c.getIdConsulta())
-                    .fechaConsulta(c.getFechaConsulta())
-                    .medico(medicoNombre)
-                    .especialidadMedico(medicoEspecialidad)
-                    .motivoConsulta(c.getMotivoConsulta())
-                    .historiaEnfermedadActual(c.getHistoriaEnfermedadActual())
-                    .impresionClinica(c.getImpresionClinica())
-                    .planMedico(c.getPlanMedico())
-                    .laboratorio(c.getLaboratorio())
-                    .diagnosticos(diagList)
-                    .indicacionesTratamiento(indicaciones)
-                    .medicamentos(medsList)
-                    .examenFisico(efResp)
-                    .build();
-        }
-        
         return PacienteConsultaResponse.builder()
                 .paciente(pacienteResp)
                 .ultimoSignoVital(signoResp)
@@ -161,6 +100,88 @@ public class ClinicaService {
                 .estadoCola(estadoColaStr)
                 .datosConsultaBorrador(datosBorrador)
                 .ultimaConsulta(ultimaConsultaResp)
+                .historialConsultas(historialConsultas)
+                .build();
+    }
+
+    private UltimaConsultaResponse mapearConsultaAResponse(Consulta c, Long idPaciente, SignoVital ultimoSignoActual) {
+        // Diagnósticos
+        List<Diagnostico> diags = diagnosticoRepository.findByConsulta_IdConsulta(c.getIdConsulta());
+        List<UltimaConsultaResponse.DiagnosticoItemResponse> diagList = diags.stream()
+                .map(d -> UltimaConsultaResponse.DiagnosticoItemResponse.builder()
+                        .codigoCie10(d.getCodigoCie10())
+                        .descripcion(d.getDescripcion())
+                        .build())
+                .toList();
+
+        // Tratamiento
+        Optional<Tratamiento> tratOpt = tratamientoRepository.findByConsultaIdWithDetalles(c.getIdConsulta());
+        String indicaciones = tratOpt.map(Tratamiento::getObservaciones).orElse(null);
+        List<UltimaConsultaResponse.MedicamentoRecetadoItemResponse> medsList = tratOpt
+                .map(t -> t.getDetalles().stream()
+                        .map(det -> UltimaConsultaResponse.MedicamentoRecetadoItemResponse.builder()
+                                .medicamento(det.getMedicamento() != null ? det.getMedicamento().getNombre() : "Medicamento")
+                                .presentacion(det.getMedicamento() != null ? det.getMedicamento().getPresentacion() : null)
+                                .concentracion(det.getMedicamento() != null ? det.getMedicamento().getConcentracion() : null)
+                                .dosis(det.getDosis())
+                                .frecuencia(det.getFrecuencia())
+                                .duracion(det.getDuracion())
+                                .cantidad(det.getCantidad())
+                                .esUsoClinica(Boolean.TRUE.equals(det.getEsUsoClinica()))
+                                .build())
+                        .toList())
+                .orElse(List.of());
+
+        // Examen Físico
+        Optional<ExamenFisico> efOpt = examenFisicoRepository.findByConsulta_IdConsulta(c.getIdConsulta());
+        UltimaConsultaResponse.ExamenFisicoItemResponse efResp = efOpt
+                .map(ef -> UltimaConsultaResponse.ExamenFisicoItemResponse.builder()
+                        .piel(ef.getPiel())
+                        .conciencia(ef.getConciencia())
+                        .cardiopulmonar(ef.getCardiopulmonar())
+                        .abdomen(ef.getAbdomen())
+                        .soma(ef.getSoma())
+                        .build())
+                .orElse(null);
+
+        String medicoNombre = null;
+        String medicoEspecialidad = null;
+        if (c.getMedico() != null) {
+            medicoNombre = ((c.getMedico().getNombres() != null ? c.getMedico().getNombres() : "") + " " +
+                           (c.getMedico().getApellidos() != null ? c.getMedico().getApellidos() : "")).trim();
+            medicoEspecialidad = c.getMedico().getEspecialidad();
+        }
+
+        SignoVital signoDeConsulta = signoVitalRepository.findByConsulta_IdConsulta(c.getIdConsulta()).orElse(null);
+        if (signoDeConsulta == null) {
+            List<SignoVital> signos = signoVitalRepository.findByPaciente_IdPacienteOrderByFechaRegistroDesc(idPaciente);
+            for (SignoVital sv : signos) {
+                if (ultimoSignoActual != null && sv.getIdSignoVital().equals(ultimoSignoActual.getIdSignoVital())) {
+                    continue;
+                }
+                if (c.getFechaConsulta() != null && sv.getFechaRegistro() != null && !sv.getFechaRegistro().isAfter(c.getFechaConsulta().plusHours(1))) {
+                    signoDeConsulta = sv;
+                    break;
+                }
+            }
+        }
+        SignoVitalResponse svResp = signoDeConsulta != null ? signoVitalMapper.toResponse(signoDeConsulta) : null;
+
+        return UltimaConsultaResponse.builder()
+                .idConsulta(c.getIdConsulta())
+                .fechaConsulta(c.getFechaConsulta())
+                .medico(medicoNombre)
+                .especialidadMedico(medicoEspecialidad)
+                .motivoConsulta(c.getMotivoConsulta())
+                .historiaEnfermedadActual(c.getHistoriaEnfermedadActual())
+                .impresionClinica(c.getImpresionClinica())
+                .planMedico(c.getPlanMedico())
+                .laboratorio(c.getLaboratorio())
+                .diagnosticos(diagList)
+                .indicacionesTratamiento(indicaciones)
+                .medicamentos(medsList)
+                .examenFisico(efResp)
+                .signoVital(svResp)
                 .build();
     }
 
@@ -288,6 +309,7 @@ public class ClinicaService {
                         .frecuencia(detReq.getFrecuencia())
                         .duracion(detReq.getDuracion())
                         .cantidad(detReq.getCantidad())
+                        .esUsoClinica(Boolean.TRUE.equals(detReq.getEsUsoClinica()))
                         .build();
                 detalleTratamientoRepository.save(detalle);
             }

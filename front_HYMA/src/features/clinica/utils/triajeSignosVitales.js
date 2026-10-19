@@ -97,10 +97,11 @@ export function evaluarSaturacionOxigeno(sat) {
   return { estado: 'NORMAL', label: 'Normal (≥95%)', tipo: 'Normal' };
 }
 
-// 6. GLICEMIA (mg/dL)
+// 6. GLICEMIA (mg/dL) - Admite números o cadenas como "110 PRE", "140 POST"
 export function evaluarGlicemia(gli) {
-  if (gli === null || gli === undefined || gli === '' || isNaN(gli)) return null;
+  if (gli === null || gli === undefined || gli === '') return null;
   const val = parseFloat(gli);
+  if (isNaN(val)) return null;
 
   if (val < 60) {
     return { estado: 'AZUL', label: 'Hipoglicemia (<60 mg/dL)', tipo: 'Bajo Crítico' };
@@ -244,10 +245,14 @@ export function evaluarTriajePaciente(signos) {
   if (signos.glicemia !== null && signos.glicemia !== undefined && signos.glicemia !== '') {
     const res = evaluarGlicemia(signos.glicemia);
     if (res) {
+      const numVal = parseFloat(signos.glicemia);
+      const isPre = String(signos.glicemia).toUpperCase().includes('PRE');
+      const isPost = String(signos.glicemia).toUpperCase().includes('POST');
+      const tag = isPre ? ' PRE' : (isPost ? ' POST' : '');
       chips.push({
         sigla: 'GLIC.',
         nombre: 'Glicemia',
-        valor: `${parseFloat(signos.glicemia).toFixed(0)} mg/dL`,
+        valor: `${!isNaN(numVal) ? numVal.toFixed(0) : signos.glicemia}${tag} mg/dL`,
         ...res
       });
       if (res.estado === 'ROJO') {

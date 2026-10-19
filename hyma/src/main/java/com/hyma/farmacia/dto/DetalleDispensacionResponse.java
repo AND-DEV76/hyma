@@ -23,4 +23,6 @@ public class DetalleDispensacionResponse {
     private BigDecimal precioUnitario = BigDecimal.ZERO;
     @Builder.Default
     private BigDecimal subtotal = BigDecimal.ZERO;
+    @Builder.Default
+    private Boolean esUsoClinica = false;
 }

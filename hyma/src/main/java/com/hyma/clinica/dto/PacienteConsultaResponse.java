@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -18,5 +20,6 @@ public class PacienteConsultaResponse {
     private String estadoCola;
     private String datosConsultaBorrador;
     private UltimaConsultaResponse ultimaConsulta;
+    private List<UltimaConsultaResponse> historialConsultas;
 }
 

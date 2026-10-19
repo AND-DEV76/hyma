@@ -13,6 +13,7 @@ import {
   X,
   Check,
   Award,
+  Info,
 } from 'lucide-react';
 import { usePreconsulta } from '../hooks/usePreconsulta';
 import { obtenerPaciente } from '../../recepcion/services/recepcionService';
@@ -32,6 +33,7 @@ export default function SignosVitalesPage() {
     error: hookError,
     guardarSignos,
     cargarUltimoSigno,
+    ultimoSigno,
     calcularIMC,
   } = usePreconsulta();
 
@@ -40,6 +42,7 @@ export default function SignosVitalesPage() {
   const [enviando, setEnviando] = useState(false);
   const [errorLocal, setErrorLocal] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [glicemiaMomento, setGlicemiaMomento] = useState(''); // '' | 'PRE' | 'POST'
 
   // Estados del Formulario de Signos Vitales
   const [formData, setFormData] = useState({
@@ -72,6 +75,45 @@ export default function SignosVitalesPage() {
     };
     fetchDatos();
   }, [queryIdPaciente, cargarUltimoSigno, navigate]);
+
+  // Auto-cargar el último Peso y Talla registrados si el paciente ya tiene historial previo
+  useEffect(() => {
+    if (ultimoSigno) {
+      setFormData((prev) => ({
+        ...prev,
+        peso: (prev.peso === '' && ultimoSigno.peso != null) ? String(ultimoSigno.peso) : prev.peso,
+        talla: (prev.talla === '' && ultimoSigno.talla != null) ? String(ultimoSigno.talla) : prev.talla,
+      }));
+    }
+  }, [ultimoSigno]);
+
+  // Manejo de Glucosa con PRE y POST
+  const handleGlicemiaNumeroChange = (e) => {
+    const val = e.target.value;
+    if (val.includes('-')) return;
+    setErrorLocal('');
+    setFormData((prev) => {
+      const combined = val ? (glicemiaMomento ? `${val} ${glicemiaMomento}` : val) : '';
+      return { ...prev, glicemia: combined };
+    });
+  };
+
+  const toggleGlicemiaMomento = (momento) => {
+    const nuevoMomento = glicemiaMomento === momento ? '' : momento;
+    setGlicemiaMomento(nuevoMomento);
+    setFormData((prev) => {
+      const numMatch = prev.glicemia ? prev.glicemia.match(/^[\d.]+/) : null;
+      const numPart = numMatch ? numMatch[0] : '';
+      const combined = numPart ? (nuevoMomento ? `${numPart} ${nuevoMomento}` : numPart) : '';
+      return { ...prev, glicemia: combined };
+    });
+  };
+
+  const glicemiaNumerica = useMemo(() => {
+    if (!formData.glicemia) return '';
+    const match = formData.glicemia.match(/^[\d.]+/);
+    return match ? match[0] : '';
+  }, [formData.glicemia]);
 
   // Bloqueo de signo negativo y caracteres inválidos en números
   const preventNegativeKeyDown = (e) => {
@@ -150,9 +192,12 @@ export default function SignosVitalesPage() {
         return;
       }
     }
-    if (formData.glicemia !== '' && (parseFloat(formData.glicemia) < 0 || isNaN(formData.glicemia))) {
-      setErrorLocal('La glucosa / glicemia no puede ser un valor negativo.');
-      return;
+    if (formData.glicemia !== '') {
+      const numGlic = parseFloat(formData.glicemia);
+      if (isNaN(numGlic) || numGlic < 0) {
+        setErrorLocal('La glucosa / glicemia debe ser un valor numérico válido positivo.');
+        return;
+      }
     }
 
     setEnviando(true);
@@ -163,7 +208,7 @@ export default function SignosVitalesPage() {
         peso: formData.peso ? parseFloat(formData.peso) : null,
         talla: formData.talla ? parseFloat(formData.talla) : null,
         presionArterial: formData.presionArterial.trim() || null,
-        glicemia: formData.glicemia ? parseFloat(formData.glicemia) : null,
+        glicemia: formData.glicemia && formData.glicemia.trim() ? formData.glicemia.trim() : null,
         frecuenciaCardiaca: formData.frecuenciaCardiaca ? parseInt(formData.frecuenciaCardiaca) : null,
         frecuenciaRespiratoria: formData.frecuenciaRespiratoria ? parseInt(formData.frecuenciaRespiratoria) : null,
         saturacionOxigeno: formData.saturacionOxigeno ? parseFloat(formData.saturacionOxigeno) : null,
@@ -280,6 +325,26 @@ export default function SignosVitalesPage() {
           </div>
 
           <form onSubmit={handleSubmit}>
+            {ultimoSigno && (ultimoSigno.peso != null || ultimoSigno.talla != null) && (
+              <div style={{
+                backgroundColor: '#f0f9ff',
+                border: '1px solid #bae6fd',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                fontSize: '13px',
+                color: '#0369a1'
+              }}>
+                <Info size={18} color="#0284c7" style={{ flexShrink: 0 }} />
+                <span>
+                  <strong>Peso y Talla cargados del último registro:</strong> Se completó automáticamente el Peso ({ultimoSigno.peso ? `${ultimoSigno.peso} kg` : '--'}) y Talla ({ultimoSigno.talla ? `${ultimoSigno.talla} cm` : '--'}) de la visita anterior ({ultimoSigno.fechaRegistro ? new Date(ultimoSigno.fechaRegistro).toLocaleDateString('es-GT') : 'reciente'}). Si midió al paciente hoy, puede editarlos libremente.
+                </span>
+              </div>
+            )}
+
             <div className="signos-vitales-grid" style={styles.vitalsGrid}>
               {/* Peso */}
               <div style={styles.fieldGroup}>
@@ -429,23 +494,69 @@ export default function SignosVitalesPage() {
                 />
               </div>
 
-              {/* Glucosa */}
+              {/* Glucosa / Glicemia con selector PRE y POST */}
               <div style={styles.fieldGroup}>
                 <label style={styles.label}>
                   <span>Glucosa / Glicemia</span>
                   <span style={styles.unitTag}>mg/dL</span>
                 </label>
-                <input
-                  type="number"
-                  step="1"
-                  min="0"
-                  name="glicemia"
-                  placeholder="Ej. 90"
-                  value={formData.glicemia}
-                  onChange={handleChange}
-                  onKeyDown={preventNegativeKeyDown}
-                  style={styles.input}
-                />
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    name="glicemia"
+                    placeholder="Ej. 90"
+                    value={glicemiaNumerica}
+                    onChange={handleGlicemiaNumeroChange}
+                    onKeyDown={preventNegativeKeyDown}
+                    style={{
+                      ...styles.input,
+                      flex: 1,
+                      minWidth: 0,
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleGlicemiaMomento('PRE')}
+                    style={{
+                      padding: '0 12px',
+                      height: '42px',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      borderRadius: '7px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      border: glicemiaMomento === 'PRE' ? '1.5px solid #0077b6' : '1px solid #cbd5e1',
+                      backgroundColor: glicemiaMomento === 'PRE' ? '#0077b6' : '#ffffff',
+                      color: glicemiaMomento === 'PRE' ? '#ffffff' : '#64748b',
+                      boxSizing: 'border-box',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    PRE
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleGlicemiaMomento('POST')}
+                    style={{
+                      padding: '0 12px',
+                      height: '42px',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      borderRadius: '7px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      border: glicemiaMomento === 'POST' ? '1.5px solid #0077b6' : '1px solid #cbd5e1',
+                      backgroundColor: glicemiaMomento === 'POST' ? '#0077b6' : '#ffffff',
+                      color: glicemiaMomento === 'POST' ? '#ffffff' : '#64748b',
+                      boxSizing: 'border-box',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    POST
+                  </button>
+                </div>
               </div>
             </div>
 

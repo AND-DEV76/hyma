@@ -324,6 +324,7 @@ export default function AtencionMedicaPage() {
   const [loadingDatos, setLoadingDatos] = useState(true);
   const [pasoActual, setPasoActual] = useState(1);
   const [mostrarUltimaConsulta, setMostrarUltimaConsulta] = useState(false);
+  const [consultasExpandidas, setConsultasExpandidas] = useState({});
   const [enviando, setEnviando] = useState(false);
   const stepBodyRef = useRef(null);
 
@@ -638,12 +639,17 @@ export default function AtencionMedicaPage() {
       const esInhalador =
         /inhalad|spray|aerosol|nebuliz|puff/i.test(presNorm) ||
         /inhalad|spray|aerosol/i.test(concNorm);
+      const esInyectable =
+        /ampolla|amp\b|vial|inyect|inyecci[oó]n/i.test(presNorm) ||
+        /inyect/i.test(concNorm) ||
+        /ampolla|inyect/i.test(nomNorm);
 
       let defaultDosis = '1';
       if (esGotas) defaultDosis = '20 gotas (1 ml)';
       else if (esLiquido) defaultDosis = '5ml';
       else if (esTopico) defaultDosis = '1 aplicación';
       else if (esInhalador) defaultDosis = '1 disparo';
+      else if (esInyectable) defaultDosis = '1 ampolla intramuscular / intravenosa';
 
       const nuevoDetalle = {
         idMedicamento: med.idMedicamento,
@@ -651,12 +657,14 @@ export default function AtencionMedicaPage() {
         presentacion: med.presentacion || '',
         concentracion: med.concentracion || '',
         unidades: med.unidades ?? null,
-        frecuencia: 'Cada 8 hrs',
-        duracion: '5 días',
+        frecuencia: esInyectable ? 'Dosis única' : 'Cada 8 hrs',
+        duracion: esInyectable ? '1 día' : '5 días',
         esGotas,
         esLiquido,
         esTopico,
         esInhalador,
+        esInyectable,
+        esUsoClinica: esInyectable,
         dosisCm: esLiquido ? 5 : null,
         unidadesPorToma: (!esLiquido && !esGotas && !esTopico && !esInhalador) ? 1 : null,
         gotasPorToma: esGotas ? 20 : null,
@@ -835,6 +843,7 @@ export default function AtencionMedicaPage() {
             frecuencia: dt.frecuencia || 'Según indicación',
             duracion: dt.duracion || 'Según evolución',
             cantidad: Number(dt.cantidad) > 0 ? Number(dt.cantidad) : 1,
+            esUsoClinica: Boolean(dt.esUsoClinica),
           })),
         },
         referenciaMedica: especialidadReferencia
@@ -1050,6 +1059,18 @@ export default function AtencionMedicaPage() {
                         </span>
                       </div>
                       <div style={styles.vitalItem}>
+                        <span style={styles.vitalLabel}>Glucosa</span>
+                        <span style={styles.vitalVal}>
+                          {pacienteData.ultimoSignoVital.glicemia ? `${pacienteData.ultimoSignoVital.glicemia} mg/dL` : '--'}
+                        </span>
+                      </div>
+                      <div style={styles.vitalItem}>
+                        <span style={styles.vitalLabel}>Frec. Resp.</span>
+                        <span style={styles.vitalVal}>
+                          {pacienteData.ultimoSignoVital.frecuenciaRespiratoria ? `${pacienteData.ultimoSignoVital.frecuenciaRespiratoria} rpm` : '--'}
+                        </span>
+                      </div>
+                      <div style={styles.vitalItem}>
                         <span style={styles.vitalLabel}>Sat. O2</span>
                         <span style={styles.vitalVal}>
                           {pacienteData.ultimoSignoVital.saturacionOxigeno ? `${pacienteData.ultimoSignoVital.saturacionOxigeno} %` : '--'}
@@ -1088,75 +1109,91 @@ export default function AtencionMedicaPage() {
                 )}
               </div>
 
-              {/* Opción Desplegable: Última Consulta */}
-              <div style={styles.ultimaConsultaCard}>
-                <button
-                  type="button"
-                  onClick={() => setMostrarUltimaConsulta((prev) => !prev)}
-                  style={{
-                    ...styles.ultimaConsultaHeaderBtn,
-                    backgroundColor: mostrarUltimaConsulta ? '#f0f9ff' : '#ffffff',
-                    borderColor: mostrarUltimaConsulta ? '#0077b6' : '#e2e8f0',
-                  }}
-                >
-                  <div style={styles.ultimaConsultaHeaderLeft}>
-                    <div
-                      style={{
-                        ...styles.ultimaConsultaIconWrap,
-                        backgroundColor: mostrarUltimaConsulta ? '#0077b6' : '#e0f2fe',
-                        color: mostrarUltimaConsulta ? '#ffffff' : '#0077b6',
-                      }}
-                    >
-                      <History size={20} />
-                    </div>
-                    <div style={{ textAlign: 'left' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                        <span style={styles.ultimaConsultaTitle}>Última Consulta</span>
-                        {pacienteData?.ultimaConsulta ? (
+              {/* Sección: Historial de Consultas Previas (Tarjetas Individuales Desplegables) */}
+              {(() => {
+                const consultasHistorial = pacienteData?.historialConsultas && pacienteData.historialConsultas.length > 0
+                  ? pacienteData.historialConsultas
+                  : (pacienteData?.ultimaConsulta ? [pacienteData.ultimaConsulta] : []);
+
+                return (
+                  <div style={{ marginTop: '24px' }}>
+                    {/* Encabezado Principal de Historial de Consultas */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '14px',
+                      paddingBottom: '8px',
+                      borderBottom: '2px solid #e2e8f0',
+                      flexWrap: 'wrap',
+                      gap: '8px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                          backgroundColor: '#e0f2fe',
+                          color: '#0077b6',
+                          borderRadius: '8px',
+                          width: '32px',
+                          height: '32px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <History size={18} />
+                        </div>
+                        <div>
+                          <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: '#03045e', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                            Historial de Consultas
+                          </h3>
+                        </div>
+                        {consultasHistorial.length > 0 && (
                           <span style={styles.badgeUltimaFecha}>
-                            <Calendar size={13} style={{ marginRight: '4px' }} />
-                            {new Date(pacienteData.ultimaConsulta.fechaConsulta).toLocaleDateString('es-GT', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                            })}
-                          </span>
-                        ) : (
-                          <span style={styles.badgeSinHistorial}>
-                            Sin consultas previas
+                            {consultasHistorial.length} {consultasHistorial.length === 1 ? 'consulta previa' : 'consultas previas'}
                           </span>
                         )}
                       </div>
-                      <p style={styles.ultimaConsultaSubtitle}>
-                        {pacienteData?.ultimaConsulta
-                          ? `Atendido por: Dr(a). ${pacienteData.ultimaConsulta.medico || 'Médico tratante'}${
-                              pacienteData.ultimaConsulta.especialidadMedico ? ` (${pacienteData.ultimaConsulta.especialidadMedico})` : ''
-                            }`
-                          : 'Haga clic para verificar el historial médico previo registrado en el sistema.'}
-                      </p>
-                    </div>
-                  </div>
-                  <div style={styles.ultimaConsultaHeaderRight}>
-                    <span style={styles.ultimaConsultaActionLabel}>
-                      {mostrarUltimaConsulta ? 'Ocultar datos' : 'Ver datos'}
-                    </span>
-                    <div
-                      style={{
-                        ...styles.ultimaConsultaChevronWrap,
-                        transform: mostrarUltimaConsulta ? 'rotate(180deg)' : 'rotate(0deg)',
-                        transition: 'transform 0.25s ease',
-                      }}
-                    >
-                      <ChevronDown size={20} color="#0077b6" />
-                    </div>
-                  </div>
-                </button>
 
-                {mostrarUltimaConsulta && (
-                  <div style={styles.ultimaConsultaBody}>
-                    {!pacienteData?.ultimaConsulta ? (
-                      <div style={styles.ultimaConsultaEmptyState}>
-                        <AlertCircle size={28} color="#94a3b8" />
+                      {consultasHistorial.length > 1 && (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const allExpanded = consultasHistorial.every((c, idx) => consultasExpandidas[c.idConsulta || `idx-${idx}`]);
+                              const newState = {};
+                              consultasHistorial.forEach((c, idx) => {
+                                newState[c.idConsulta || `idx-${idx}`] = !allExpanded;
+                              });
+                              setConsultasExpandidas(newState);
+                            }}
+                            style={{
+                              background: '#f1f5f9',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '6px',
+                              color: '#0077b6',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              padding: '4px 10px',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            {consultasHistorial.every((c, idx) => consultasExpandidas[c.idConsulta || `idx-${idx}`]) ? 'Colapsar todas' : 'Expandir todas'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Lista de Consultas o Estado Vacío */}
+                    {consultasHistorial.length === 0 ? (
+                      <div style={{
+                        ...styles.ultimaConsultaCard,
+                        padding: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '14px',
+                        backgroundColor: '#f8fafc',
+                      }}>
+                        <AlertCircle size={26} color="#94a3b8" />
                         <div>
                           <p style={{ margin: 0, fontWeight: '600', color: '#475569', fontSize: '14px' }}>
                             El paciente no cuenta con consultas médicas previas registradas
@@ -1167,185 +1204,386 @@ export default function AtencionMedicaPage() {
                         </div>
                       </div>
                     ) : (
-                      <div style={styles.ultimaConsultaContentGrid}>
-                        {/* Fila 1: Resumen de Consulta (Médico y Fecha) */}
-                        <div style={styles.ucInfoBanner}>
-                          <div style={styles.ucBannerItem}>
-                            <span style={styles.ucBannerLabel}>Fecha y Hora:</span>
-                            <span style={styles.ucBannerVal}>
-                              {new Date(pacienteData.ultimaConsulta.fechaConsulta).toLocaleString('es-GT', {
-                                dateStyle: 'medium',
-                                timeStyle: 'short',
-                              })}
-                            </span>
-                          </div>
-                          <div style={styles.ucBannerItem}>
-                            <span style={styles.ucBannerLabel}>Médico Evaluador:</span>
-                            <span style={styles.ucBannerVal}>
-                              Dr(a). {pacienteData.ultimaConsulta.medico || 'No especificado'}
-                            </span>
-                          </div>
-                          {pacienteData.ultimaConsulta.especialidadMedico && (
-                            <div style={styles.ucBannerItem}>
-                              <span style={styles.ucBannerLabel}>Especialidad:</span>
-                              <span style={styles.ucBannerVal}>
-                                {pacienteData.ultimaConsulta.especialidadMedico}
-                              </span>
-                            </div>
-                          )}
-                        </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {consultasHistorial.map((consulta, cIdx) => {
+                          const key = consulta.idConsulta || `idx-${cIdx}`;
+                          const estaExpandida = Boolean(consultasExpandidas[key]);
+                          const esUltima = cIdx === 0;
 
-                        {/* Fila 2: Motivo y Evolución */}
-                        <div style={styles.ucTwoColGrid}>
-                          <div style={styles.ucCardBlock}>
-                            <span style={styles.ucBlockTitle}>Motivo de Consulta</span>
-                            <p style={styles.ucBlockText}>
-                              {pacienteData.ultimaConsulta.motivoConsulta || 'Sin motivo registrado'}
-                            </p>
-                          </div>
-                          <div style={styles.ucCardBlock}>
-                            <span style={styles.ucBlockTitle}>Historia de la Enfermedad Actual</span>
-                            <p style={styles.ucBlockText}>
-                              {pacienteData.ultimaConsulta.historiaEnfermedadActual || 'Sin historia registrada'}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Impresión Clínica y Plan si existen */}
-                        {(pacienteData.ultimaConsulta.impresionClinica || pacienteData.ultimaConsulta.planMedico) && (
-                          <div style={styles.ucTwoColGrid}>
-                            {pacienteData.ultimaConsulta.impresionClinica && (
-                              <div style={styles.ucCardBlock}>
-                                <span style={styles.ucBlockTitle}>Impresión Clínica</span>
-                                <p style={styles.ucBlockText}>
-                                  {pacienteData.ultimaConsulta.impresionClinica}
-                                </p>
-                              </div>
-                            )}
-                            {pacienteData.ultimaConsulta.planMedico && (
-                              <div style={styles.ucCardBlock}>
-                                <span style={styles.ucBlockTitle}>Plan Médico</span>
-                                <p style={styles.ucBlockText}>
-                                  {pacienteData.ultimaConsulta.planMedico}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Fila 3: Diagnósticos */}
-                        <div style={styles.ucCardBlock}>
-                          <span style={styles.ucBlockTitle}>Diagnósticos Asignados</span>
-                          {pacienteData.ultimaConsulta.diagnosticos?.length > 0 ? (
-                            <div style={styles.ucDiagList}>
-                              {pacienteData.ultimaConsulta.diagnosticos.map((d, idx) => (
-                                <div key={idx} style={styles.ucDiagTag}>
-                                  <span style={styles.ucDiagDesc}>{d.descripcion}</span>
+                          return (
+                            <div key={key} style={styles.ultimaConsultaCard}>
+                              {/* Botón de acordeón individual para esta consulta */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setConsultasExpandidas(prev => ({
+                                    ...prev,
+                                    [key]: !prev[key]
+                                  }));
+                                }}
+                                style={{
+                                  ...styles.ultimaConsultaHeaderBtn,
+                                  backgroundColor: estaExpandida ? '#f0f9ff' : '#ffffff',
+                                  borderColor: estaExpandida ? '#0077b6' : '#e2e8f0',
+                                }}
+                              >
+                                <div style={styles.ultimaConsultaHeaderLeft}>
+                                  <div
+                                    style={{
+                                      ...styles.ultimaConsultaIconWrap,
+                                      backgroundColor: estaExpandida ? '#0077b6' : (esUltima ? '#e0f2fe' : '#f1f5f9'),
+                                      color: estaExpandida ? '#ffffff' : (esUltima ? '#0077b6' : '#64748b'),
+                                    }}
+                                  >
+                                    <History size={18} />
+                                  </div>
+                                  <div style={{ textAlign: 'left' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                      <span style={{
+                                        ...styles.ultimaConsultaTitle,
+                                        color: esUltima ? '#0077b6' : '#1e293b'
+                                      }}>
+                                        {esUltima ? 'Última Consulta' : `Consulta ${new Date(consulta.fechaConsulta).toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: 'numeric' })}`}
+                                      </span>
+                                      <span style={styles.badgeUltimaFecha}>
+                                        <Calendar size={12} style={{ marginRight: '4px' }} />
+                                        {new Date(consulta.fechaConsulta).toLocaleDateString('es-GT', {
+                                          day: '2-digit',
+                                          month: 'short',
+                                          year: 'numeric',
+                                        })}
+                                      </span>
+                                      {esUltima && (
+                                        <span style={{
+                                          fontSize: '10px',
+                                          fontWeight: '800',
+                                          color: '#0369a1',
+                                          backgroundColor: '#e0f2fe',
+                                          padding: '1px 6px',
+                                          borderRadius: '4px',
+                                          textTransform: 'uppercase'
+                                        }}>
+                                          Más Reciente
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p style={styles.ultimaConsultaSubtitle}>
+                                      Atendido por: Dr(a). <strong>{consulta.medico || 'Médico tratante'}</strong>{consulta.especialidadMedico ? ` (${consulta.especialidadMedico})` : ''}
+                                    </p>
+                                  </div>
                                 </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <span style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>
-                              No se registraron diagnósticos formales CIE-10.
-                            </span>
-                          )}
-                        </div>
+                                <div style={styles.ultimaConsultaHeaderRight}>
+                                  <span style={styles.ultimaConsultaActionLabel}>
+                                    {estaExpandida ? 'Ocultar datos' : 'Ver datos'}
+                                  </span>
+                                  <div
+                                    style={{
+                                      ...styles.ultimaConsultaChevronWrap,
+                                      transform: estaExpandida ? 'rotate(180deg)' : 'rotate(0deg)',
+                                      transition: 'transform 0.25s ease',
+                                    }}
+                                  >
+                                    <ChevronDown size={18} color="#0077b6" />
+                                  </div>
+                                </div>
+                              </button>
 
-                        {/* Fila 4: Medicamentos Recetados y Tratamiento */}
-                        <div style={styles.ucCardBlock}>
-                          <span style={styles.ucBlockTitle}>Tratamiento y Receta Anterior</span>
-                          {pacienteData.ultimaConsulta.medicamentos?.length > 0 ? (
-                            <div style={styles.ucMedTableContainer}>
-                              <table style={styles.ucMedTable}>
-                                <thead>
-                                  <tr>
-                                    <th style={styles.ucMedTh}>Medicamento</th>
-                                    <th style={styles.ucMedTh}>Dosis & Indicaciones</th>
-                                    <th style={{ ...styles.ucMedTh, textAlign: 'center', width: '80px' }}>Cant.</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {pacienteData.ultimaConsulta.medicamentos.map((m, idx) => (
-                                    <tr key={idx} style={styles.ucMedTr}>
-                                      <td style={styles.ucMedTdName}>
-                                        <div style={{ fontWeight: '600', color: '#03045e' }}>{m.medicamento}</div>
-                                        <div style={{ fontSize: '11px', color: '#64748b' }}>
-                                          {[m.presentacion, m.concentracion].filter(Boolean).join(' • ')}
+                              {/* Cuerpo desplegable con los datos y signos vitales de esta consulta */}
+                              {estaExpandida && (
+                                <div style={styles.ultimaConsultaBody}>
+                                  <div style={styles.ultimaConsultaContentGrid}>
+                                    {/* Resumen Banner */}
+                                    <div style={styles.ucInfoBanner}>
+                                      <div style={styles.ucBannerItem}>
+                                        <span style={styles.ucBannerLabel}>Fecha y Hora:</span>
+                                        <span style={styles.ucBannerVal}>
+                                          {new Date(consulta.fechaConsulta).toLocaleString('es-GT', {
+                                            dateStyle: 'medium',
+                                            timeStyle: 'short',
+                                          })}
+                                        </span>
+                                      </div>
+                                      <div style={styles.ucBannerItem}>
+                                        <span style={styles.ucBannerLabel}>Médico Evaluador:</span>
+                                        <span style={styles.ucBannerVal}>
+                                          Dr(a). {consulta.medico || 'No especificado'}
+                                        </span>
+                                      </div>
+                                      {consulta.especialidadMedico && (
+                                        <div style={styles.ucBannerItem}>
+                                          <span style={styles.ucBannerLabel}>Especialidad:</span>
+                                          <span style={styles.ucBannerVal}>
+                                            {consulta.especialidadMedico}
+                                          </span>
                                         </div>
-                                      </td>
-                                      <td style={styles.ucMedTd}>
-                                        <span>{m.dosis || '--'}</span>
-                                        {m.frecuencia && <span style={{ color: '#0077b6', marginLeft: '6px' }}>• {m.frecuencia}</span>}
-                                        {m.duracion && <span style={{ color: '#64748b', marginLeft: '6px' }}>• por {m.duracion}</span>}
-                                      </td>
-                                      <td style={{ ...styles.ucMedTd, textAlign: 'center', fontWeight: '600' }}>
-                                        {m.cantidad || '--'}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          ) : (
-                            <span style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>
-                              No se recetaron medicamentos en la consulta anterior.
-                            </span>
-                          )}
+                                      )}
+                                    </div>
 
-                          {pacienteData.ultimaConsulta.indicacionesTratamiento && (
-                            <div style={styles.ucIndicacionesBox}>
-                              <span style={styles.ucIndicacionesLabel}>Indicaciones Generales / Observaciones:</span>
-                              <p style={styles.ucIndicacionesText}>
-                                {pacienteData.ultimaConsulta.indicacionesTratamiento}
-                              </p>
-                            </div>
-                          )}
-                        </div>
+                                    {/* Signos Vitales Previos de esta Consulta */}
+                                    {consulta.signoVital && (
+                                      <div style={{
+                                        backgroundColor: '#f8fafc',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '10px',
+                                        padding: '12px 14px',
+                                        boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+                                      }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                                          <HeartPulse size={15} color="#0284c7" />
+                                          <span style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
+                                            Signos Vitales de Triaje en esta Consulta
+                                          </span>
+                                          {consulta.signoVital.fechaRegistro && (
+                                            <span style={{ fontSize: '11px', color: '#64748b' }}>
+                                              ({new Date(consulta.signoVital.fechaRegistro).toLocaleDateString('es-GT')})
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div style={{
+                                          display: 'grid',
+                                          gridTemplateColumns: 'repeat(auto-fit, minmax(115px, 1fr))',
+                                          gap: '8px'
+                                        }}>
+                                          <div style={styles.vitalItem}>
+                                            <span style={styles.vitalLabel}>Presión Art.</span>
+                                            <span style={styles.vitalVal}>
+                                              {consulta.signoVital.presionArterial || '--'}
+                                            </span>
+                                          </div>
+                                          <div style={styles.vitalItem}>
+                                            <span style={styles.vitalLabel}>Frec. Cardíaca</span>
+                                            <span style={styles.vitalVal}>
+                                              {consulta.signoVital.frecuenciaCardiaca ? `${consulta.signoVital.frecuenciaCardiaca} lpm` : '--'}
+                                            </span>
+                                          </div>
+                                          <div style={styles.vitalItem}>
+                                            <span style={styles.vitalLabel}>Temperatura</span>
+                                            <span style={styles.vitalVal}>
+                                              {consulta.signoVital.temperatura ? `${consulta.signoVital.temperatura} °C` : '--'}
+                                            </span>
+                                          </div>
+                                          <div style={styles.vitalItem}>
+                                            <span style={styles.vitalLabel}>Glucosa</span>
+                                            <span style={styles.vitalVal}>
+                                              {consulta.signoVital.glicemia ? `${consulta.signoVital.glicemia} mg/dL` : '--'}
+                                            </span>
+                                          </div>
+                                          <div style={styles.vitalItem}>
+                                            <span style={styles.vitalLabel}>Frec. Resp.</span>
+                                            <span style={styles.vitalVal}>
+                                              {consulta.signoVital.frecuenciaRespiratoria ? `${consulta.signoVital.frecuenciaRespiratoria} rpm` : '--'}
+                                            </span>
+                                          </div>
+                                          <div style={styles.vitalItem}>
+                                            <span style={styles.vitalLabel}>Sat. O2</span>
+                                            <span style={styles.vitalVal}>
+                                              {consulta.signoVital.saturacionOxigeno ? `${consulta.signoVital.saturacionOxigeno} %` : '--'}
+                                            </span>
+                                          </div>
+                                          <div style={styles.vitalItem}>
+                                            <span style={styles.vitalLabel}>Peso</span>
+                                            <span style={styles.vitalVal}>
+                                              {consulta.signoVital.peso ? `${consulta.signoVital.peso} kg` : '--'}
+                                            </span>
+                                          </div>
+                                          <div style={styles.vitalItem}>
+                                            <span style={styles.vitalLabel}>Talla</span>
+                                            <span style={styles.vitalVal}>
+                                              {consulta.signoVital.talla ? `${consulta.signoVital.talla} cm` : '--'}
+                                            </span>
+                                          </div>
+                                          <div style={styles.vitalItem}>
+                                            <span style={styles.vitalLabel}>IMC</span>
+                                            <span style={styles.vitalVal}>
+                                              {consulta.signoVital.imc ? `${consulta.signoVital.imc}` : '--'}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
 
-                        {/* Fila 5: Examen Físico (si hay datos) */}
-                        {pacienteData.ultimaConsulta.examenFisico &&
-                          Object.values(pacienteData.ultimaConsulta.examenFisico).some((val) => Boolean(val && val.trim())) && (
-                            <div style={styles.ucCardBlock}>
-                              <span style={styles.ucBlockTitle}>Examen Físico Registrado</span>
-                              <div style={styles.ucExamenGrid}>
-                                {pacienteData.ultimaConsulta.examenFisico.piel && (
-                                  <div style={styles.ucExamenItem}>
-                                    <span style={styles.ucExamenLabel}>Piel:</span>
-                                    <span style={styles.ucExamenVal}>{pacienteData.ultimaConsulta.examenFisico.piel}</span>
+                                    {/* Motivo y Evolución */}
+                                    <div style={styles.ucTwoColGrid}>
+                                      <div style={styles.ucCardBlock}>
+                                        <span style={styles.ucBlockTitle}>Motivo de Consulta</span>
+                                        <p style={styles.ucBlockText}>
+                                          {consulta.motivoConsulta || 'Sin motivo registrado'}
+                                        </p>
+                                      </div>
+                                      <div style={styles.ucCardBlock}>
+                                        <span style={styles.ucBlockTitle}>Historia de la Enfermedad Actual</span>
+                                        <p style={styles.ucBlockText}>
+                                          {consulta.historiaEnfermedadActual || 'Sin historia registrada'}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    {/* Impresión Clínica y Plan si existen */}
+                                    {(consulta.impresionClinica || consulta.planMedico) && (
+                                      <div style={styles.ucTwoColGrid}>
+                                        {consulta.impresionClinica && (
+                                          <div style={styles.ucCardBlock}>
+                                            <span style={styles.ucBlockTitle}>Impresión Clínica</span>
+                                            <p style={styles.ucBlockText}>
+                                              {consulta.impresionClinica}
+                                            </p>
+                                          </div>
+                                        )}
+                                        {consulta.planMedico && (
+                                          <div style={styles.ucCardBlock}>
+                                            <span style={styles.ucBlockTitle}>Plan Médico</span>
+                                            <p style={styles.ucBlockText}>
+                                              {consulta.planMedico}
+                                            </p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {/* Órdenes de Laboratorio (si existe) */}
+                                    {consulta.laboratorio && (
+                                      <div style={styles.ucCardBlock}>
+                                        <span style={styles.ucBlockTitle}>Órdenes de Laboratorio</span>
+                                        <p style={styles.ucBlockText}>
+                                          {consulta.laboratorio}
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    {/* Diagnósticos */}
+                                    <div style={styles.ucCardBlock}>
+                                      <span style={styles.ucBlockTitle}>Diagnósticos Asignados</span>
+                                      {consulta.diagnosticos?.length > 0 ? (
+                                        <div style={styles.ucDiagList}>
+                                          {consulta.diagnosticos.map((d, dIdx) => (
+                                            <div key={dIdx} style={styles.ucDiagTag}>
+                                              <span style={styles.ucDiagDesc}>{d.descripcion}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <span style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>
+                                          No se registraron diagnósticos formales CIE-10.
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {/* Tratamiento y Receta */}
+                                    <div style={styles.ucCardBlock}>
+                                      <span style={styles.ucBlockTitle}>Tratamiento y Receta</span>
+                                      {consulta.medicamentos?.length > 0 ? (
+                                        <div style={styles.ucMedTableContainer}>
+                                          <table style={styles.ucMedTable}>
+                                            <thead>
+                                              <tr>
+                                                <th style={styles.ucMedTh}>Medicamento</th>
+                                                <th style={styles.ucMedTh}>Dosis & Indicaciones</th>
+                                                <th style={{ ...styles.ucMedTh, textAlign: 'center', width: '80px' }}>Cant.</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              {consulta.medicamentos.map((m, mIdx) => (
+                                                <tr key={mIdx} style={styles.ucMedTr}>
+                                                  <td style={styles.ucMedTdName}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                                      <span style={{ fontWeight: '600', color: '#03045e' }}>{m.medicamento}</span>
+                                                      {m.esUsoClinica && (
+                                                        <span style={{
+                                                          fontSize: '10.5px',
+                                                          fontWeight: '700',
+                                                          backgroundColor: '#fef3c7',
+                                                          color: '#b45309',
+                                                          border: '1px solid #fde68a',
+                                                          padding: '1px 6px',
+                                                          borderRadius: '4px'
+                                                        }}>
+                                                          Uso en Clínica
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                    <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                                      {[m.presentacion, m.concentracion].filter(Boolean).join(' • ')}
+                                                    </div>
+                                                  </td>
+                                                  <td style={styles.ucMedTd}>
+                                                    <span>{m.dosis || '--'}</span>
+                                                    {m.frecuencia && <span style={{ color: '#0077b6', marginLeft: '6px' }}>• {m.frecuencia}</span>}
+                                                    {m.duracion && <span style={{ color: '#64748b', marginLeft: '6px' }}>• por {m.duracion}</span>}
+                                                  </td>
+                                                  <td style={{ ...styles.ucMedTd, textAlign: 'center', fontWeight: '600' }}>
+                                                    {m.cantidad || '--'}
+                                                  </td>
+                                                </tr>
+                                              ))}
+                                            </tbody>
+                                          </table>
+                                        </div>
+                                      ) : (
+                                        <span style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>
+                                          No se recetaron medicamentos en esta consulta.
+                                        </span>
+                                      )}
+
+                                      {consulta.indicacionesTratamiento && (
+                                        <div style={styles.ucIndicacionesBox}>
+                                          <span style={styles.ucIndicacionesLabel}>Indicaciones Generales / Observaciones:</span>
+                                          <p style={styles.ucIndicacionesText}>
+                                            {consulta.indicacionesTratamiento}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Examen Físico */}
+                                    {consulta.examenFisico &&
+                                      Object.values(consulta.examenFisico).some((val) => Boolean(val && val.trim())) && (
+                                        <div style={styles.ucCardBlock}>
+                                          <span style={styles.ucBlockTitle}>Examen Físico Registrado</span>
+                                          <div style={styles.ucExamenGrid}>
+                                            {consulta.examenFisico.piel && (
+                                              <div style={styles.ucExamenItem}>
+                                                <span style={styles.ucExamenLabel}>Piel:</span>
+                                                <span style={styles.ucExamenVal}>{consulta.examenFisico.piel}</span>
+                                              </div>
+                                            )}
+                                            {consulta.examenFisico.conciencia && (
+                                              <div style={styles.ucExamenItem}>
+                                                <span style={styles.ucExamenLabel}>Conciencia:</span>
+                                                <span style={styles.ucExamenVal}>{consulta.examenFisico.conciencia}</span>
+                                              </div>
+                                            )}
+                                            {consulta.examenFisico.cardiopulmonar && (
+                                              <div style={styles.ucExamenItem}>
+                                                <span style={styles.ucExamenLabel}>Cardiopulmonar:</span>
+                                                <span style={styles.ucExamenVal}>{consulta.examenFisico.cardiopulmonar}</span>
+                                              </div>
+                                            )}
+                                            {consulta.examenFisico.abdomen && (
+                                              <div style={styles.ucExamenItem}>
+                                                <span style={styles.ucExamenLabel}>Abdomen:</span>
+                                                <span style={styles.ucExamenVal}>{consulta.examenFisico.abdomen}</span>
+                                              </div>
+                                            )}
+                                            {consulta.examenFisico.soma && (
+                                              <div style={styles.ucExamenItem}>
+                                                <span style={styles.ucExamenLabel}>SOMA:</span>
+                                                <span style={styles.ucExamenVal}>{consulta.examenFisico.soma}</span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
                                   </div>
-                                )}
-                                {pacienteData.ultimaConsulta.examenFisico.conciencia && (
-                                  <div style={styles.ucExamenItem}>
-                                    <span style={styles.ucExamenLabel}>Conciencia:</span>
-                                    <span style={styles.ucExamenVal}>{pacienteData.ultimaConsulta.examenFisico.conciencia}</span>
-                                  </div>
-                                )}
-                                {pacienteData.ultimaConsulta.examenFisico.cardiopulmonar && (
-                                  <div style={styles.ucExamenItem}>
-                                    <span style={styles.ucExamenLabel}>Cardiopulmonar:</span>
-                                    <span style={styles.ucExamenVal}>{pacienteData.ultimaConsulta.examenFisico.cardiopulmonar}</span>
-                                  </div>
-                                )}
-                                {pacienteData.ultimaConsulta.examenFisico.abdomen && (
-                                  <div style={styles.ucExamenItem}>
-                                    <span style={styles.ucExamenLabel}>Abdomen:</span>
-                                    <span style={styles.ucExamenVal}>{pacienteData.ultimaConsulta.examenFisico.abdomen}</span>
-                                  </div>
-                                )}
-                                {pacienteData.ultimaConsulta.examenFisico.soma && (
-                                  <div style={styles.ucExamenItem}>
-                                    <span style={styles.ucExamenLabel}>SOMA:</span>
-                                    <span style={styles.ucExamenVal}>{pacienteData.ultimaConsulta.examenFisico.soma}</span>
-                                  </div>
-                                )}
-                              </div>
+                                </div>
+                              )}
                             </div>
-                          )}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
+                );
+              })()}
             </div>
           )}
 
@@ -2047,12 +2285,13 @@ export default function AtencionMedicaPage() {
                     <table style={styles.table}>
                       <thead>
                         <tr>
-                          <th style={{ ...styles.th, width: '25%' }}>Medicamento</th>
-                          <th style={{ ...styles.th, width: '15%' }}>Presentación</th>
-                          <th style={{ ...styles.th, width: '15%' }}>Frecuencia</th>
-                          <th style={{ ...styles.th, width: '13%' }}>Duración</th>
-                          <th style={{ ...styles.th, width: '15%' }}>Dosis</th>
-                          <th style={{ ...styles.th, width: '13%' }}>Cantidad</th>
+                          <th style={{ ...styles.th, width: '22%' }}>Medicamento</th>
+                          <th style={{ ...styles.th, width: '13%' }}>Presentación</th>
+                          <th style={{ ...styles.th, width: '13%' }}>Frecuencia</th>
+                          <th style={{ ...styles.th, width: '11%' }}>Duración</th>
+                          <th style={{ ...styles.th, width: '13%' }}>Dosis</th>
+                          <th style={{ ...styles.th, width: '12%' }}>Cantidad</th>
+                          <th style={{ ...styles.th, width: '12%', textAlign: 'center' }}>¿Uso en Clínica?</th>
                           <th style={{ ...styles.th, width: '4%', textAlign: 'center' }}></th>
                         </tr>
                       </thead>
@@ -2231,6 +2470,42 @@ export default function AtencionMedicaPage() {
                                       : 'unid.'}
                                   </span>
                                 </div>
+                              </td>
+                              <td style={{ ...styles.td, textAlign: 'center' }}>
+                                <label
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    cursor: 'pointer',
+                                    padding: '5px 10px',
+                                    borderRadius: '6px',
+                                    backgroundColor: dt.esUsoClinica ? '#fef3c7' : '#ffffff',
+                                    border: `1px solid ${dt.esUsoClinica ? '#f59e0b' : '#cbd5e1'}`,
+                                    userSelect: 'none',
+                                    transition: 'all 0.15s ease',
+                                  }}
+                                  title="Marcar si este medicamento fue administrado/inyectado al paciente en la clínica"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={Boolean(dt.esUsoClinica)}
+                                    onChange={(e) =>
+                                      updateDetalle(dt.idMedicamento, 'esUsoClinica', e.target.checked)
+                                    }
+                                    style={{ cursor: 'pointer', accentColor: '#d97706', width: '15px', height: '15px' }}
+                                  />
+                                  <span
+                                    style={{
+                                      fontSize: '12px',
+                                      fontWeight: dt.esUsoClinica ? '700' : '500',
+                                      color: dt.esUsoClinica ? '#b45309' : '#475569',
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                  >
+                                    Uso en Clínica
+                                  </span>
+                                </label>
                               </td>
                               <td style={{ ...styles.td, textAlign: 'center' }}>
                                 <button

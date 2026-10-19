@@ -37,5 +37,9 @@ public class DetalleTratamiento {
 
     @Column(name = "cantidad", nullable = false)
     private Integer cantidad;
+
+    @Column(name = "es_uso_clinica")
+    @Builder.Default
+    private Boolean esUsoClinica = false;
 }
 

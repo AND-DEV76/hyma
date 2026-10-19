@@ -166,6 +166,16 @@ export default function DispensarMedicamentosPage() {
     setLotesSugeridos((prev) => prev.filter((l) => l.idMedicamento !== idMedicamento));
   };
 
+  const handleToggleUsoClinica = (idMedicamento) => {
+    setMedicamentos((prev) =>
+      prev.map((m) =>
+        m.idMedicamento === idMedicamento
+          ? { ...m, esUsoClinica: !m.esUsoClinica }
+          : m
+      )
+    );
+  };
+
   const abrirModalMed = async () => {
     setModalMedOpen(true);
     setBusquedaMed('');
@@ -230,6 +240,9 @@ export default function DispensarMedicamentosPage() {
       ? Number(primerLote.precioVenta || primerLote.precioUnitario || 0)
       : Number(medSeleccionado.precio ?? medSeleccionado.precioVenta ?? 0);
 
+    const presNorm = (medSeleccionado.presentacion || '').toLowerCase();
+    const esIny = /ampolla|amp\b|vial|inyect|inyecci[oó]n/i.test(presNorm) || /inyect/i.test(medSeleccionado.nombre || '');
+
     const nuevoItemMed = {
       idMedicamento: medSeleccionado.idMedicamento,
       nombre: medSeleccionado.nombre,
@@ -242,6 +255,7 @@ export default function DispensarMedicamentosPage() {
       stockDisponible: stockTotal,
       precioUnitario: precioUnitario,
       subtotal: precioUnitario * cant,
+      esUsoClinica: esIny,
     };
 
     setMedicamentos((prev) => {
@@ -412,6 +426,7 @@ export default function DispensarMedicamentosPage() {
           frecuencia: m.frecuencia,
           duracion: m.duracion,
           cantidad: Number(m.cantidad || 1),
+          esUsoClinica: Boolean(m.esUsoClinica),
         })),
         procedimientos: procedimientos.map((p) => ({
           idConsultaProcedimiento: p.idConsultaProcedimiento || null,
@@ -818,6 +833,24 @@ export default function DispensarMedicamentosPage() {
                                     <strong style={{ color: '#03045e', fontSize: '13.5px' }}>
                                       {m.nombre}
                                     </strong>
+                                    {m.esUsoClinica && (
+                                      <span
+                                        style={{
+                                          display: 'inline-block',
+                                          marginTop: '2px',
+                                          padding: '2px 8px',
+                                          backgroundColor: '#fef3c7',
+                                          color: '#b45309',
+                                          border: '1px solid #fde68a',
+                                          borderRadius: '4px',
+                                          fontSize: '11px',
+                                          fontWeight: '700',
+                                          width: 'fit-content',
+                                        }}
+                                      >
+                                        Uso en Clínica
+                                      </span>
+                                    )}
                                     {stockBajo && (
                                       <span style={styles.warningStock}>
                                         Stock bajo en farmacia: {m.stockDisponible} disponibles
