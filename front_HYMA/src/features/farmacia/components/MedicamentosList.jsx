@@ -642,6 +642,7 @@ function MedicamentosList({
             setIsModalOpen(false);
             setEditingMedicine(null);
           }}
+          medicineToEdit={editingMedicine}
           medicine={editingMedicine}
           categorias={categorias}
           casas={casas}

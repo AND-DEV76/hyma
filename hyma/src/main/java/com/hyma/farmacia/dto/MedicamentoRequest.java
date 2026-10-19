@@ -26,4 +26,7 @@ public class MedicamentoRequest {
 
     @Builder.Default
     private Boolean estado = true;
+
+    @Builder.Default
+    private Boolean esUsoClinica = false;
 }

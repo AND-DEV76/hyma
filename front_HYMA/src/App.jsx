@@ -10,11 +10,12 @@ import NotFoundPage from './pages/NotFoundPage';
 function RedirectHome() {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   if (user.nombreRol === 'MEDICO') return <Navigate to="/clinica" replace />;
-  if (user.nombreRol === 'ENFERMERA') return <Navigate to="/recepcion" replace />;
+  if (user.nombreRol === 'ENFERMERA' || user.nombreRol === 'RECEPCION') return <Navigate to="/recepcion" replace />;
   if (user.nombreRol === 'SOCIAL') return <Navigate to="/social" replace />;
   return <Navigate to="/dashboard" replace />;
 }
 import RecepcionPage from './features/recepcion/pages/RecepcionPage';
+import PacientesPage from './features/recepcion/pages/PacientesPage';
 import PreconsultaPage from './features/preconsulta/pages/PreconsultaPage';
 import SignosVitalesPage from './features/preconsulta/pages/SignosVitalesPage';
 import FarmaciaPortalPage from './features/farmacia/pages/FarmaciaPortalPage';
@@ -27,6 +28,7 @@ import MedicamentosHubPage from './features/farmacia/pages/MedicamentosHubPage';
 import InventarioPage from './features/farmacia/pages/InventarioPage';
 import MovimientosPage from './features/farmacia/pages/MovimientosPage';
 import CatalogoMedicamentosPage from './features/farmacia/pages/CatalogoMedicamentosPage';
+import UsoClinicaPage from './features/farmacia/pages/UsoClinicaPage';
 import MedicosPage from './features/doctor/pages/MedicosPage';
 import UsuariosPage from './features/usuario/pages/UsuariosPage';
 import UsuariosPortalPage from './features/usuario/pages/UsuariosPortalPage';
@@ -64,6 +66,7 @@ function App() {
             <Route path="/inicio" element={<RedirectHome />} />
             <Route path="/dashboard" element={<HospitalDashboardPage />} />
             <Route path="/recepcion" element={<RecepcionPage />} />
+            <Route path="/pacientes" element={<PacientesPage />} />
             <Route path="/preconsulta" element={<PreconsultaPage />} />
             <Route path="/preconsulta/signos" element={<SignosVitalesPage />} />
             <Route path="/farmacia" element={<FarmaciaPortalPage />} />
@@ -75,6 +78,7 @@ function App() {
             <Route path="/farmacia/medicamentos/inventario" element={<InventarioPage />} />
             <Route path="/farmacia/medicamentos/movimientos" element={<MovimientosPage />} />
             <Route path="/farmacia/medicamentos/catalogo" element={<CatalogoMedicamentosPage />} />
+            <Route path="/farmacia/uso-clinica" element={<UsoClinicaPage />} />
             <Route path="/farmacia/informes" element={<InformesHubPage />} />
             <Route path="/farmacia/informes/estadistica" element={<EstadisticaMensualPage />} />
             <Route path="/farmacia/informes/inventario-farmacia" element={<InventarioFarmaciaReportePage />} />

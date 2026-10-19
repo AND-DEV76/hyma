@@ -42,3 +42,11 @@ export const cambiarPrioridad = async (idCola, prioridad = 1) => {
   return response.data;
 };
 
+export const ponerEnObservacion = async (idCola, datosBorrador) => {
+  const jsonStr = typeof datosBorrador === 'string' ? datosBorrador : JSON.stringify(datosBorrador);
+  const response = await api.put(`/clinica/cola/${idCola}/observacion`, jsonStr, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return response.data;
+};
+

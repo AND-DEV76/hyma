@@ -73,13 +73,29 @@ public class PacienteService {
         List<Paciente> pacientes;
 
         if (buscar == null || buscar.isBlank()) {
-            pacientes = pacienteRepository.findAll();
+            pacientes = pacienteRepository.findTopRecientes(org.springframework.data.domain.PageRequest.of(0, 50));
         } else {
             pacientes = pacienteRepository.buscar(buscar.trim());
         }
 
         return pacientes.stream()
                 .map(pacienteMapper::toResumenResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<PacienteResponse> listarRecientes(String buscar) {
+
+        List<Paciente> pacientes;
+
+        if (buscar == null || buscar.isBlank()) {
+            pacientes = pacienteRepository.findTopRecientes(org.springframework.data.domain.PageRequest.of(0, 50));
+        } else {
+            pacientes = pacienteRepository.buscar(buscar.trim());
+        }
+
+        return pacientes.stream()
+                .map(pacienteMapper::toResponse)
                 .toList();
     }
 

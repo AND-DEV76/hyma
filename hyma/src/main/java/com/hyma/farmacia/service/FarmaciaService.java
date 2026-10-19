@@ -52,6 +52,7 @@ public class FarmaciaService {
     private final DetalleSalidaMedicamentoRepository detalleSalidaMedicamentoRepository;
     private final TarifaServicioService tarifaServicioService;
     private final com.hyma.procedimiento.repository.ConsultaProcedimientoRepository consultaProcedimientoRepository;
+    private final com.hyma.procedimiento.repository.ProcedimientoRepository procedimientoRepository;
     private final com.hyma.procedimiento.service.ProcedimientoService procedimientoService;
 
     @Transactional(readOnly = true)
@@ -211,6 +212,7 @@ public class FarmaciaService {
         entity.setPresentacion(limpiar(request.getPresentacion()));
         entity.setConcentracion(limpiar(request.getConcentracion()));
         entity.setEstado(request.getEstado() == null || request.getEstado());
+        entity.setEsUsoClinica(request.getEsUsoClinica() != null && request.getEsUsoClinica());
     }
 
     @Transactional(readOnly = true)
@@ -729,7 +731,39 @@ public class FarmaciaService {
                     consultaRepository.save(consulta);
                 }
 
+                // Sincronizar tratamiento si fue editado en farmacia
                 Tratamiento tratamiento = tratamientoRepository.findByConsultaIdWithDetalles(consulta.getIdConsulta()).orElse(null);
+                if (request != null && request.getMedicamentos() != null) {
+                    if (tratamiento == null && !request.getMedicamentos().isEmpty()) {
+                        tratamiento = Tratamiento.builder()
+                                .consulta(consulta)
+                                .observaciones("Dispensación Farmacia")
+                                .detalles(new ArrayList<>())
+                                .build();
+                        tratamiento = tratamientoRepository.save(tratamiento);
+                    }
+                    if (tratamiento != null) {
+                        tratamiento.getDetalles().clear();
+                        for (MedicamentoDispensacionItemRequest mReq : request.getMedicamentos()) {
+                            if (mReq == null || mReq.getIdMedicamento() == null) continue;
+                            int cant = mReq.getCantidad() != null && mReq.getCantidad() > 0 ? mReq.getCantidad() : 1;
+                            Medicamento med = medicamentoRepository.findById(mReq.getIdMedicamento()).orElse(null);
+                            if (med != null) {
+                                DetalleTratamiento det = DetalleTratamiento.builder()
+                                        .tratamiento(tratamiento)
+                                        .medicamento(med)
+                                        .dosis(mReq.getDosis() != null ? mReq.getDosis().trim() : "")
+                                        .frecuencia(mReq.getFrecuencia() != null ? mReq.getFrecuencia().trim() : "")
+                                        .duracion(mReq.getDuracion() != null ? mReq.getDuracion().trim() : "")
+                                        .cantidad(cant)
+                                        .build();
+                                tratamiento.getDetalles().add(det);
+                            }
+                        }
+                        tratamiento = tratamientoRepository.save(tratamiento);
+                    }
+                }
+
                 boolean tieneMedicamentos = tratamiento != null && tratamiento.getDetalles() != null
                         && tratamiento.getDetalles().stream().anyMatch(d -> d.getMedicamento() != null && d.getCantidad() != null && d.getCantidad() > 0);
 
@@ -808,18 +842,86 @@ public class FarmaciaService {
                     }
                 }
 
-                // Actualizar procedimientos de consulta a ATENDIDO
-                List<com.hyma.procedimiento.model.ConsultaProcedimiento> procs =
-                        consultaProcedimientoRepository.findByConsulta_IdConsulta(consulta.getIdConsulta());
-                if (procs != null) {
-                    for (var cp : procs) {
-                        if (cp != null && "ESPERA".equalsIgnoreCase(cp.getEstado())) {
-                            cp.setEstado("ATENDIDO");
-                            cp.setFechaAtencion(LocalDateTime.now());
-                            if (usuario != null) {
-                                cp.setUsuarioAtendio(usuario);
+                // Sincronizar y actualizar procedimientos clínicos
+                if (request != null && request.getProcedimientos() != null) {
+                    List<com.hyma.procedimiento.model.ConsultaProcedimiento> procsExistentes =
+                            consultaProcedimientoRepository.findByConsulta_IdConsulta(consulta.getIdConsulta());
+
+                    Set<Long> idsKept = request.getProcedimientos().stream()
+                            .map(ProcedimientoDispensacionItemRequest::getIdConsultaProcedimiento)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toSet());
+
+                    if (procsExistentes != null) {
+                        for (var cp : procsExistentes) {
+                            if (cp != null && !idsKept.contains(cp.getIdConsultaProcedimiento())) {
+                                consultaProcedimientoRepository.delete(cp);
                             }
-                            consultaProcedimientoRepository.save(cp);
+                        }
+                    }
+
+                    for (ProcedimientoDispensacionItemRequest pReq : request.getProcedimientos()) {
+                        if (pReq == null) continue;
+                        int cant = pReq.getCantidad() != null && pReq.getCantidad() > 0 ? pReq.getCantidad() : 1;
+
+                        if (pReq.getIdConsultaProcedimiento() != null) {
+                            var cpOpt = consultaProcedimientoRepository.findById(pReq.getIdConsultaProcedimiento());
+                            if (cpOpt.isPresent()) {
+                                var cp = cpOpt.get();
+                                BigDecimal pUnit = pReq.getPrecioUnitario() != null
+                                        ? pReq.getPrecioUnitario()
+                                        : (cp.getPrecioUnitario() != null ? cp.getPrecioUnitario() : BigDecimal.ZERO);
+                                cp.setCantidad(cant);
+                                cp.setPrecioUnitario(pUnit);
+                                cp.setSubtotal(pUnit.multiply(BigDecimal.valueOf(cant)));
+                                if (pReq.getInstrucciones() != null) {
+                                    cp.setInstrucciones(pReq.getInstrucciones().trim());
+                                }
+                                cp.setEstado("ATENDIDO");
+                                cp.setFechaAtencion(LocalDateTime.now());
+                                if (usuario != null) {
+                                    cp.setUsuarioAtendio(usuario);
+                                }
+                                consultaProcedimientoRepository.save(cp);
+                            }
+                        } else if (pReq.getIdProcedimiento() != null) {
+                            var procOpt = procedimientoRepository.findById(pReq.getIdProcedimiento());
+                            if (procOpt.isPresent()) {
+                                var proc = procOpt.get();
+                                BigDecimal pUnit = pReq.getPrecioUnitario() != null
+                                        ? pReq.getPrecioUnitario()
+                                        : (proc.getPrecio() != null ? proc.getPrecio() : BigDecimal.ZERO);
+                                var cpNuevo = com.hyma.procedimiento.model.ConsultaProcedimiento.builder()
+                                        .consulta(consulta)
+                                        .paciente(paciente)
+                                        .procedimiento(proc)
+                                        .cantidad(cant)
+                                        .precioUnitario(pUnit)
+                                        .subtotal(pUnit.multiply(BigDecimal.valueOf(cant)))
+                                        .instrucciones(pReq.getInstrucciones() != null ? pReq.getInstrucciones().trim() : "")
+                                        .estado("ATENDIDO")
+                                        .fechaRegistro(LocalDateTime.now())
+                                        .fechaAtencion(LocalDateTime.now())
+                                        .usuarioAtendio(usuario)
+                                        .build();
+                                consultaProcedimientoRepository.save(cpNuevo);
+                            }
+                        }
+                    }
+                } else {
+                    // Si no se envió lista modificada, marcar los existentes en ESPERA a ATENDIDO
+                    List<com.hyma.procedimiento.model.ConsultaProcedimiento> procs =
+                            consultaProcedimientoRepository.findByConsulta_IdConsulta(consulta.getIdConsulta());
+                    if (procs != null) {
+                        for (var cp : procs) {
+                            if (cp != null && "ESPERA".equalsIgnoreCase(cp.getEstado())) {
+                                cp.setEstado("ATENDIDO");
+                                cp.setFechaAtencion(LocalDateTime.now());
+                                if (usuario != null) {
+                                    cp.setUsuarioAtendio(usuario);
+                                }
+                                consultaProcedimientoRepository.save(cp);
+                            }
                         }
                     }
                 }
@@ -1030,5 +1132,136 @@ public class FarmaciaService {
                 .totalVenta(totalVenta)
                 .detalles(detallesResponse)
                 .build();
+    }
+
+    @Transactional
+    public ConsumoClinicaResponse registrarConsumoClinica(ConsumoClinicaRequest request, String username) {
+        if (request.getIdMedicamento() == null) {
+            throw new IllegalArgumentException("Debe seleccionar un medicamento o insumo");
+        }
+        if (request.getCantidad() == null || request.getCantidad() < 1) {
+            throw new IllegalArgumentException("La cantidad debe ser mayor a cero");
+        }
+
+        Usuario usuario = null;
+        if (username != null) {
+            usuario = usuarioRepository.findByUsername(username).orElse(null);
+        }
+
+        Medicamento med = medicamentoRepository.findById(request.getIdMedicamento())
+                .orElseThrow(() -> new FarmaciaNotFoundException("Medicamento no encontrado"));
+
+        List<LoteMedicamento> lotesActivos = loteRepository.buscar(EstadoLote.ACTIVO, med.getIdMedicamento(), null).stream()
+                .filter(l -> l.getCantidadInicial() != null && l.getCantidadInicial() > 0)
+                .sorted(Comparator.comparing(LoteMedicamento::getFechaExpiracion))
+                .toList();
+
+        int stockTotal = lotesActivos.stream().mapToInt(LoteMedicamento::getCantidadInicial).sum();
+        if (stockTotal < request.getCantidad()) {
+            throw new IllegalArgumentException("Stock insuficiente para " + med.getNombre() +
+                    ". Stock disponible: " + stockTotal + ", solicitado: " + request.getCantidad());
+        }
+
+        String obs = request.getObservaciones() != null && !request.getObservaciones().isBlank()
+                ? request.getObservaciones().trim()
+                : "Consumo de insumo en clínica médica";
+
+        SalidaMedicamento salida = SalidaMedicamento.builder()
+                .usuario(usuario)
+                .fechaSalida(LocalDateTime.now())
+                .tipoSalida("USO_CLINICA")
+                .observaciones(obs)
+                .costoConsulta(BigDecimal.ZERO)
+                .build();
+        salida = salidaMedicamentoRepository.save(salida);
+
+        int cantidadRestante = request.getCantidad();
+        BigDecimal totalCosto = BigDecimal.ZERO;
+        BigDecimal ultimoPrecioUnit = BigDecimal.ZERO;
+
+        for (LoteMedicamento lote : lotesActivos) {
+            if (cantidadRestante <= 0) break;
+            int stockActual = lote.getCantidadInicial();
+            int aDescontar = Math.min(stockActual, cantidadRestante);
+            int nuevoStock = stockActual - aDescontar;
+            lote.setCantidadInicial(nuevoStock);
+            if (nuevoStock == 0) {
+                lote.setEstado(EstadoLote.INACTIVO);
+            }
+            loteRepository.save(lote);
+
+            BigDecimal precioUnit = lote.getPrecioVenta() != null
+                    ? lote.getPrecioVenta()
+                    : (lote.getPrecioUnitario() != null ? lote.getPrecioUnitario() : BigDecimal.ZERO);
+            ultimoPrecioUnit = precioUnit;
+
+            DetalleSalidaMedicamento det = DetalleSalidaMedicamento.builder()
+                    .salida(salida)
+                    .lote(lote)
+                    .cantidad(aDescontar)
+                    .precioUnitario(precioUnit)
+                    .build();
+            detalleSalidaMedicamentoRepository.save(det);
+
+            totalCosto = totalCosto.add(precioUnit.multiply(BigDecimal.valueOf(aDescontar)));
+            cantidadRestante -= aDescontar;
+        }
+
+        String usuarioNombre = usuario != null ? usuario.getUsername() : "Sistema";
+
+        return ConsumoClinicaResponse.builder()
+                .idSalida(salida.getIdSalida())
+                .idMedicamento(med.getIdMedicamento())
+                .medicamentoNombre(med.getNombre())
+                .presentacion(med.getPresentacion())
+                .cantidad(request.getCantidad())
+                .precioUnitario(ultimoPrecioUnit)
+                .total(totalCosto)
+                .usuarioNombre(usuarioNombre)
+                .fechaSalida(salida.getFechaSalida())
+                .observaciones(salida.getObservaciones())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConsumoClinicaResponse> listarHistorialConsumoClinica() {
+        List<SalidaMedicamento> salidas = salidaMedicamentoRepository.findTop50ByTipoSalidaOrderByFechaSalidaDesc("USO_CLINICA");
+        if (salidas.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> idsSalidas = salidas.stream().map(SalidaMedicamento::getIdSalida).toList();
+        List<DetalleSalidaMedicamento> detalles = detalleSalidaMedicamentoRepository.findBySalida_IdSalidaIn(idsSalidas);
+        Map<Long, List<DetalleSalidaMedicamento>> detallesPorSalida = detalles.stream()
+                .collect(Collectors.groupingBy(d -> d.getSalida().getIdSalida()));
+
+        List<ConsumoClinicaResponse> resultado = new ArrayList<>();
+        for (SalidaMedicamento s : salidas) {
+            List<DetalleSalidaMedicamento> dets = detallesPorSalida.getOrDefault(s.getIdSalida(), List.of());
+            for (DetalleSalidaMedicamento d : dets) {
+                Medicamento med = d.getLote() != null ? d.getLote().getMedicamento() : null;
+                String medNombre = med != null ? med.getNombre() : "Insumo / Medicamento";
+                String pres = med != null ? med.getPresentacion() : "";
+                BigDecimal precioUnit = d.getPrecioUnitario() != null ? d.getPrecioUnitario() : BigDecimal.ZERO;
+                BigDecimal total = precioUnit.multiply(BigDecimal.valueOf(d.getCantidad() != null ? d.getCantidad() : 0));
+
+                Usuario u = s.getUsuario();
+                String uNombre = u != null ? u.getUsername() : "Sistema";
+
+                resultado.add(ConsumoClinicaResponse.builder()
+                        .idSalida(s.getIdSalida())
+                        .idMedicamento(med != null ? med.getIdMedicamento() : null)
+                        .medicamentoNombre(medNombre)
+                        .presentacion(pres)
+                        .cantidad(d.getCantidad())
+                        .precioUnitario(precioUnit)
+                        .total(total)
+                        .usuarioNombre(uNombre)
+                        .fechaSalida(s.getFechaSalida())
+                        .observaciones(s.getObservaciones())
+                        .build());
+            }
+        }
+        return resultado;
     }
 }

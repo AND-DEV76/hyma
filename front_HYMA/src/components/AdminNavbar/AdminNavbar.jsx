@@ -67,6 +67,7 @@ export default function AdminNavbar({ onBeforeNavigate }) {
   const isFarmacia = hasRole('FARMACIA');
   const isMedico = hasRole('MEDICO');
   const isSocial = hasRole('SOCIAL');
+  const isRecepcion = hasRole('RECEPCION');
 
   const [pendientesProcedimientos, setPendientesProcedimientos] = useState(0);
   const [procedimientosSubmenuOpen, setProcedimientosSubmenuOpen] = useState(() => {
@@ -154,6 +155,7 @@ export default function AdminNavbar({ onBeforeNavigate }) {
       );
     }
     if (path === '/preconsulta') return location.pathname.startsWith('/preconsulta');
+    if (path === '/pacientes') return location.pathname.startsWith('/pacientes');
     if (path === '/clinica') return location.pathname.startsWith('/clinica');
     if (path === '/social') return location.pathname.startsWith('/social');
     if (path === '/configuracion') {
@@ -185,7 +187,13 @@ export default function AdminNavbar({ onBeforeNavigate }) {
       label: 'Recepción',
       path: '/recepcion',
       icon: UserCheck,
-      show: isAdmin || isEnfermera,
+      show: isAdmin || isEnfermera || isRecepcion,
+    },
+    {
+      label: 'Pacientes',
+      path: '/pacientes',
+      icon: Users,
+      show: isAdmin || isEnfermera || isRecepcion,
     },
     {
       label: 'Triaje',
@@ -280,7 +288,7 @@ export default function AdminNavbar({ onBeforeNavigate }) {
         <div className="sidebar-header">
           <button
             className="sidebar-brand"
-            onClick={() => handleNav(isEnfermera ? '/recepcion' : (isMedico ? '/clinica' : '/dashboard'))}
+            onClick={() => handleNav(isEnfermera || isRecepcion ? '/recepcion' : (isMedico ? '/clinica' : '/dashboard'))}
             title="Programa de Salud - Obras Sociales San Martín"
           >
             <div className="brand-logo-wrapper">

@@ -19,13 +19,32 @@
   background: #94a3b8;
 }
 
-/* Stepper horizontal scrollbar invisible pero funcional */
+/* Stepper horizontal de 6 pasos en una sola línea */
+.clinica-stepper-nav {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
 .clinica-stepper-nav::-webkit-scrollbar {
   height: 4px;
 }
 .clinica-stepper-nav::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 4px;
+}
+
+.clinica-step-tab {
+  min-width: 0 !important;
+  padding: 7px 6px !important;
+}
+
+.clinica-step-tab-label {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  font-size: 11px !important;
 }
 
 .clinica-step4-grid {
@@ -840,6 +859,13 @@
   background: #dcfce7;
   color: #15803d;
   border: 1px solid #bbf7d0;
+}
+
+.clinica-clean-state-badge.observacion {
+  background: #F3E8FF;
+  color: #7E22CE;
+  border: 1px solid #7E22CE;
+  box-shadow: 0 0 0 1px rgba(126, 34, 206, 0.15);
 }
 
 .clinica-clean-actions-box {

@@ -274,8 +274,8 @@ export default function ClinicaPage() {
                       )}
 
                       {/* Badge Estado */}
-                      <span className={`clinica-clean-state-badge ${item.estado === 'EN_CONSULTA' ? 'en-consulta' : 'espera-consulta'}`}>
-                        {item.estado === 'EN_CONSULTA' ? 'EN CONSULTA' : 'ESPERA CONSULTA'}
+                      <span className={`clinica-clean-state-badge ${item.estado === 'OBSERVACION' ? 'observacion' : item.estado === 'EN_CONSULTA' ? 'en-consulta' : 'espera-consulta'}`}>
+                        {item.estado === 'OBSERVACION' ? 'OBSERVACIÓN' : item.estado === 'EN_CONSULTA' ? 'EN CONSULTA' : 'ESPERA CONSULTA'}
                       </span>
                     </div>
 

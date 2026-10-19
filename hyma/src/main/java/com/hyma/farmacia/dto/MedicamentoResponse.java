@@ -23,4 +23,5 @@ public class MedicamentoResponse {
     private Integer unidades;
     private BigDecimal precio;
     private LocalDate proximoVencimiento;
+    private Boolean esUsoClinica;
 }

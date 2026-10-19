@@ -39,3 +39,8 @@ out/
 
 
 docker-compose.override.yml
+
+datos.sql
+db.sql
+inventario.sql
+migracion_procedimientos.sql

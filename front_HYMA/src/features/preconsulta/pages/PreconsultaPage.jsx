@@ -140,19 +140,19 @@ export default function PreconsultaPage() {
         <div className="preconsulta-workspace-grid-layout" style={styles.workspaceGrid}>
           {/* Columna Izquierda: Tarjeta Gráfica con USER.PNG */}
           <aside className="preconsulta-brand-aside" style={styles.brandCard}>
-            <div style={styles.avatarGlowContainer}>
-              <div style={styles.bigAvatarWrapper}>
+            <div className="preconsulta-avatar-glow" style={styles.avatarGlowContainer}>
+              <div className="preconsulta-avatar-wrapper" style={styles.bigAvatarWrapper}>
                 <img src={userImg} alt="Ilustración Triaje" style={styles.bigAvatarImg} />
               </div>
             </div>
 
-            <div style={styles.brandContent}>
-              <h2 style={styles.brandTitle}>Triaje Clínico</h2>
-              <p style={styles.brandDesc}>
+            <div className="preconsulta-brand-content" style={styles.brandContent}>
+              <h2 className="preconsulta-brand-title" style={styles.brandTitle}>Triaje Clínico</h2>
+              <p className="preconsulta-brand-desc" style={styles.brandDesc}>
                 Registro y evaluación de signos vitales del paciente previos a la consulta médica.
               </p>
 
-              <div style={styles.brandStats}>
+              <div className="preconsulta-brand-stats" style={styles.brandStats}>
                 <div style={styles.statPill}>
                   <span style={styles.statDotActive} />
                   <span>{colaPreconsulta.length} en atención</span>

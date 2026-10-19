@@ -260,8 +260,103 @@ export function evaluarTriajePaciente(signos) {
     }
   }
 
+  // 7. Peso (kg)
+  if (signos.peso !== null && signos.peso !== undefined && signos.peso !== '') {
+    const pVal = parseFloat(signos.peso);
+    if (!isNaN(pVal) && pVal > 0) {
+      chips.push({
+        sigla: 'PESO',
+        nombre: 'Peso',
+        valor: `${pVal.toFixed(1)} kg`,
+        estado: 'NORMAL',
+        label: 'Registrado',
+        tipo: 'Normal'
+      });
+    }
+  }
+
+  // 8. Talla (cm)
+  if (signos.talla !== null && signos.talla !== undefined && signos.talla !== '') {
+    const tVal = parseFloat(signos.talla);
+    if (!isNaN(tVal) && tVal > 0) {
+      chips.push({
+        sigla: 'TALLA',
+        nombre: 'Talla',
+        valor: `${Math.round(tVal)} cm`,
+        estado: 'NORMAL',
+        label: 'Registrado',
+        tipo: 'Normal'
+      });
+    }
+  }
+
+  // 9. IMC
+  const imcVal =
+    signos.imc !== null && signos.imc !== undefined && signos.imc !== ''
+      ? parseFloat(signos.imc)
+      : signos.peso && signos.talla && parseFloat(signos.talla) > 0
+      ? parseFloat(signos.peso) /
+        Math.pow(
+          parseFloat(signos.talla) > 3 ? parseFloat(signos.talla) / 100 : parseFloat(signos.talla),
+          2
+        )
+      : null;
+
+  if (imcVal && !isNaN(imcVal) && imcVal > 0) {
+    let imcEstado = 'NORMAL';
+    let imcLabel = 'Peso Normal';
+    if (imcVal < 18.5) {
+      imcEstado = 'AMARILLO';
+      imcLabel = 'Bajo Peso (<18.5)';
+      alertasLeves.push({
+        signo: 'IMC',
+        valor: imcVal.toFixed(1),
+        estado: 'AMARILLO',
+        label: imcLabel,
+        tipo: 'Alerta Leve',
+      });
+    } else if (imcVal >= 30.0) {
+      imcEstado = 'AMARILLO';
+      imcLabel = 'Obesidad (≥30)';
+      alertasLeves.push({
+        signo: 'IMC',
+        valor: imcVal.toFixed(1),
+        estado: 'AMARILLO',
+        label: imcLabel,
+        tipo: 'Alerta Leve',
+      });
+    } else if (imcVal >= 25.0) {
+      imcEstado = 'NORMAL';
+      imcLabel = 'Sobrepeso (25-29.9)';
+    }
+
+    chips.push({
+      sigla: 'IMC',
+      nombre: 'Índice de Masa Corporal',
+      valor: `${imcVal.toFixed(1)}`,
+      estado: imcEstado,
+      label: signos.clasificacionImc || imcLabel,
+      tipo: imcEstado === 'AMARILLO' ? 'Alerta Leve' : 'Normal',
+    });
+  }
+
   // Si no hay signos registrados
   if (chips.length === 0) {
+    if (signos.idSignoVital) {
+      return {
+        estadoGeneral: 'NORMAL',
+        tieneSignos: true,
+        badge: {
+          text: 'NORMAL',
+          color: '#166534',
+          bg: '#f0fdf4',
+          border: '#bbf7d0',
+          dot: '#16a34a',
+        },
+        alertas: [],
+        chips: [],
+      };
+    }
     return {
       estadoGeneral: 'SIN_REGISTRO',
       tieneSignos: false,
@@ -270,10 +365,10 @@ export function evaluarTriajePaciente(signos) {
         color: '#64748b',
         bg: '#f1f5f9',
         border: '#cbd5e1',
-        dot: '#94a3b8'
+        dot: '#94a3b8',
       },
       alertas: [],
-      chips: []
+      chips: [],
     };
   }
 

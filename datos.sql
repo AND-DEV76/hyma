@@ -3,7 +3,8 @@ INSERT INTO rol (nombre) VALUES
 ('MEDICO'),
 ('ENFERMERA'),
 ('FARMACIA'),
-('SOCIAL');
+('SOCIAL'),
+('RECEPCION');
 
 
 -- ==========================================================

@@ -22,5 +22,7 @@ public interface SalidaMedicamentoRepository extends JpaRepository<SalidaMedicam
 
     List<SalidaMedicamento> findByFechaSalidaBetweenOrderByFechaSalidaDesc(java.time.LocalDateTime inicio, java.time.LocalDateTime fin);
 
+    List<SalidaMedicamento> findTop50ByTipoSalidaOrderByFechaSalidaDesc(String tipoSalida);
+
     List<SalidaMedicamento> findAllByOrderByFechaSalidaDesc();
 }

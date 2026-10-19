@@ -34,6 +34,7 @@ public class FarmaciaMapper {
                 .presentacion(entity.getPresentacion())
                 .concentracion(entity.getConcentracion())
                 .estado(entity.getEstado())
+                .esUsoClinica(entity.getEsUsoClinica() != null && entity.getEsUsoClinica())
                 .build();
     }
 

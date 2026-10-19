@@ -7,6 +7,7 @@ public enum EstadoCola {
     EN_PRECONSULTA,
     ESPERA_CONSULTA,
     EN_CONSULTA,
+    OBSERVACION,
     EN_FARMACIA,
     FINALIZADO,
     CANCELADO

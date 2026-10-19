@@ -20,6 +20,7 @@ public class ConsultaCompletaRequest {
     private String historiaEnfermedadActual;
     private String impresionClinica;
     private String planMedico;
+    private String laboratorio;
     private java.math.BigDecimal precioConsulta;
 
     @Valid

@@ -469,7 +469,9 @@
   gap: 10px;
 }
 
-/* Responsive */
+/* ==========================================================
+   RESPONSIVE DESIGN (TABLETS Y MÓVILES)
+========================================================== */
 @media (max-width: 992px) {
   .preconsulta-workspace-grid,
   .preconsulta-workspace-grid-layout {
@@ -487,20 +489,52 @@
     align-items: flex-start;
   }
 
+  /* Banner ilustrativo horizontal y compacto en tablets */
   .preconsulta-brand-aside {
-    padding: 20px !important;
+    padding: 18px 22px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    text-align: left !important;
+    gap: 18px !important;
+  }
+
+  .preconsulta-avatar-glow {
+    margin-bottom: 0 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .preconsulta-avatar-wrapper {
+    width: 68px !important;
+    height: 68px !important;
+  }
+
+  .preconsulta-brand-content {
+    flex: 1 !important;
+  }
+
+  .preconsulta-brand-desc {
+    margin-bottom: 10px !important;
+  }
+
+  .preconsulta-brand-stats {
+    flex-direction: row !important;
+    border-top: none !important;
+    padding-top: 0 !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
   }
 
   .signos-vitales-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
   }
 }
 
-/* Teléfonos móviles */
-@media (max-width: 640px) {
+/* Tablets en vertical y teléfonos móviles */
+@media (max-width: 768px) {
   .preconsulta-container,
   .signos-vitales-content {
-    padding: 12px 14px 28px !important;
+    padding: 14px 14px 30px !important;
   }
 
   /* Preconsulta Header */
@@ -519,8 +553,8 @@
   /* Preconsulta Patient Cards */
   .preconsulta-patient-row-card {
     flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 14px !important;
+    align-items: stretch !important;
+    gap: 12px !important;
     padding: 14px !important;
   }
 
@@ -540,7 +574,9 @@
   .preconsulta-btn-eliminar {
     flex: 1 !important;
     justify-content: center !important;
-    padding: 10px 12px !important;
+    padding: 11px 14px !important;
+    font-size: 13px !important;
+    min-height: 42px !important;
   }
 
   /* Signos Vitales Header */
@@ -553,8 +589,24 @@
 
   .signos-vitales-header-left {
     width: 100% !important;
-    flex-wrap: wrap !important;
-    gap: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .signos-vitales-divider {
+    display: none !important;
+  }
+
+  .signos-vitales-title-container {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .signos-vitales-title {
+    font-size: 1.15rem !important;
+    word-break: break-word !important;
+    line-height: 1.3 !important;
   }
 
   .signos-vitales-header-right {
@@ -564,12 +616,13 @@
   .signos-vitales-header-right button {
     width: 100% !important;
     justify-content: center !important;
+    min-height: 42px !important;
   }
 
   /* Signos Vitales Resumen del Paciente */
   .signos-vitales-summary-grid {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 12px !important;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important;
+    gap: 10px !important;
   }
 
   /* Formulario Datos de Signos Vitales */
@@ -578,7 +631,7 @@
   }
 
   .signos-vitales-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
     gap: 14px !important;
   }
 
@@ -591,6 +644,39 @@
   .signos-vitales-footer-actions button {
     width: 100% !important;
     justify-content: center !important;
+    min-height: 44px !important;
+  }
+}
+
+/* Teléfonos pequeños */
+@media (max-width: 480px) {
+  .preconsulta-brand-aside {
+    flex-direction: column !important;
+    text-align: center !important;
+    padding: 16px !important;
+  }
+
+  .preconsulta-avatar-wrapper {
+    width: 60px !important;
+    height: 60px !important;
+  }
+
+  .preconsulta-brand-stats {
+    justify-content: center !important;
+  }
+
+  .signos-vitales-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .signos-vitales-summary-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .logro-card {
+    padding: 24px 16px 20px !important;
+    max-width: 94% !important;
   }
 }
 

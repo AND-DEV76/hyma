@@ -28,6 +28,8 @@ export default function UsuarioTable({ usuarios, onEdit, onDelete, onToggleEstad
         return 'usuarios-role-farmacia';
       case 'SOCIAL':
         return 'usuarios-role-social';
+      case 'RECEPCION':
+        return 'usuarios-role-recepcion';
       default:
         return 'usuarios-role-default';
     }

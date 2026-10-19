@@ -55,6 +55,9 @@ export const formatFechaReceta = (f) => {
 
 export const formatUsoTexto = (m) => {
   const dosis = getDosisTexto(m);
+  if (dosis && (/^tomar\s+cada/i.test(dosis) || /^aplicar\s+/i.test(dosis))) {
+    return dosis;
+  }
   let freq = (m.frecuencia || '').trim();
   let dur = (m.duracion || '').trim();
 

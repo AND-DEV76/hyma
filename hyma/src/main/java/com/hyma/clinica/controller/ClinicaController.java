@@ -62,4 +62,13 @@ public class ClinicaController {
             @RequestParam(name = "buscar", required = false) String buscar) {
         return ResponseEntity.ok(farmaciaService.listarMedicamentos(null, null, true, buscar));
     }
+
+    @PutMapping("/cola/{idCola}/observacion")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
+    public ResponseEntity<Void> ponerEnObservacion(
+            @PathVariable(name = "idCola") Long idCola,
+            @RequestBody(required = false) String datosBorrador) {
+        clinicaService.ponerEnObservacion(idCola, datosBorrador);
+        return ResponseEntity.ok().build();
+    }
 }

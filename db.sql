@@ -110,6 +110,7 @@ CREATE TABLE cola_atencion (
     estado VARCHAR(30) NOT NULL DEFAULT 'PENDIENTE',
     prioridad INT NOT NULL DEFAULT 0,
     fecha_atencion TIMESTAMP,
+    datos_consulta TEXT,
     CONSTRAINT fk_cola_paciente
         FOREIGN KEY (id_paciente)
         REFERENCES paciente(id_paciente),
@@ -151,6 +152,7 @@ CREATE TABLE consulta (
     historia_enfermedad_actual TEXT,
     impresion_clinica TEXT,
     plan_medico TEXT,
+    laboratorio TEXT,
     precio_consulta DECIMAL(12,2) DEFAULT 0.00,
     CONSTRAINT fk_consulta_paciente
         FOREIGN KEY (id_paciente)
@@ -268,6 +270,7 @@ CREATE TABLE medicamento (
     presentacion VARCHAR(100),
     concentracion VARCHAR(100),
     estado BOOLEAN DEFAULT TRUE,
+    es_uso_clinica BOOLEAN DEFAULT FALSE,
     CONSTRAINT fk_medicamento_categoria
         FOREIGN KEY (id_categoria_medicamento)
         REFERENCES categoria_medicamento(id_categoria_medicamento),
@@ -441,8 +444,9 @@ ALTER TABLE cola_atencion ADD CONSTRAINT chk_cola_estado CHECK (
     estado IN (
         'PENDIENTE', 
         'EN_PRECONSULTA', 
-        'ESPERA_CONSULTA',   -- <--- Nuevo estado
+        'ESPERA_CONSULTA', 
         'EN_CONSULTA', 
+        'OBSERVACION', 
         'EN_FARMACIA', 
         'FINALIZADO', 
         'CANCELADO'

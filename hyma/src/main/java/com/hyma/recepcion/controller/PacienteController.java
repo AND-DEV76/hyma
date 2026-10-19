@@ -48,6 +48,16 @@ public class PacienteController {
         );
     }
 
+    @GetMapping("/recientes")
+    public ResponseEntity<List<PacienteResponse>> listarRecientes(
+            @RequestParam(name = "buscar", required = false) String buscar
+    ) {
+
+        return ResponseEntity.ok(
+                pacienteService.listarRecientes(buscar)
+        );
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<PacienteResponse> obtenerPaciente(
             @PathVariable(name = "id") Long id

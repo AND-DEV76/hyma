@@ -40,8 +40,7 @@ public class SignoVitalCreateRequest {
     @DecimalMax(value = "300.00", message = "La talla no puede exceder 300 cm")
     private BigDecimal talla;
 
-    /** Presión arterial sistólica/diastólica (ej: 120/80) (OBLIGATORIA) */
-    @NotBlank(message = "La presión arterial es obligatoria")
+    /** Presión arterial sistólica/diastólica (ej: 120/80) (Opcional) */
     private String presionArterial;
 
     /** Glucosa en sangre (mg/dL) (Opcional) */
@@ -64,8 +63,7 @@ public class SignoVitalCreateRequest {
     @DecimalMax(value = "100.00", message = "La saturación de oxígeno no puede superar el 100%")
     private BigDecimal saturacionOxigeno;
 
-    /** Temperatura corporal (°C) (OBLIGATORIA) */
-    @NotNull(message = "La temperatura es obligatoria")
+    /** Temperatura corporal (°C) (Opcional) */
     @DecimalMin(value = "30.00", message = "La temperatura debe ser mayor a 30°C")
     @DecimalMax(value = "45.00", message = "La temperatura no puede superar 45°C")
     private BigDecimal temperatura;

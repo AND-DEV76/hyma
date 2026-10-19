@@ -113,7 +113,7 @@ public class ColaAtencionService {
     @Transactional(readOnly = true)
     public List<ColaAtencionResponse> obtenerColaConsulta() {
         List<ColaAtencion> cola = colaAtencionRepository
-                .findColaConsultaConPrioridad(List.of(EstadoCola.ESPERA_CONSULTA, EstadoCola.EN_CONSULTA));
+                .findColaConsultaConPrioridad(List.of(EstadoCola.ESPERA_CONSULTA, EstadoCola.EN_CONSULTA, EstadoCola.OBSERVACION));
 
         return cola.stream()
                 .map(c -> {

@@ -8,6 +8,14 @@ export const buscarPacientes = async (buscar) => {
   return response.data;
 };
 
+export const listarPacientesRecientes = async (buscar) => {
+  const response = await api.get('/recepcion/pacientes/recientes', {
+    params: buscar ? { buscar } : {},
+  });
+
+  return response.data;
+};
+
 export const obtenerPaciente = async (id) => {
   const response = await api.get(`/recepcion/pacientes/${id}`);
 

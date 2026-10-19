@@ -37,4 +37,8 @@ public class Medicamento {
     @Column(name = "estado", nullable = false)
     @Builder.Default
     private Boolean estado = true;
+
+    @Column(name = "es_uso_clinica")
+    @Builder.Default
+    private Boolean esUsoClinica = false;
 }

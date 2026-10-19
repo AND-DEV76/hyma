@@ -15,6 +15,8 @@ public class PacienteConsultaResponse {
     private PacienteResponse paciente;
     private SignoVitalResponse ultimoSignoVital;
     private Long idCola;
+    private String estadoCola;
+    private String datosConsultaBorrador;
     private UltimaConsultaResponse ultimaConsulta;
 }
 

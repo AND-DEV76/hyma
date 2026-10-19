@@ -44,6 +44,9 @@ public class ColaAtencion {
     @Column(name = "fecha_atencion")
     private LocalDateTime fechaAtencion;
 
+    @Column(name = "datos_consulta", columnDefinition = "TEXT")
+    private String datosConsulta;
+
     @PrePersist
     protected void prePersist() {
         if (fechaIngreso == null) {

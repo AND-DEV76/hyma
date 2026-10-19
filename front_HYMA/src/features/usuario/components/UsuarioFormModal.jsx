@@ -7,6 +7,7 @@ const ROLES = [
   { id: 3, nombre: 'ENFERMERA', color: '#15803d', bg: '#dcfce7', border: '#bbf7d0', desc: 'Recepción, control de cola y preconsulta' },
   { id: 4, nombre: 'FARMACIA', color: '#b45309', bg: '#fef3c7', border: '#fde68a', desc: 'Dispensación, inventario y dashboard' },
   { id: 5, nombre: 'SOCIAL', color: '#0284c7', bg: '#e0f2fe', border: '#bae6fd', desc: 'Trabajo social, referencias médicas y expedientes' },
+  { id: 6, nombre: 'RECEPCION', color: '#0891b2', bg: '#cffafe', border: '#a5f3fc', desc: 'Recepción de pacientes y lista de espera' },
 ];
 
 export default function UsuarioFormModal({ isOpen, onClose, onSubmit, usuarioToEdit }) {

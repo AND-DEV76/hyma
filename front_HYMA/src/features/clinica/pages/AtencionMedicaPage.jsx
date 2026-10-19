@@ -24,11 +24,14 @@ import {
   Award,
   Check,
   Share2,
+  FlaskConical,
+  Plus,
 } from 'lucide-react';
 import { useClinica } from '../hooks/useClinica';
 import * as clinicaService from '../services/clinicaService';
 import * as socialService from '../../social/services/socialService';
 import * as procedimientoService from '../../procedimiento/services/procedimientoService';
+import * as diagnosticoService from '../../diagnostico/services/diagnosticoService';
 import { calcularIMC } from '../../preconsulta/hooks/usePreconsulta';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import userImg from '../../../assets/images/user.png';
@@ -38,9 +41,57 @@ const PASOS = [
   { id: 1, label: 'Paciente & Signos', icon: User },
   { id: 2, label: 'Consulta & Evolución', icon: FileText },
   { id: 3, label: 'Examen Físico', icon: Activity },
-  { id: 4, label: 'Diagnósticos', icon: Stethoscope },
-  { id: 5, label: 'Receta & Tratamiento', icon: Pill },
+  { id: 4, label: 'Laboratorio & Procedimientos', icon: FlaskConical },
+  { id: 5, label: 'Diagnósticos', icon: Stethoscope },
+  { id: 6, label: 'Receta & Tratamiento', icon: Pill },
 ];
+
+export const generarInstruccionPosologia = (dt) => {
+  const frec = (dt.frecuencia || '').toLowerCase().trim();
+  const dur = (dt.duracion || '').toLowerCase().trim();
+  const pres = (dt.presentacion || '').toLowerCase();
+
+  // Extraer horas
+  const mFrec = frec.match(/(\d+(?:\.\d+)?)/);
+  const horasTxt = mFrec ? mFrec[1] : '';
+  const cadaTxt = horasTxt ? `cada ${horasTxt} hrs` : frec || 'según indicación';
+
+  // Extraer días
+  const mDur = dur.match(/(\d+(?:\.\d+)?)/);
+  const diasTxt = mDur ? `${mDur[1]} días` : dur || 'según evolución';
+
+  if (dt.esLiquido || /jarabe|suspensi[oó]n|soluci[oó]n|elixir/i.test(pres)) {
+    const cm = dt.dosisCm || parseFloat(dt.tomaDosis) || 5;
+    return `Tomar ${cadaTxt} por ${diasTxt} ${cm} cm`;
+  }
+
+  if (dt.esGotas || /gotas|gotero/i.test(pres)) {
+    const gotas = dt.gotasPorToma || (dt.tomaDosis && dt.tomaDosis.includes('gotas') ? dt.tomaDosis : '20 gotas');
+    return `Aplicar ${cadaTxt} por ${diasTxt} ${gotas}`;
+  }
+
+  if (dt.esTopico || /crema|ung[uü]ento|pomada|gel|loci[oó]n|pasta/i.test(pres)) {
+    return `Aplicar en la zona ${cadaTxt} por ${diasTxt}`;
+  }
+
+  if (dt.esInhalador || /inhalad|spray|aerosol|puff/i.test(pres)) {
+    const disparos = dt.tomaDosis || '1 disparo';
+    return `Inhalar ${cadaTxt} por ${diasTxt} ${disparos}`;
+  }
+
+  if (/sobre/i.test(pres)) {
+    return `Tomar ${cadaTxt} por ${diasTxt} con agua`;
+  }
+
+  if (/ampolla|inyect/i.test(pres)) {
+    return `Aplicar ${cadaTxt} por ${diasTxt} 1 ampolla`;
+  }
+
+  // Tabletas / cápsulas / sólidos por defecto
+  const unid = dt.unidadesPorToma || parseFloat(dt.tomaDosis) || 1;
+  const unidTxt = unid === 1 ? '1 unidad' : `${unid} unidades`;
+  return `Tomar ${cadaTxt} por ${diasTxt} ${unidTxt}`;
+};
 
 const calcularCantidadReceta = ({
   frecuencia = '',
@@ -50,6 +101,9 @@ const calcularCantidadReceta = ({
   tomaDosis = '',
   nombreMedicamento = '',
   nombre = '',
+  dosisCm = null,
+  unidadesPorToma = null,
+  gotasPorToma = null,
 }) => {
   // 1. Extraer duración en días
   const durStr = (duracion || '').toString().toLowerCase().trim();
@@ -127,33 +181,25 @@ const calcularCantidadReceta = ({
   if (tomasAlDia <= 0) tomasAlDia = 3;
   const totalTomas = dias * tomasAlDia;
 
-  // 2. Detectar si es Gotas (gotas oftálmicas, óticas, pediátricas o frascos gotero)
+  // 2. Gotas
   const esGotas =
     /gotas|gotero/i.test(presNorm) ||
     /gotas|gotero/i.test(concNorm) ||
     /gotas|gotero/i.test(nomNorm);
 
   if (esGotas) {
-    // Convención posológica estándar: 20 gotas = 1 ml (1 gota ≈ 0.05 ml)
-    let gotasPorToma = 20;
-    let mlPorToma = 1.0;
-
-    const tomaStr = (tomaDosis || '').toString().toLowerCase();
-    if (tomaStr.includes('gotas')) {
-      const m = tomaStr.match(/(\d+(?:\.\d+)?)\s*gotas/);
-      if (m) {
-        gotasPorToma = parseFloat(m[1]);
-        mlPorToma = Number((gotasPorToma / 20).toFixed(2));
-      }
-    } else if (tomaStr.includes('ml')) {
-      const m = tomaStr.match(/(\d+(?:\.\d+)?)\s*ml/);
-      if (m) {
-        mlPorToma = parseFloat(m[1]);
-        gotasPorToma = Math.round(mlPorToma * 20);
+    let gPorToma = 20;
+    if (gotasPorToma !== null && gotasPorToma !== undefined && gotasPorToma !== '') {
+      gPorToma = parseFloat(gotasPorToma) || 20;
+    } else {
+      const tomaStr = (tomaDosis || '').toString().toLowerCase();
+      if (tomaStr.includes('gotas')) {
+        const m = tomaStr.match(/(\d+(?:\.\d+)?)\s*gotas/);
+        if (m) gPorToma = parseFloat(m[1]);
       }
     }
+    const mlPorToma = Number((gPorToma / 20).toFixed(2));
 
-    // Tamaño del frasco gotero (buscar ej. "15 ml", "20 ml", "30 ml", "10 ml")
     let tamanoFrascoGotero = 15;
     const matchTam = (concNorm + ' ' + presNorm + ' ' + nomNorm).match(/(\d{1,3})\s*ml\b/);
     if (matchTam) {
@@ -165,22 +211,19 @@ const calcularCantidadReceta = ({
 
     const totalMl = totalTomas * mlPorToma;
     const frascos = Math.max(1, Math.ceil(totalMl / tamanoFrascoGotero));
-    const tomasTxt = totalTomas % 1 === 0 ? totalTomas : totalTomas.toFixed(1);
-
-    const explicacion = `Sugerido: ${tomasTxt} tomas de ${gotasPorToma} gotas (${mlPorToma}ml) = ${Math.round(totalTomas * gotasPorToma)} gotas (~${totalMl.toFixed(1)}ml = ${frascos} ${frascos > 1 ? 'frascos gotero' : 'frasco gotero'} de ${tamanoFrascoGotero}ml)`;
 
     return {
       cantidad: frascos,
-      explicacion,
+      explicacion: '',
       esGotas: true,
       esLiquido: false,
-      gotasPorToma,
+      gotasPorToma: gPorToma,
       mlPorToma,
       tamanoFrasco: tamanoFrascoGotero,
     };
   }
 
-  // 3. Detectar si es crema / ungüento / pomada / gel tópico / vaginal
+  // 3. Tópico (crema / pomada)
   const esTopico =
     /crema|ung[uü]ento|pomada|gel\b|t[oó]pic|d[eé]rmic|loci[oó]n|pasta\b|vaginal/i.test(presNorm) ||
     /crema|ung[uü]ento|pomada|gel\b|t[oó]pic|d[eé]rmic/i.test(concNorm);
@@ -189,13 +232,13 @@ const calcularCantidadReceta = ({
     const tubos = Math.max(1, Math.ceil(dias / 15));
     return {
       cantidad: tubos,
-      explicacion: `Sugerido: ${tubos} ${tubos > 1 ? 'tubos' : 'tubo'} (${dias} días de aplicación tópica)`,
+      explicacion: '',
       esTopico: true,
       esLiquido: false,
     };
   }
 
-  // 3. Detectar si es inhalador / spray / aerosol
+  // 4. Inhalador
   const esInhalador =
     /inhalad|spray|aerosol|nebuliz|puff/i.test(presNorm) ||
     /inhalad|spray|aerosol/i.test(concNorm);
@@ -204,22 +247,22 @@ const calcularCantidadReceta = ({
     const frascos = Math.max(1, Math.ceil(dias / 30));
     return {
       cantidad: frascos,
-      explicacion: `Sugerido: ${frascos} ${frascos > 1 ? 'inhaladores/frascos' : 'inhalador/frasco'} (${dias} días)`,
+      explicacion: '',
       esInhalador: true,
       esLiquido: false,
     };
   }
 
-  // 5. Detectar si es líquido (Jarabe / Suspensión / Solución)
+  // 5. Líquido (Jarabe / Suspensión / Solución)
   const esLiquido =
     /jarabe|suspensi[oó]n|soluci[oó]n|elixir|frasco|l[ií]quid/i.test(presNorm) ||
     /jarabe|suspensi[oó]n|soluci[oó]n/i.test(concNorm);
 
   if (esLiquido) {
-
-    // Volumen por toma (ej. 5ml cucharadita, 10ml cucharada, 15ml)
     let mlPorToma = 5;
-    if (tomaDosis) {
+    if (dosisCm !== undefined && dosisCm !== null && dosisCm !== '') {
+      mlPorToma = parseFloat(dosisCm) || 5;
+    } else if (tomaDosis) {
       const tMatch = tomaDosis.toString().match(/(\d+(?:\.\d+)?)/);
       if (tMatch) mlPorToma = parseFloat(tMatch[1]);
     } else if (frecStr.includes('cucharada') || frecStr.includes('10ml')) {
@@ -228,9 +271,11 @@ const calcularCantidadReceta = ({
       mlPorToma = 5;
     }
 
-    // Tamaño del frasco (buscar en concentración o presentación: ej "120 ml", "100ml", "60 ml")
+    if (mlPorToma > 30) mlPorToma = 30;
+    if (mlPorToma < 0.5) mlPorToma = 1;
+
     let tamanoFrasco = 120;
-    const matchTamano = (concNorm + ' ' + presNorm).match(/(\d{2,4})\s*ml\b/);
+    const matchTamano = (concNorm + ' ' + presNorm + ' ' + nomNorm).match(/(\d{2,4})\s*ml\b/);
     if (matchTamano) {
       const vol = parseFloat(matchTamano[1]);
       if (vol >= 30) {
@@ -240,20 +285,10 @@ const calcularCantidadReceta = ({
 
     const totalMl = totalTomas * mlPorToma;
     const frascos = Math.max(1, Math.ceil(totalMl / tamanoFrasco));
-    const tomasTxt = totalTomas % 1 === 0 ? totalTomas : totalTomas.toFixed(1);
-    const nombreCuchara =
-      mlPorToma === 5
-        ? '1 cucharadita (5ml)'
-        : mlPorToma === 10
-        ? '1 cucharada (10ml)'
-        : mlPorToma === 15
-        ? '1 cda sopera (15ml)'
-        : `${mlPorToma}ml`;
-    const explicacion = `Sugerido: ${tomasTxt} tomas de ${nombreCuchara} (${Math.round(totalMl)}ml = ${frascos} ${frascos > 1 ? 'frascos' : 'frasco'} de ${tamanoFrasco}ml)`;
 
     return {
       cantidad: frascos,
-      explicacion,
+      explicacion: '',
       esLiquido: true,
       mlPorToma,
       tamanoFrasco,
@@ -261,18 +296,18 @@ const calcularCantidadReceta = ({
   }
 
   // Medicamento sólido (Tabletas, Cápsulas, etc.)
-  let unidadesPorToma = 1;
-  if (tomaDosis) {
+  let unidPorToma = 1;
+  if (unidadesPorToma !== null && unidadesPorToma !== undefined && unidadesPorToma !== '') {
+    unidPorToma = parseFloat(unidadesPorToma) || 1;
+  } else if (tomaDosis) {
     const uMatch = tomaDosis.toString().match(/(\d+(?:\.\d+)?)/);
-    if (uMatch) unidadesPorToma = parseFloat(uMatch[1]);
+    if (uMatch) unidPorToma = parseFloat(uMatch[1]);
   }
-  const cantidadSolido = Math.max(1, Math.ceil(totalTomas * unidadesPorToma));
-  const tomasTxt = tomasAlDia % 1 === 0 ? tomasAlDia : tomasAlDia.toFixed(1);
-  const explicacion = `Sugerido: ${dias} días × ${tomasTxt} al día = ${cantidadSolido} unidades`;
+  const cantidadSolido = Math.max(1, Math.ceil(totalTomas * unidPorToma));
 
   return {
     cantidad: cantidadSolido,
-    explicacion,
+    explicacion: '',
     esLiquido: false,
   };
 };
@@ -361,13 +396,26 @@ export default function AtencionMedicaPage() {
     return calcularIMC(peso, talla);
   }, [pacienteData?.ultimoSignoVital]);
 
-  // Section B
+  // Cálculo de edad exacta del paciente basada en su fecha de nacimiento
+  const edadPaciente = useMemo(() => {
+    if (!pacienteData?.paciente?.fechaNacimiento) return null;
+    const nacimiento = new Date(pacienteData.paciente.fechaNacimiento);
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const m = hoy.getMonth() - nacimiento.getMonth();
+    if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
+      edad--;
+    }
+    return edad;
+  }, [pacienteData]);
+
+  // Section B: Consulta & Evolución
   const [motivoConsulta, setMotivoConsulta] = useState('');
   const [historiaEnfermedad, setHistoriaEnfermedad] = useState('');
   const [impresionClinica, setImpresionClinica] = useState('');
   const [planMedico, setPlanMedico] = useState('');
 
-  // Section C
+  // Section C: Examen Físico
   const [examenFisico, setExamenFisico] = useState({
     piel: '',
     conciencia: '',
@@ -376,30 +424,74 @@ export default function AtencionMedicaPage() {
     soma: '',
   });
 
-  // Section D
+  // Section D (Paso 4): Laboratorio de texto libre
+  const [laboratorio, setLaboratorio] = useState('');
+
+  // Section E (Paso 5): Diagnósticos Clínicos
   const [diagnosticos, setDiagnosticos] = useState([]); // { codigoCie10, descripcion }
   const [searchDiag, setSearchDiag] = useState('');
   const [diagResults, setDiagResults] = useState([]);
 
-  // Section D.2: Referencia Médica (Opcional - Módulo Social)
+  // Modal para crear diagnóstico CIE-10 sobre la marcha
+  const [modalCrearDiagVisible, setModalCrearDiagVisible] = useState(false);
+  const [categoriasDiag, setCategoriasDiag] = useState([]);
+  const [nuevoDiagNombre, setNuevoDiagNombre] = useState('');
+  const [nuevoDiagCodigo, setNuevoDiagCodigo] = useState('');
+  const [nuevoDiagIdCategoria, setNuevoDiagIdCategoria] = useState('');
+  const [creandoDiag, setCreandoDiag] = useState(false);
+  const [errorCrearDiag, setErrorCrearDiag] = useState('');
+
+  // Section E.2: Referencia Médica (Opcional - Módulo Social)
   const [especialidadReferencia, setEspecialidadReferencia] = useState(null); // { idEspecialidad, nombre, ... }
   const [motivoReferencia, setMotivoReferencia] = useState('');
   const [searchEspecialidad, setSearchEspecialidad] = useState('');
   const [especialidadResults, setEspecialidadResults] = useState([]);
 
-  // Section E
+  // Section F (Paso 6): Tratamiento y Receta para Farmacia
   const [observacionesTratamiento, setObservacionesTratamiento] = useState('');
   const [detallesTratamiento, setDetallesTratamiento] = useState([]);
-  // { idMedicamento, nombreMedicamento, dosis, frecuencia, duracion, cantidad }
+  // { idMedicamento, nombreMedicamento, presentacion, dosisCm, unidadesPorToma, gotasPorToma, frecuencia, duracion, cantidad }
 
   const [searchMed, setSearchMed] = useState('');
   const [medResults, setMedResults] = useState([]);
+
+  // Estado y modal para Poner en Observación
+  const [modalObservacionVisible, setModalObservacionVisible] = useState(false);
+  const [guardandoObservacion, setGuardandoObservacion] = useState(false);
 
   useEffect(() => {
     const fetchDatos = async () => {
       try {
         const data = await clinicaService.obtenerPacienteConsulta(idPaciente, idCola);
         setPacienteData(data);
+
+        // Si el paciente estaba en OBSERVACION o tiene un borrador guardado, restaurar todos los datos
+        if (data?.datosConsultaBorrador) {
+          try {
+            const b =
+              typeof data.datosConsultaBorrador === 'string'
+                ? JSON.parse(data.datosConsultaBorrador)
+                : data.datosConsultaBorrador;
+
+            if (b.motivoConsulta !== undefined) setMotivoConsulta(b.motivoConsulta);
+            if (b.historiaEnfermedad !== undefined) setHistoriaEnfermedad(b.historiaEnfermedad);
+            if (b.impresionClinica !== undefined) setImpresionClinica(b.impresionClinica);
+            if (b.planMedico !== undefined) setPlanMedico(b.planMedico);
+            if (b.examenFisico) setExamenFisico(b.examenFisico);
+            if (b.laboratorio !== undefined) setLaboratorio(b.laboratorio);
+            if (b.diagnosticos) setDiagnosticos(b.diagnosticos);
+            if (b.especialidadReferencia) setEspecialidadReferencia(b.especialidadReferencia);
+            if (b.motivoReferencia !== undefined) setMotivoReferencia(b.motivoReferencia);
+            if (b.observacionesTratamiento !== undefined)
+              setObservacionesTratamiento(b.observacionesTratamiento);
+            if (b.detallesTratamiento) setDetallesTratamiento(b.detallesTratamiento);
+            if (b.procedimientosSeleccionados)
+              setProcedimientosSeleccionados(b.procedimientosSeleccionados);
+            if (b.pasoActual) setPasoActual(b.pasoActual);
+          } catch (e) {
+            console.error('Error restaurando borrador de consulta', e);
+          }
+        }
       } catch (err) {
         console.error('Error fetching paciente data', err);
       } finally {
@@ -437,6 +529,53 @@ export default function AtencionMedicaPage() {
 
   const removeDiagnostico = (codigo) => {
     setDiagnosticos(diagnosticos.filter((d) => d.codigoCie10 !== codigo));
+  };
+
+  // Abrir modal de creación de diagnóstico al vuelo
+  const abrirModalCrearDiag = async () => {
+    setNuevoDiagNombre(searchDiag.trim());
+    setNuevoDiagCodigo(`CIE-${Math.floor(1000 + Math.random() * 9000)}`);
+    setErrorCrearDiag('');
+    setModalCrearDiagVisible(true);
+    try {
+      const cats = await diagnosticoService.listarCategoriasDiagnostico();
+      setCategoriasDiag(cats || []);
+      if (cats && cats.length > 0 && !nuevoDiagIdCategoria) {
+        setNuevoDiagIdCategoria(cats[0].idCategoria);
+      }
+    } catch (err) {
+      console.error('Error cargando categorías de diagnóstico', err);
+    }
+  };
+
+  const handleGuardarNuevoDiagnostico = async (e) => {
+    e.preventDefault();
+    if (!nuevoDiagNombre.trim()) {
+      setErrorCrearDiag('Debe ingresar la descripción del diagnóstico');
+      return;
+    }
+    if (!nuevoDiagIdCategoria) {
+      setErrorCrearDiag('Debe seleccionar una categoría');
+      return;
+    }
+    setCreandoDiag(true);
+    setErrorCrearDiag('');
+    try {
+      const nuevo = await diagnosticoService.crearCie10({
+        codigo: nuevoDiagCodigo.trim() || `CIE-${Math.floor(1000 + Math.random() * 9000)}`,
+        descripcion: nuevoDiagNombre.trim(),
+        idCategoria: Number(nuevoDiagIdCategoria),
+      });
+      addDiagnostico({ codigo: nuevo.codigo, descripcion: nuevo.descripcion });
+      setModalCrearDiagVisible(false);
+      setSearchDiag('');
+      setDiagResults([]);
+    } catch (err) {
+      console.error('Error creando diagnóstico CIE-10', err);
+      setErrorCrearDiag(err.response?.data?.message || 'Error al guardar el nuevo diagnóstico');
+    } finally {
+      setCreandoDiag(false);
+    }
   };
 
   const handleSearchEspecialidad = async (e) => {
@@ -495,7 +634,7 @@ export default function AtencionMedicaPage() {
         );
       const esTopico =
         /crema|ung[uü]ento|pomada|gel\b|t[oó]pic|d[eé]rmic|loci[oó]n|pasta\b|vaginal/i.test(presNorm) ||
-        /crema|ung[uü]ento|pomada|gel\b|t[oó]pic/i.test(concNorm);
+        /crema|ung[uü]ento|pomada|gel\b|t[oó]pic|d[eé]rmic/i.test(concNorm);
       const esInhalador =
         /inhalad|spray|aerosol|nebuliz|puff/i.test(presNorm) ||
         /inhalad|spray|aerosol/i.test(concNorm);
@@ -518,6 +657,9 @@ export default function AtencionMedicaPage() {
         esLiquido,
         esTopico,
         esInhalador,
+        dosisCm: esLiquido ? 5 : null,
+        unidadesPorToma: (!esLiquido && !esGotas && !esTopico && !esInhalador) ? 1 : null,
+        gotasPorToma: esGotas ? 20 : null,
         tomaDosis: defaultDosis,
         cantidad: 1,
         explicacion: '',
@@ -538,7 +680,14 @@ export default function AtencionMedicaPage() {
       detallesTratamiento.map((dt) => {
         if (dt.idMedicamento !== idMed) return dt;
         const updated = { ...dt, [field]: val };
-        if (field === 'frecuencia' || field === 'duracion' || field === 'tomaDosis') {
+        if (
+          field === 'frecuencia' ||
+          field === 'duracion' ||
+          field === 'tomaDosis' ||
+          field === 'dosisCm' ||
+          field === 'unidadesPorToma' ||
+          field === 'gotasPorToma'
+        ) {
           const calc = calcularCantidadReceta(updated);
           updated.cantidad = calc.cantidad;
           updated.explicacion = calc.explicacion;
@@ -624,12 +773,44 @@ export default function AtencionMedicaPage() {
     );
   };
 
+  // Guardar en Observación
+  const handlePonerEnObservacion = async () => {
+    if (guardandoObservacion || !idCola) return;
+    setGuardandoObservacion(true);
+    try {
+      const borrador = {
+        pasoActual,
+        motivoConsulta,
+        historiaEnfermedad,
+        impresionClinica,
+        planMedico,
+        examenFisico,
+        laboratorio,
+        diagnosticos,
+        especialidadReferencia,
+        motivoReferencia,
+        observacionesTratamiento,
+        detallesTratamiento,
+        procedimientosSeleccionados,
+      };
+      await clinicaService.ponerEnObservacion(idCola, JSON.stringify(borrador));
+      consultaFinalizadaRef.current = true;
+      navigate('/clinica');
+    } catch (err) {
+      console.error('Error al poner paciente en observación', err);
+      alert('Error al guardar el borrador en observación.');
+    } finally {
+      setGuardandoObservacion(false);
+      setModalObservacionVisible(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (guardando || enviando) return;
 
     if (!diagnosticos || diagnosticos.length === 0) {
       alert('Debe agregar al menos un diagnóstico antes de finalizar la consulta médica.');
-      setPasoActual(4);
+      setPasoActual(5);
       return;
     }
 
@@ -644,30 +825,17 @@ export default function AtencionMedicaPage() {
         impresionClinica,
         planMedico,
         examenFisico: { ...examenFisico },
+        laboratorio: laboratorio?.trim() ? laboratorio.trim() : null,
         diagnosticos,
         tratamiento: {
           observaciones: observacionesTratamiento,
-          detalles: detallesTratamiento.map((dt) => {
-            let tomaTexto = '';
-            if (dt.esGotas) {
-              tomaTexto = dt.tomaDosis || '20 gotas (1 ml)';
-            } else if (dt.esLiquido) {
-              if (dt.tomaDosis === '5ml') tomaTexto = '1 cucharadita (5 ml)';
-              else if (dt.tomaDosis === '10ml') tomaTexto = '1 cucharada (10 ml)';
-              else if (dt.tomaDosis === '15ml') tomaTexto = '1 cucharada sopera (15 ml)';
-              else if (dt.tomaDosis) tomaTexto = `${dt.tomaDosis}`;
-            } else if (dt.tomaDosis) {
-              tomaTexto = `${dt.tomaDosis} ${Number(dt.tomaDosis) === 1 ? 'unidad/tableta' : 'unidades/tabletas'}`;
-            }
-
-            return {
-              idMedicamento: dt.idMedicamento,
-              dosis: tomaTexto || [dt.presentacion, dt.concentracion].filter(Boolean).join(' - ') || '1 toma',
-              frecuencia: dt.frecuencia || 'Según indicación',
-              duracion: dt.duracion || 'Según evolución',
-              cantidad: Number(dt.cantidad) > 0 ? Number(dt.cantidad) : 1,
-            };
-          }),
+          detalles: detallesTratamiento.map((dt) => ({
+            idMedicamento: dt.idMedicamento,
+            dosis: generarInstruccionPosologia(dt),
+            frecuencia: dt.frecuencia || 'Según indicación',
+            duracion: dt.duracion || 'Según evolución',
+            cantidad: Number(dt.cantidad) > 0 ? Number(dt.cantidad) : 1,
+          })),
         },
         referenciaMedica: especialidadReferencia
           ? {
@@ -732,7 +900,7 @@ export default function AtencionMedicaPage() {
             <div>
               <span style={styles.headerEyebrow}>ATENCIÓN MÉDICA EN CONSULTA</span>
               <h1 style={styles.headerTitle}>
-                Paciente: {nombreCompleto || 'Desconocido'}
+                Paciente: {nombreCompleto || 'Desconocido'}{edadPaciente !== null ? ` (${edadPaciente} años)` : ''}
               </h1>
             </div>
           </div>
@@ -1326,8 +1494,189 @@ export default function AtencionMedicaPage() {
             </div>
           )}
 
-          {/* PASO 4: Diagnósticos y Referencia Médica */}
+          {/* PASO 4: Laboratorio & Procedimientos */}
           {pasoActual === 4 && (
+            <div style={styles.stepContentFade}>
+              <div className="clinica-step4-grid">
+                
+                {/* COLUMNA 1: Laboratorio Clínico */}
+                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                  <div style={styles.stepTitleBar}>
+                    <div style={{ ...styles.stepIconWrap, background: '#f0fdf4', borderColor: '#bbf7d0' }}>
+                      <FlaskConical size={20} color="#16a34a" />
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h2 style={styles.stepHeading}>Laboratorio Clínico</h2>
+                        <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0' }}>
+                          OPCIONAL
+                        </span>
+                      </div>
+                      <p style={styles.stepSubheading}>
+                        Órdenes de exámenes y pruebas de laboratorio que requiere el paciente.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ ...styles.inputGroup, marginTop: '14px' }}>
+                    <label style={styles.label}>Exámenes y Análisis de Laboratorio Solicitados</label>
+                    <textarea
+                      placeholder="Indique los análisis clínicos o pruebas de laboratorio solicitadas (ej: Hematología completa, Glucosa en ayunas, Examen de orina, Perfil lipídico, etc.)..."
+                      value={laboratorio}
+                      onChange={(e) => setLaboratorio(e.target.value)}
+                      style={{
+                        ...styles.textarea,
+                        minHeight: '160px',
+                        height: '210px',
+                        fontSize: '14px',
+                        lineHeight: '1.5'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* COLUMNA 2: Procedimientos Clínicos (Opcional) */}
+                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                  <div style={styles.stepTitleBar}>
+                    <div style={{ ...styles.stepIconWrap, background: '#eff6ff', borderColor: '#bfdbfe' }}>
+                      <Activity size={20} color="#0284c7" />
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h2 style={styles.stepHeading}>Procedimientos Clínicos</h2>
+                        <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0' }}>
+                          OPCIONAL
+                        </span>
+                      </div>
+                      <p style={styles.stepSubheading}>
+                        Prescripción de procedimientos para atención en enfermería o cobro en farmacia.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Buscador de Procedimientos */}
+                  <div style={styles.searchContainer}>
+                    <label style={styles.label}>Buscar o Seleccionar Procedimiento</label>
+                    <div style={styles.searchInputWrapper}>
+                      <Search size={16} color="#64748b" style={styles.searchIcon} />
+                      <input
+                        type="text"
+                        placeholder="Buscar procedimiento (ej: Nebulización, Sutura, Glucosa...)"
+                        value={searchProcedimiento}
+                        onChange={handleSearchProcedimiento}
+                        style={styles.searchInput}
+                      />
+                    </div>
+
+                    {procedimientoResults.length > 0 && (
+                      <ul style={styles.autocompleteList}>
+                        {procedimientoResults.map((proc) => (
+                          <li
+                            key={proc.idProcedimiento}
+                            onClick={() => addProcedimiento(proc)}
+                            style={styles.autocompleteItem}
+                          >
+                            <span style={{ fontWeight: '600', color: '#03045e' }}>{proc.nombre}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {/* Lista de Procedimientos Seleccionados - Sin campo de cantidad para la doctora */}
+                  {procedimientosSeleccionados.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '16px' }}>
+                      {procedimientosSeleccionados.map((proc, index) => (
+                        <div
+                          key={proc.idProcedimiento}
+                          style={{
+                            background: '#f8fafc',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '10px',
+                            padding: '16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '12px',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{
+                                width: '24px',
+                                height: '24px',
+                                borderRadius: '50%',
+                                background: '#eff6ff',
+                                color: '#0284c7',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '12px',
+                                fontWeight: '700'
+                              }}>
+                                {index + 1}
+                              </span>
+                              <strong style={{ color: '#03045e', fontSize: '15px', fontWeight: '700' }}>
+                                {proc.nombre}
+                              </strong>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => removeProcedimiento(proc.idProcedimiento)}
+                              style={styles.btnTableDelete}
+                              title="Eliminar procedimiento"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+
+                          {/* Campo de Instrucciones para el Procedimiento */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                            <label style={{ fontSize: '12.5px', fontWeight: '600', color: '#334155' }}>
+                              Instrucciones para el Procedimiento (Opcional)
+                            </label>
+                            <textarea
+                              placeholder="Instrucciones específicas de cuidado, materiales, dosis o indicaciones clínicas..."
+                              value={proc.instrucciones || ''}
+                              onChange={(e) => updateProcedimiento(proc.idProcedimiento, 'instrucciones', e.target.value)}
+                              rows={3}
+                              style={{
+                                ...styles.textarea,
+                                backgroundColor: '#ffffff',
+                                height: '85px',
+                                minHeight: '75px',
+                                maxHeight: '140px',
+                                fontSize: '13.5px',
+                                lineHeight: '1.45'
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: '600' }}>
+                          ✓ {procedimientosSeleccionados.length} procedimiento(s) clínico(s) prescrito(s)
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ ...styles.emptyDiagBox, marginTop: '16px' }}>
+                      <Activity size={28} color="#94a3b8" />
+                      <p style={styles.emptyHint}>
+                        No se han asignado procedimientos clínicos a esta consulta (opcional).
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* PASO 5: Diagnósticos y Referencia Médica */}
+          {pasoActual === 5 && (
             <div style={styles.stepContentFade}>
               <div className="clinica-step4-grid">
                 
@@ -1346,15 +1695,40 @@ export default function AtencionMedicaPage() {
                   </div>
 
                   <div style={styles.searchContainer}>
-                    <div style={styles.searchInputWrapper}>
-                      <Search size={16} color="#64748b" style={styles.searchIcon} />
-                      <input
-                        type="text"
-                        placeholder="Buscar diagnóstico por descripción o patología..."
-                        value={searchDiag}
-                        onChange={handleSearchDiag}
-                        style={styles.searchInput}
-                      />
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <div style={{ ...styles.searchInputWrapper, flex: 1 }}>
+                        <Search size={16} color="#64748b" style={styles.searchIcon} />
+                        <input
+                          type="text"
+                          placeholder="Buscar diagnóstico por descripción o patología..."
+                          value={searchDiag}
+                          onChange={handleSearchDiag}
+                          style={styles.searchInput}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={abrirModalCrearDiag}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          background: '#eff6ff',
+                          color: '#0284c7',
+                          border: '1px solid #bfdbfe',
+                          borderRadius: '8px',
+                          padding: '10px 14px',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          transition: 'all 0.15s ease'
+                        }}
+                        title="Crear un diagnóstico no encontrado en catálogo"
+                      >
+                        <Plus size={15} />
+                        <span>Nuevo Diagnóstico</span>
+                      </button>
                     </div>
 
                     {diagResults.length > 0 && (
@@ -1370,6 +1744,26 @@ export default function AtencionMedicaPage() {
                             </span>
                           </li>
                         ))}
+                      </ul>
+                    )}
+
+                    {searchDiag.trim().length > 1 && diagResults.length === 0 && (
+                      <ul style={styles.autocompleteList}>
+                        <li
+                          onClick={abrirModalCrearDiag}
+                          style={{
+                            ...styles.autocompleteItem,
+                            background: '#eff6ff',
+                            color: '#0284c7',
+                            fontWeight: '600',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}
+                        >
+                          <Plus size={16} />
+                          <span>No se encontró "{searchDiag}". Clic aquí para crearlo y agregarlo</span>
+                        </li>
                       </ul>
                     )}
                   </div>
@@ -1558,397 +1952,310 @@ export default function AtencionMedicaPage() {
             </div>
           )}
 
-          {/* PASO 5: Tratamiento, Receta y Procedimientos */}
-          {pasoActual === 5 && (
+          {/* PASO 6: Receta & Tratamiento (Pantalla Completa) */}
+          {pasoActual === 6 && (
             <div style={styles.stepContentFade}>
-              <div className="clinica-step4-grid">
-
-                {/* COLUMNA 1: Tratamiento y Receta para Farmacia */}
-                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-                  <div style={styles.stepTitleBar}>
-                    <div style={styles.stepIconWrap}>
-                      <Pill size={20} color="#0077b6" />
-                    </div>
-                    <div>
-                      <h2 style={styles.stepHeading}>Tratamiento y Receta para Farmacia</h2>
-                      <p style={styles.stepSubheading}>
-                        Prescripción médica que será derivada automáticamente a la Farmacia.
-                      </p>
-                    </div>
+              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                <div style={styles.stepTitleBar}>
+                  <div style={styles.stepIconWrap}>
+                    <Pill size={20} color="#0077b6" />
                   </div>
+                  <div>
+                    <h2 style={styles.stepHeading}>Tratamiento y Receta para Farmacia</h2>
+                    <p style={styles.stepSubheading}>
+                      Prescripción médica que será derivada automáticamente a la Farmacia.
+                    </p>
+                  </div>
+                </div>
 
-                  <div style={styles.inputGroup}>
-                    <label style={styles.label}>Indicaciones Generales de Tratamiento</label>
-                    <textarea
-                      placeholder="Instrucciones generales de cuidado, régimen de alimentación, reposo, advertencias..."
-                      value={observacionesTratamiento}
-                      onChange={(e) => setObservacionesTratamiento(e.target.value)}
-                      style={styles.textarea}
-                      rows={3}
+                <div style={styles.inputGroup}>
+                  <label style={styles.label}>Indicaciones Generales de Tratamiento</label>
+                  <textarea
+                    placeholder="Instrucciones generales de cuidado, régimen de alimentación, reposo, advertencias..."
+                    value={observacionesTratamiento}
+                    onChange={(e) => setObservacionesTratamiento(e.target.value)}
+                    style={styles.textarea}
+                    rows={3}
+                  />
+                </div>
+
+                <div style={{ ...styles.searchContainer, marginTop: '20px' }}>
+                  <label style={styles.label}>Agregar Medicamento a la Receta</label>
+                  <div style={styles.searchInputWrapper}>
+                    <Search size={16} color="#64748b" style={styles.searchIcon} />
+                    <input
+                      type="text"
+                      placeholder="Buscar medicamento en el catálogo de farmacia..."
+                      value={searchMed}
+                      onChange={handleSearchMed}
+                      style={styles.searchInput}
                     />
                   </div>
 
-                  <div style={{ ...styles.searchContainer, marginTop: '16px' }}>
-                    <label style={styles.label}>Agregar Medicamento a la Receta</label>
-                    <div style={styles.searchInputWrapper}>
-                      <Search size={16} color="#64748b" style={styles.searchIcon} />
-                      <input
-                        type="text"
-                        placeholder="Buscar medicamento en el catálogo de farmacia..."
-                        value={searchMed}
-                        onChange={handleSearchMed}
-                        style={styles.searchInput}
-                      />
-                    </div>
-
-                    {medResults.length > 0 && (
-                      <ul style={styles.autocompleteList}>
-                        {medResults.map((m) => {
-                          const sinStock = m.unidades !== null && m.unidades !== undefined && m.unidades <= 0;
-                          return (
-                            <li
-                              key={m.idMedicamento}
-                              onClick={() => addDetalleTratamiento(m)}
-                              style={styles.autocompleteItem}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '12px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <span style={{ fontWeight: '600', color: '#03045e' }}>
-                                    {m.nombre}
-                                  </span>
-                                  <span style={{ color: '#64748b', fontSize: '13px' }}>
-                                    ({m.presentacion || 'General'} {m.concentracion || ''})
-                                  </span>
-                                </div>
-                                {sinStock && (
-                                  <span style={styles.noStockPill}>
-                                    Agotado en farmacia - No hacer receta
-                                  </span>
-                                )}
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </div>
-
-                  {detallesTratamiento.length > 0 ? (
-                    <div className="clinica-table-responsive" style={{ ...styles.tableContainer, marginTop: '14px' }}>
-                      <datalist id="frecuencia-options">
-                        <option value="Cada 4 hrs" label="Cada 4 horas (6 al día)" />
-                        <option value="Cada 5 hrs" label="Cada 5 horas (4.8 al día)" />
-                        <option value="Cada 6 hrs" label="Cada 6 horas (4 al día)" />
-                        <option value="Cada 8 hrs" label="Cada 8 horas (3 al día)" />
-                        <option value="Cada 12 hrs" label="Cada 12 horas (2 al día)" />
-                        <option value="Cada 24 hrs" label="Cada 24 horas (1 al día)" />
-                      </datalist>
-
-                      <datalist id="duracion-options">
-                        <option value="3 días" />
-                        <option value="5 días" />
-                        <option value="7 días" />
-                        <option value="8 días" />
-                        <option value="10 días" />
-                        <option value="14 días" />
-                        <option value="30 días" />
-                      </datalist>
-
-                      <table style={styles.table}>
-                        <thead>
-                          <tr>
-                            <th style={{ ...styles.th, width: '28%' }}>Medicamento</th>
-                            <th style={{ ...styles.th, width: '18%' }}>Presentación</th>
-                            <th style={{ ...styles.th, width: '18%' }}>Frecuencia</th>
-                            <th style={{ ...styles.th, width: '14%' }}>Duración</th>
-                            <th style={{ ...styles.th, width: '18%' }}>Cantidad</th>
-                            <th style={{ ...styles.th, width: '4%', textAlign: 'center' }}></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {detallesTratamiento.map((dt) => {
-                            const sinStock = dt.unidades !== null && dt.unidades !== undefined && dt.unidades <= 0;
-                            return (
-                              <tr key={dt.idMedicamento} style={styles.tr}>
-                                <td style={styles.td}>
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                    <strong style={{ color: '#03045e', fontSize: '13px', fontWeight: '600' }}>
-                                      {dt.nombreMedicamento}
-                                    </strong>
-                                    {sinStock && (
-                                      <span style={styles.noStockPill}>
-                                        Agotado en farmacia
-                                      </span>
-                                    )}
-                                  </div>
-                                </td>
-                                <td style={styles.td}>
-                                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
-                                    {dt.presentacion && (
-                                      <span style={styles.badgePres}>
-                                        {dt.presentacion}
-                                      </span>
-                                    )}
-                                    {dt.concentracion && (
-                                      <span style={styles.badgeConc}>
-                                        {dt.concentracion}
-                                      </span>
-                                    )}
-                                  </div>
-                                </td>
-                                <td style={styles.td}>
-                                  <input
-                                    list="frecuencia-options"
-                                    placeholder="Cada 8 hrs"
-                                    value={dt.frecuencia}
-                                    onChange={(e) =>
-                                      updateDetalle(
-                                        dt.idMedicamento,
-                                        'frecuencia',
-                                        e.target.value
-                                      )
-                                    }
-                                    style={styles.tableInput}
-                                  />
-                                </td>
-                                <td style={styles.td}>
-                                  <input
-                                    list="duracion-options"
-                                    placeholder="5 días"
-                                    value={dt.duracion}
-                                    onChange={(e) =>
-                                      updateDetalle(
-                                        dt.idMedicamento,
-                                        'duracion',
-                                        e.target.value
-                                      )
-                                    }
-                                    style={styles.tableInput}
-                                  />
-                                </td>
-                                <td style={styles.td}>
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                      <input
-                                        type="number"
-                                        min="1"
-                                        value={dt.cantidad}
-                                        onChange={(e) =>
-                                          updateDetalle(
-                                            dt.idMedicamento,
-                                            'cantidad',
-                                            e.target.value
-                                          )
-                                        }
-                                        style={styles.quantityInput}
-                                      />
-                                      <span style={styles.unitLabel}>
-                                        {dt.esGotas
-                                          ? 'gotero'
-                                          : dt.esTopico
-                                          ? 'tubo'
-                                          : dt.esLiquido
-                                          ? 'frasco'
-                                          : dt.esInhalador
-                                          ? 'inhalador'
-                                          : 'unid.'}
-                                      </span>
-                                    </div>
-                                    {dt.explicacion && (
-                                      <span style={styles.calcSubtext}>
-                                        {dt.explicacion}
-                                      </span>
-                                    )}
-                                  </div>
-                                </td>
-                                <td style={{ ...styles.td, textAlign: 'center' }}>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeDetalle(dt.idMedicamento)}
-                                    style={styles.btnTableDelete}
-                                    title="Eliminar medicamento"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div style={{ ...styles.emptyDiagBox, marginTop: '16px' }}>
-                      <Pill size={28} color="#94a3b8" />
-                      <p style={styles.emptyHint}>
-                        No se han agregado medicamentos a la receta (opcional si no requiere fármacos).
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* COLUMNA 2: Procedimientos Clínicos (Opcional) */}
-                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-                  <div style={styles.stepTitleBar}>
-                    <div style={{ ...styles.stepIconWrap, background: '#eff6ff', borderColor: '#bfdbfe' }}>
-                      <Activity size={20} color="#0284c7" />
-                    </div>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <h2 style={styles.stepHeading}>Procedimientos Clínicos</h2>
-                        <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0' }}>
-                          OPCIONAL
-                        </span>
-                      </div>
-                      <p style={styles.stepSubheading}>
-                        Prescripción de procedimientos para atención en enfermería o cobro en farmacia.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Buscador de Procedimientos */}
-                  <div style={styles.searchContainer}>
-                    <label style={styles.label}>Buscar o Seleccionar Procedimiento</label>
-                    <div style={styles.searchInputWrapper}>
-                      <Search size={16} color="#64748b" style={styles.searchIcon} />
-                      <input
-                        type="text"
-                        placeholder="Buscar procedimiento (ej: Nebulización, Sutura, Glucosa...)"
-                        value={searchProcedimiento}
-                        onChange={handleSearchProcedimiento}
-                        style={styles.searchInput}
-                      />
-                    </div>
-
-                    {procedimientoResults.length > 0 && (
-                      <ul style={styles.autocompleteList}>
-                        {procedimientoResults.map((proc) => (
+                  {medResults.length > 0 && (
+                    <ul style={styles.autocompleteList}>
+                      {medResults.map((m) => {
+                        const sinStock = m.unidades !== null && m.unidades !== undefined && m.unidades <= 0;
+                        return (
                           <li
-                            key={proc.idProcedimiento}
-                            onClick={() => addProcedimiento(proc)}
+                            key={m.idMedicamento}
+                            onClick={() => addDetalleTratamiento(m)}
                             style={styles.autocompleteItem}
                           >
-                            <span style={{ fontWeight: '600', color: '#03045e' }}>{proc.nombre}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-
-                  {/* Lista de Procedimientos Seleccionados */}
-                  {procedimientosSeleccionados.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '16px' }}>
-                      {procedimientosSeleccionados.map((proc, index) => (
-                        <div
-                          key={proc.idProcedimiento}
-                          style={{
-                            background: '#f8fafc',
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '10px',
-                            padding: '16px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '12px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
-                          }}
-                        >
-                          {/* Fila superior: Nombre del procedimiento, Cantidad y Eliminar */}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{
-                                width: '24px',
-                                height: '24px',
-                                borderRadius: '50%',
-                                background: '#eff6ff',
-                                color: '#0284c7',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '12px',
-                                fontWeight: '700'
-                              }}>
-                                {index + 1}
-                              </span>
-                              <strong style={{ color: '#03045e', fontSize: '15px', fontWeight: '700' }}>
-                                {proc.nombre}
-                              </strong>
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <label style={{ fontSize: '12.5px', fontWeight: '600', color: '#475569' }}>
-                                  Cantidad:
-                                </label>
-                                <input
-                                  type="number"
-                                  min="1"
-                                  value={proc.cantidad}
-                                  onChange={(e) => updateProcedimiento(proc.idProcedimiento, 'cantidad', e.target.value)}
-                                  style={{
-                                    width: '60px',
-                                    padding: '6px 8px',
-                                    textAlign: 'center',
-                                    borderRadius: '6px',
-                                    border: '1px solid #cbd5e1',
-                                    fontWeight: '700',
-                                    fontSize: '14px',
-                                    backgroundColor: '#ffffff'
-                                  }}
-                                />
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '12px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontWeight: '600', color: '#03045e' }}>
+                                  {m.nombre}
+                                </span>
+                                <span style={{ color: '#64748b', fontSize: '13px' }}>
+                                  ({m.presentacion || 'General'} {m.concentracion || ''})
+                                </span>
                               </div>
-
-                              <button
-                                type="button"
-                                onClick={() => removeProcedimiento(proc.idProcedimiento)}
-                                style={styles.btnTableDelete}
-                                title="Eliminar procedimiento"
-                              >
-                                <Trash2 size={16} />
-                              </button>
+                              {sinStock && (
+                                <span style={styles.noStockPill}>
+                                  Agotado en farmacia - No hacer receta
+                                </span>
+                              )}
                             </div>
-                          </div>
-
-                          {/* Campo grande de Instrucciones (similar a Indicaciones Generales de Tratamiento) */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                            <label style={{ fontSize: '12.5px', fontWeight: '600', color: '#334155' }}>
-                              Instrucciones para el Procedimiento (Opcional)
-                            </label>
-                            <textarea
-                              placeholder="Instrucciones específicas de cuidado, materiales, dosis o indicaciones clínicas..."
-                              value={proc.instrucciones || ''}
-                              onChange={(e) => updateProcedimiento(proc.idProcedimiento, 'instrucciones', e.target.value)}
-                              rows={3}
-                              style={{
-                                ...styles.textarea,
-                                backgroundColor: '#ffffff',
-                                height: '85px',
-                                minHeight: '75px',
-                                maxHeight: '140px',
-                                fontSize: '13.5px',
-                                lineHeight: '1.45'
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* Resumen informativo sin precios */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                        <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: '600' }}>
-                          ✓ {procedimientosSeleccionados.length} procedimiento(s) clínico(s) prescrito(s)
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ ...styles.emptyDiagBox, marginTop: '16px' }}>
-                      <Activity size={28} color="#94a3b8" />
-                      <p style={styles.emptyHint}>
-                        No se han asignado procedimientos clínicos a esta consulta (opcional).
-                      </p>
-                    </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   )}
                 </div>
 
+                {detallesTratamiento.length > 0 ? (
+                  <div className="clinica-table-responsive" style={{ ...styles.tableContainer, marginTop: '16px' }}>
+                    <datalist id="frecuencia-options">
+                      <option value="Cada 4 hrs" label="Cada 4 horas (6 al día)" />
+                      <option value="Cada 6 hrs" label="Cada 6 horas (4 al día)" />
+                      <option value="Cada 8 hrs" label="Cada 8 horas (3 al día)" />
+                      <option value="Cada 12 hrs" label="Cada 12 horas (2 al día)" />
+                      <option value="Cada 24 hrs" label="Cada 24 horas (1 al día)" />
+                    </datalist>
+
+                    <datalist id="duracion-options">
+                      <option value="3 días" />
+                      <option value="5 días" />
+                      <option value="7 días" />
+                      <option value="8 días" />
+                      <option value="10 días" />
+                      <option value="14 días" />
+                      <option value="30 días" />
+                    </datalist>
+
+                    <table style={styles.table}>
+                      <thead>
+                        <tr>
+                          <th style={{ ...styles.th, width: '25%' }}>Medicamento</th>
+                          <th style={{ ...styles.th, width: '15%' }}>Presentación</th>
+                          <th style={{ ...styles.th, width: '15%' }}>Frecuencia</th>
+                          <th style={{ ...styles.th, width: '13%' }}>Duración</th>
+                          <th style={{ ...styles.th, width: '15%' }}>Dosis</th>
+                          <th style={{ ...styles.th, width: '13%' }}>Cantidad</th>
+                          <th style={{ ...styles.th, width: '4%', textAlign: 'center' }}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {detallesTratamiento.map((dt) => {
+                          const sinStock = dt.unidades !== null && dt.unidades !== undefined && dt.unidades <= 0;
+                          return (
+                            <tr key={dt.idMedicamento} style={styles.tr}>
+                              <td style={styles.td}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                  <strong style={{ color: '#03045e', fontSize: '13.5px', fontWeight: '600' }}>
+                                    {dt.nombreMedicamento}
+                                  </strong>
+                                  {sinStock && (
+                                    <span style={styles.noStockPill}>
+                                      Agotado en farmacia
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td style={styles.td}>
+                                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                  {dt.presentacion && (
+                                    <span style={styles.badgePres}>
+                                      {dt.presentacion}
+                                    </span>
+                                  )}
+                                  {dt.concentracion && (
+                                    <span style={styles.badgeConc}>
+                                      {dt.concentracion}
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td style={styles.td}>
+                                <input
+                                  list="frecuencia-options"
+                                  placeholder="Cada 8 hrs"
+                                  value={dt.frecuencia}
+                                  onChange={(e) =>
+                                    updateDetalle(
+                                      dt.idMedicamento,
+                                      'frecuencia',
+                                      e.target.value
+                                    )
+                                  }
+                                  style={styles.tableInput}
+                                />
+                              </td>
+                              <td style={styles.td}>
+                                <input
+                                  list="duracion-options"
+                                  placeholder="5 días"
+                                  value={dt.duracion}
+                                  onChange={(e) =>
+                                    updateDetalle(
+                                      dt.idMedicamento,
+                                      'duracion',
+                                      e.target.value
+                                    )
+                                  }
+                                  style={styles.tableInput}
+                                />
+                              </td>
+                              {/* Columna Dosis adaptativa */}
+                              <td style={styles.td}>
+                                {dt.esLiquido ? (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <input
+                                      type="number"
+                                      min="0.5"
+                                      max="30"
+                                      step="0.5"
+                                      value={dt.dosisCm || 5}
+                                      onChange={(e) => {
+                                        const v = parseFloat(e.target.value) || 0;
+                                        updateDetalle(dt.idMedicamento, 'dosisCm', Math.min(30, Math.max(0.5, v)));
+                                      }}
+                                      style={{
+                                        width: '60px',
+                                        padding: '6px 8px',
+                                        textAlign: 'center',
+                                        borderRadius: '6px',
+                                        border: '1px solid #cbd5e1',
+                                        fontWeight: '700',
+                                        fontSize: '13px',
+                                        backgroundColor: '#ffffff'
+                                      }}
+                                    />
+                                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#0077b6' }}>cm</span>
+                                  </div>
+                                ) : dt.esGotas ? (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      max="100"
+                                      value={dt.gotasPorToma || 20}
+                                      onChange={(e) => {
+                                        const v = parseInt(e.target.value, 10) || 20;
+                                        updateDetalle(dt.idMedicamento, 'gotasPorToma', v);
+                                      }}
+                                      style={{
+                                        width: '55px',
+                                        padding: '6px 8px',
+                                        textAlign: 'center',
+                                        borderRadius: '6px',
+                                        border: '1px solid #cbd5e1',
+                                        fontWeight: '700',
+                                        fontSize: '13px',
+                                        backgroundColor: '#ffffff'
+                                      }}
+                                    />
+                                    <span style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>gotas</span>
+                                  </div>
+                                ) : dt.esTopico ? (
+                                  <span style={{ fontSize: '12.5px', color: '#64748b', fontStyle: 'italic' }}>
+                                    Aplicar en la zona
+                                  </span>
+                                ) : dt.esInhalador ? (
+                                  <span style={{ fontSize: '12.5px', color: '#64748b', fontStyle: 'italic' }}>
+                                    1 disparo / puff
+                                  </span>
+                                ) : (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <input
+                                      type="number"
+                                      min="0.5"
+                                      max="20"
+                                      step="0.5"
+                                      value={dt.unidadesPorToma || 1}
+                                      onChange={(e) => {
+                                        const v = parseFloat(e.target.value) || 1;
+                                        updateDetalle(dt.idMedicamento, 'unidadesPorToma', Math.max(0.5, v));
+                                      }}
+                                      style={{
+                                        width: '55px',
+                                        padding: '6px 8px',
+                                        textAlign: 'center',
+                                        borderRadius: '6px',
+                                        border: '1px solid #cbd5e1',
+                                        fontWeight: '700',
+                                        fontSize: '13px',
+                                        backgroundColor: '#ffffff'
+                                      }}
+                                    />
+                                    <span style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>unid.</span>
+                                  </div>
+                                )}
+                              </td>
+                              {/* Columna Cantidad sin texto de sugerencia */}
+                              <td style={styles.td}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={dt.cantidad}
+                                    onChange={(e) =>
+                                      updateDetalle(
+                                        dt.idMedicamento,
+                                        'cantidad',
+                                        e.target.value
+                                      )
+                                    }
+                                    style={styles.quantityInput}
+                                  />
+                                  <span style={styles.unitLabel}>
+                                    {dt.esGotas
+                                      ? 'gotero'
+                                      : dt.esTopico
+                                      ? 'tubo'
+                                      : dt.esLiquido
+                                      ? 'frasco'
+                                      : dt.esInhalador
+                                      ? 'inhalador'
+                                      : 'unid.'}
+                                  </span>
+                                </div>
+                              </td>
+                              <td style={{ ...styles.td, textAlign: 'center' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => removeDetalle(dt.idMedicamento)}
+                                  style={styles.btnTableDelete}
+                                  title="Eliminar medicamento"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div style={{ ...styles.emptyDiagBox, marginTop: '20px' }}>
+                    <Pill size={28} color="#94a3b8" />
+                    <p style={styles.emptyHint}>
+                      No se han agregado medicamentos a la receta (opcional si no requiere fármacos).
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1963,6 +2270,26 @@ export default function AtencionMedicaPage() {
                 style={styles.btnCancelFooter}
               >
                 Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setModalObservacionVisible(true)}
+                disabled={guardando || enviando || guardandoObservacion}
+                style={styles.btnObservacion}
+                title="Poner paciente en observación y guardar borrador"
+              >
+                {guardandoObservacion ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Guardando...</span>
+                  </>
+                ) : (
+                  <>
+                    <History size={16} />
+                    <span>Poner en Observación</span>
+                  </>
+                )}
               </button>
             </div>
 
@@ -2042,7 +2369,7 @@ export default function AtencionMedicaPage() {
 
             <div style={styles.modalBody}>
               <p style={{ margin: 0, color: '#334155', fontSize: '14px', lineHeight: '1.5' }}>
-                Tiene una atención médica en proceso. Si decide salir ahora, la información ingresada en los 5 pasos se perderá y no podrá recuperarse.
+                Tiene una atención médica en proceso. Si decide salir ahora, la información ingresada en los 6 pasos se perderá y no podrá recuperarse.
               </p>
             </div>
 
@@ -2065,6 +2392,188 @@ export default function AtencionMedicaPage() {
                 Sí, Salir
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Confirmar Poner en Observación */}
+      {modalObservacionVisible && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalCard}>
+            <div style={styles.modalHeader}>
+              <div style={{ ...styles.modalIconBoxWarning, background: '#F3E8FF', borderColor: '#D8B4FE' }}>
+                <History size={24} color="#7E22CE" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={styles.modalTitle}>¿Poner al paciente en Observación?</h3>
+                <p style={{ ...styles.modalSubtitle, color: '#7E22CE' }}>
+                  Se guardará todo el avance actual de la consulta
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalObservacionVisible(false)}
+                style={styles.btnModalClose}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={styles.modalBody}>
+              <p style={{ margin: 0, color: '#334155', fontSize: '14px', lineHeight: '1.5' }}>
+                El paciente quedará registrado con el estado <strong>OBSERVACIÓN</strong> en la cola de atención médica. Toda la información que ha registrado en los pasos se conservará para cuando decida continuar la consulta.
+              </p>
+            </div>
+
+            <div style={styles.modalFooter}>
+              <button
+                type="button"
+                onClick={() => setModalObservacionVisible(false)}
+                disabled={guardandoObservacion}
+                style={styles.btnModalCancel}
+              >
+                Continuar Consulta
+              </button>
+              <button
+                type="button"
+                onClick={handlePonerEnObservacion}
+                disabled={guardandoObservacion}
+                style={{
+                  ...styles.btnModalConfirmExit,
+                  background: '#7E22CE',
+                  boxShadow: '0 2px 6px rgba(126, 34, 206, 0.35)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                {guardandoObservacion ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Guardando...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={16} />
+                    <span>Confirmar Observación</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Crear Nuevo Diagnóstico CIE-10 Sobre la Marcha */}
+      {modalCrearDiagVisible && (
+        <div style={styles.modalOverlay}>
+          <div style={{ ...styles.modalCard, maxWidth: '520px' }}>
+            <div style={styles.modalHeader}>
+              <div style={{ ...styles.modalIconBoxWarning, background: '#e0f2fe', borderColor: '#bae6fd' }}>
+                <Stethoscope size={24} color="#0284c7" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={styles.modalTitle}>Nuevo Diagnóstico Clínico</h3>
+                <p style={styles.modalSubtitle}>
+                  Agregue una nueva patología al catálogo CIE-10
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalCrearDiagVisible(false)}
+                style={styles.btnModalClose}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleGuardarNuevoDiagnostico}>
+              <div style={{ ...styles.modalBody, display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {errorCrearDiag && (
+                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '10px 14px', borderRadius: '8px', fontSize: '13px' }}>
+                    {errorCrearDiag}
+                  </div>
+                )}
+
+                <div style={styles.inputGroup}>
+                  <label style={styles.label}>Nombre o Descripción del Diagnóstico *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej: Faringitis aguda bacteriana, Hipertensión gestacional..."
+                    value={nuevoDiagNombre}
+                    onChange={(e) => setNuevoDiagNombre(e.target.value)}
+                    style={styles.input}
+                    autoFocus
+                  />
+                </div>
+
+                <div style={styles.inputGroup}>
+                  <label style={styles.label}>Categoría Clínica *</label>
+                  <select
+                    required
+                    value={nuevoDiagIdCategoria}
+                    onChange={(e) => setNuevoDiagIdCategoria(e.target.value)}
+                    style={{ ...styles.input, height: '42px', backgroundColor: '#ffffff' }}
+                  >
+                    <option value="" disabled>Seleccione una categoría...</option>
+                    {categoriasDiag.map((cat) => (
+                      <option key={cat.idCategoria} value={cat.idCategoria}>
+                        {cat.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={styles.inputGroup}>
+                  <label style={styles.label}>Código CIE-10 (Opcional / Autogenerado)</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: J02.9 o CIE-XXXX"
+                    value={nuevoDiagCodigo}
+                    onChange={(e) => setNuevoDiagCodigo(e.target.value)}
+                    style={styles.input}
+                  />
+                  <span style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                    Si no conoce el código oficial, se utilizará un código sugerido.
+                  </span>
+                </div>
+              </div>
+
+              <div style={styles.modalFooter}>
+                <button
+                  type="button"
+                  onClick={() => setModalCrearDiagVisible(false)}
+                  disabled={creandoDiag}
+                  style={styles.btnModalCancel}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={creandoDiag}
+                  style={{
+                    ...styles.btnModalConfirmExit,
+                    background: '#0077b6',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  {creandoDiag ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Guardando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={16} />
+                      <span>Guardar y Agregar</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -2230,10 +2739,10 @@ const styles = {
     padding: '30px',
     textAlign: 'center',
   },
-  // Wizard Stepper Tabs
+  // Wizard Stepper Tabs (6 pasos en una sola línea)
   stepperNav: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(5, 1fr)',
+    gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
     gap: '6px',
     marginBottom: '10px',
   },
@@ -2241,14 +2750,15 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '6px',
-    padding: '7px 10px',
+    gap: '4px',
+    padding: '7px 6px',
     borderRadius: '8px',
     border: '1px solid transparent',
-    fontSize: '12px',
+    fontSize: '11px',
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
+    minWidth: 0,
   },
   stepTabActive: {
     background: '#0077b6',
@@ -2267,8 +2777,8 @@ const styles = {
     border: '1px solid #e2e8f0',
   },
   stepNumberBadge: {
-    width: '20px',
-    height: '20px',
+    width: '18px',
+    height: '18px',
     borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
@@ -2293,6 +2803,7 @@ const styles = {
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+    fontSize: '11px',
   },
   // Wizard Card Content
   wizardCard: {
@@ -2978,6 +3489,8 @@ const styles = {
   wizardFooterLeft: {
     display: 'flex',
     alignItems: 'center',
+    gap: '12px',
+    flexWrap: 'wrap',
   },
   wizardFooterRight: {
     display: 'flex',
@@ -2993,6 +3506,21 @@ const styles = {
     fontSize: '14.5px',
     fontWeight: '600',
     cursor: 'pointer',
+  },
+  btnObservacion: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#F3E8FF',
+    color: '#7E22CE',
+    border: '1.5px solid #7E22CE',
+    padding: '11px 18px',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '700',
+    cursor: 'pointer',
+    boxShadow: '0 1px 3px rgba(126, 34, 206, 0.12)',
+    transition: 'all 0.2s',
   },
   btnNavSecondary: {
     display: 'inline-flex',

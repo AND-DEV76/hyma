@@ -56,6 +56,9 @@ public class Consulta {
     @Column(name = "plan_medico", columnDefinition = "TEXT")
     private String planMedico;
 
+    @Column(name = "laboratorio", columnDefinition = "TEXT")
+    private String laboratorio;
+
     @Column(name = "precio_consulta", precision = 12, scale = 2)
     @Builder.Default
     private BigDecimal precioConsulta = BigDecimal.ZERO;

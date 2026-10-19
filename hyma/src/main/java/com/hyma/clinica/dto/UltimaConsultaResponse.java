@@ -21,6 +21,7 @@ public class UltimaConsultaResponse {
     private String historiaEnfermedadActual;
     private String impresionClinica;
     private String planMedico;
+    private String laboratorio;
     
     private List<DiagnosticoItemResponse> diagnosticos;
     private String indicacionesTratamiento;

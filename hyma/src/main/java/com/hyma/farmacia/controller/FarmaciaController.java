@@ -204,4 +204,17 @@ public class FarmaciaController {
         String username = authentication != null ? authentication.getName() : null;
         return ResponseEntity.status(HttpStatus.CREATED).body(farmaciaService.registrarVentaExterna(request, username));
     }
+
+    @PostMapping("/uso-clinica/consumo")
+    public ResponseEntity<ConsumoClinicaResponse> registrarConsumoClinica(
+            @Valid @RequestBody ConsumoClinicaRequest request,
+            Authentication authentication) {
+        String username = authentication != null ? authentication.getName() : null;
+        return ResponseEntity.status(HttpStatus.CREATED).body(farmaciaService.registrarConsumoClinica(request, username));
+    }
+
+    @GetMapping("/uso-clinica/historial")
+    public ResponseEntity<List<ConsumoClinicaResponse>> listarHistorialConsumoClinica() {
+        return ResponseEntity.ok(farmaciaService.listarHistorialConsumoClinica());
+    }
 }

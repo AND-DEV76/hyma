@@ -177,8 +177,8 @@ public class ReporteService {
         LocalDateTime finMes = ym.atEndOfMonth().atTime(23, 59, 59, 999999999);
 
         // Obtener columnas diagnósticas dinámicas desde BD
-        List<DiagnosticoColumnaInfo> columnasDiag = obtenerColumnasDiagnosticosDinamicas();
-        int totalDiagCols = columnasDiag.size();
+        List<DiagnosticoColumnaInfo> todasColumnasDiag = obtenerColumnasDiagnosticosDinamicas();
+        int totalDiagCols = todasColumnasDiag.size();
 
         // Consultas del mes
         List<Consulta> consultasMes = consultaRepository.findByFechaConsultaBetweenOrderByFechaConsultaAsc(inicioMes, finMes);
@@ -426,7 +426,7 @@ public class ReporteService {
                     List<Diagnostico> diags = diagPorConsulta.getOrDefault(c.getIdConsulta(), Collections.emptyList());
                     for (Diagnostico d : diags) {
                         if (d == null) continue;
-                        int idx = clasificarDiagnosticoDinamico(d, columnasDiag);
+                        int idx = clasificarDiagnosticoDinamico(d, todasColumnasDiag);
                         if (idx >= 0 && idx < totalDiagCols) {
                             conteoDiag[idx]++;
                         }
@@ -506,8 +506,43 @@ public class ReporteService {
                 }
             }
         }
-        List<Integer> listTotDiags = new ArrayList<>();
-        for (int v : sumDiags) listTotDiags.add(v);
+        // Filtrar diagnósticos para conservar ÚNICAMENTE aquellos con al menos un caso registrado en el mes (> 0)
+        List<Integer> indicesConDatos = new ArrayList<>();
+        for (int i = 0; i < totalDiagCols; i++) {
+            if (sumDiags[i] > 0) {
+                indicesConDatos.add(i);
+            }
+        }
+
+        List<DiagnosticoColumnaInfo> columnasDiag = new ArrayList<>();
+        int nuevoIndice = 0;
+        for (int idxOrig : indicesConDatos) {
+            DiagnosticoColumnaInfo colOrig = todasColumnasDiag.get(idxOrig);
+            columnasDiag.add(DiagnosticoColumnaInfo.builder()
+                    .indice(nuevoIndice++)
+                    .idCie10(colOrig.getIdCie10())
+                    .codigo(colOrig.getCodigo())
+                    .categoria(colOrig.getCategoria())
+                    .nombre(colOrig.getNombre())
+                    .colorFondo(colOrig.getColorFondo())
+                    .build());
+        }
+
+        // Reasignar los diagnósticos en cada fila conservando solo las columnas con datos
+        for (FilaReporteEstadistica f : filas) {
+            List<Integer> diagsFila = new ArrayList<>(columnasDiag.size());
+            for (int idxOrig : indicesConDatos) {
+                int val = (f.getDiagnosticos() != null && f.getDiagnosticos().size() > idxOrig)
+                        ? f.getDiagnosticos().get(idxOrig) : 0;
+                diagsFila.add(val);
+            }
+            f.setDiagnosticos(diagsFila);
+        }
+
+        List<Integer> listTotDiags = new ArrayList<>(columnasDiag.size());
+        for (int idxOrig : indicesConDatos) {
+            listTotDiags.add(sumDiags[idxOrig]);
+        }
 
         // Promedio diario de atención (Total Pacientes / Total Días de Atención)
         double promDiarioPacientes = totDiasAtencion > 0
@@ -569,7 +604,7 @@ public class ReporteService {
                 .recaudadoMedicamentos(promRecaudadoMedicamentos)
                 .recaudadoProcedimientos(promRecaudadoProcedimientos)
                 .totalRecaudado(promRecaudado)
-                .diagnosticos(new ArrayList<>(Collections.nCopies(totalDiagCols, 0)))
+                .diagnosticos(new ArrayList<>(Collections.nCopies(columnasDiag.size(), 0)))
                 .build();
 
         String periodoNombre = ym.getMonth().name().substring(0, 3).toLowerCase() + "-" + (anio % 100);
@@ -626,14 +661,14 @@ public class ReporteService {
             }
         }
 
-        // 4. Si no coincide, buscar primera columna de "OTROS" o fallback al último índice
+        // 4. Si no coincide, buscar primera columna de "OTROS" o retornar -1 si no se encuentra
         for (int i = 0; i < columnas.size(); i++) {
             if ("OTROS".equalsIgnoreCase(columnas.get(i).getCategoria())) {
                 return i;
             }
         }
 
-        return columnas.size() - 1;
+        return -1;
     }
 
     private String normalizarTexto(String texto) {
@@ -795,15 +830,17 @@ public class ReporteService {
             sheet.addMergedRegion(new CellRangeAddress(0, 0, 1, 17));
 
             // Merge de clasificación de diagnósticos
-            Cell cDiagTitle = row0.createCell(18);
-            cDiagTitle.setCellValue("CLASIFICACIÓN DE DIAGNÓSTICOS");
-            cDiagTitle.setCellStyle(styleTitleDiag);
-            for (int col = 19; col <= lastColIdx; col++) {
-                Cell c = row0.createCell(col);
-                c.setCellStyle(styleTitleDiag);
-            }
-            if (lastColIdx >= 18) {
-                sheet.addMergedRegion(new CellRangeAddress(0, 0, 18, lastColIdx));
+            if (totalDiagCols > 0) {
+                Cell cDiagTitle = row0.createCell(18);
+                cDiagTitle.setCellValue("CLASIFICACIÓN DE DIAGNÓSTICOS");
+                cDiagTitle.setCellStyle(styleTitleDiag);
+                for (int col = 19; col <= lastColIdx; col++) {
+                    Cell c = row0.createCell(col);
+                    c.setCellStyle(styleTitleDiag);
+                }
+                if (lastColIdx >= 18) {
+                    sheet.addMergedRegion(new CellRangeAddress(0, 0, 18, lastColIdx));
+                }
             }
 
             // -------------------------------------------------------------
@@ -1067,8 +1104,10 @@ public class ReporteService {
             sheet.setColumnWidth(15, 3600); // MEDICAMENTOS
             sheet.setColumnWidth(16, 3600); // PROCEDIMIENTOS
             sheet.setColumnWidth(17, 3800); // TOTAL RECAUDADO
-            for (int c = 18; c <= lastColIdx; c++) {
-                sheet.setColumnWidth(c, 4200); // Diagnósticos legibles
+            if (totalDiagCols > 0) {
+                for (int c = 18; c <= lastColIdx; c++) {
+                    sheet.setColumnWidth(c, 4200); // Diagnósticos legibles
+                }
             }
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();

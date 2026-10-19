@@ -61,13 +61,19 @@ public class ClinicaService {
 
     @Transactional
     public PacienteConsultaResponse obtenerDatosPacienteParaConsulta(Long idPaciente, Long idCola) {
+        String datosBorrador = null;
+        String estadoColaStr = null;
         if (idCola != null) {
-            colaAtencionRepository.findById(idCola).ifPresent(cola -> {
+            Optional<ColaAtencion> colaOpt = colaAtencionRepository.findById(idCola);
+            if (colaOpt.isPresent()) {
+                ColaAtencion cola = colaOpt.get();
+                estadoColaStr = cola.getEstado() != null ? cola.getEstado().name() : null;
+                datosBorrador = cola.getDatosConsulta();
                 if (cola.getEstado() == EstadoCola.ESPERA_CONSULTA) {
                     cola.setEstado(EstadoCola.EN_CONSULTA);
                     colaAtencionRepository.save(cola);
                 }
-            });
+            }
         }
 
         Paciente paciente = pacienteRepository.findById(idPaciente)
@@ -140,6 +146,7 @@ public class ClinicaService {
                     .historiaEnfermedadActual(c.getHistoriaEnfermedadActual())
                     .impresionClinica(c.getImpresionClinica())
                     .planMedico(c.getPlanMedico())
+                    .laboratorio(c.getLaboratorio())
                     .diagnosticos(diagList)
                     .indicacionesTratamiento(indicaciones)
                     .medicamentos(medsList)
@@ -151,6 +158,8 @@ public class ClinicaService {
                 .paciente(pacienteResp)
                 .ultimoSignoVital(signoResp)
                 .idCola(idCola)
+                .estadoCola(estadoColaStr)
+                .datosConsultaBorrador(datosBorrador)
                 .ultimaConsulta(ultimaConsultaResp)
                 .build();
     }
@@ -219,6 +228,7 @@ public class ClinicaService {
                 .historiaEnfermedadActual(request.getHistoriaEnfermedadActual())
                 .impresionClinica(request.getImpresionClinica())
                 .planMedico(request.getPlanMedico())
+                .laboratorio(request.getLaboratorio())
                 .precioConsulta(precio)
                 .fechaConsulta(LocalDateTime.now())
                 .build();
@@ -337,6 +347,7 @@ public class ClinicaService {
 
         // 7. Actualizar Cola de Atención
         cola.setEstado(EstadoCola.EN_FARMACIA);
+        cola.setDatosConsulta(null);
         cola.setFechaAtencion(LocalDateTime.now());
         colaAtencionRepository.save(cola);
 
@@ -345,5 +356,14 @@ public class ClinicaService {
                 .mensaje("Consulta finalizada exitosamente")
                 .fechaConsulta(consulta.getFechaConsulta())
                 .build();
+    }
+
+    @Transactional
+    public void ponerEnObservacion(Long idCola, String datosBorrador) {
+        ColaAtencion cola = colaAtencionRepository.findById(idCola)
+                .orElseThrow(() -> new ColaAtencionNotFoundException(idCola));
+        cola.setEstado(EstadoCola.OBSERVACION);
+        cola.setDatosConsulta(datosBorrador);
+        colaAtencionRepository.save(cola);
     }
 }

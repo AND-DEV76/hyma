@@ -8,29 +8,32 @@ const initialMedicineState = {
   idCategoriaMedicamento: '',
   idCasaFarmaceutica: '',
   estado: true,
+  esUsoClinica: false,
 };
 
-function MedicamentoModal({ isOpen, onClose, onSave, medicineToEdit, categorias, casas }) {
+function MedicamentoModal({ isOpen, onClose, onSave, medicineToEdit, medicine, categorias, casas }) {
+  const itemToEdit = medicineToEdit || medicine;
   const [formData, setFormData] = useState(initialMedicineState);
   const [errorMessage, setErrorMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (medicineToEdit) {
+    if (itemToEdit) {
       setFormData({
-        idMedicamento: medicineToEdit.idMedicamento,
-        nombre: medicineToEdit.nombre || '',
-        presentacion: medicineToEdit.presentacion || '',
-        concentracion: medicineToEdit.concentracion || '',
-        idCategoriaMedicamento: medicineToEdit.idCategoriaMedicamento ? String(medicineToEdit.idCategoriaMedicamento) : '',
-        idCasaFarmaceutica: medicineToEdit.idCasaFarmaceutica ? String(medicineToEdit.idCasaFarmaceutica) : '',
-        estado: medicineToEdit.estado !== false,
+        idMedicamento: itemToEdit.idMedicamento,
+        nombre: itemToEdit.nombre || '',
+        presentacion: itemToEdit.presentacion || '',
+        concentracion: itemToEdit.concentracion || '',
+        idCategoriaMedicamento: itemToEdit.idCategoriaMedicamento ? String(itemToEdit.idCategoriaMedicamento) : '',
+        idCasaFarmaceutica: itemToEdit.idCasaFarmaceutica ? String(itemToEdit.idCasaFarmaceutica) : '',
+        estado: itemToEdit.estado !== false,
+        esUsoClinica: Boolean(itemToEdit.esUsoClinica),
       });
     } else {
       setFormData(initialMedicineState);
     }
     setErrorMessage('');
-  }, [medicineToEdit, isOpen]);
+  }, [itemToEdit, isOpen]);
 
   if (!isOpen) return null;
 
@@ -62,6 +65,7 @@ function MedicamentoModal({ isOpen, onClose, onSave, medicineToEdit, categorias,
         idCategoriaMedicamento: formData.idCategoriaMedicamento ? Number(formData.idCategoriaMedicamento) : null,
         idCasaFarmaceutica: formData.idCasaFarmaceutica ? Number(formData.idCasaFarmaceutica) : null,
         estado: formData.estado,
+        esUsoClinica: Boolean(formData.esUsoClinica),
       };
 
       const id = formData.idMedicamento || null;
@@ -212,6 +216,38 @@ function MedicamentoModal({ isOpen, onClose, onSave, medicineToEdit, categorias,
                 <option value="true">Activo (Disponible para movimientos)</option>
                 <option value="false">Inactivo (Deshabilitado)</option>
               </select>
+            </div>
+
+            <div className="farmacia-form-group full" style={{ marginTop: '4px' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                  background: formData.esUsoClinica ? '#f0fdf4' : '#f8fafc',
+                  border: formData.esUsoClinica ? '1.5px solid #86efac' : '1.5px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '12px 14px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  name="esUsoClinica"
+                  checked={formData.esUsoClinica}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, esUsoClinica: e.target.checked }))}
+                  style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: '#059669', cursor: 'pointer' }}
+                />
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: formData.esUsoClinica ? '#15803d' : '#334155' }}>
+                    Insumo de Uso en Clínica Médica
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px', lineHeight: '1.3' }}>
+                    Marcar si este insumo es para consumo interno en clínica (ej. alcohol al 70%, gasas, algodón, desinfectante) y no para venta individual a pacientes.
+                  </div>
+                </div>
+              </label>
             </div>
           </div>
 

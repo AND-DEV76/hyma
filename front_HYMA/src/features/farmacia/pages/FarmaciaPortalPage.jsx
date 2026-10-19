@@ -6,7 +6,8 @@ import {
   Package,
   ChevronRight,
   Pill,
-  Sparkles
+  Sparkles,
+  Stethoscope
 } from 'lucide-react';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
@@ -30,6 +31,13 @@ export default function FarmaciaPortalPage() {
       descripcion: 'Inventario de farmacia, control de stock, lotes activos y catálogos.',
       ruta: '/farmacia/medicamentos',
       icono: <Package size={26} />,
+    },
+    {
+      id: 'uso-clinica',
+      titulo: 'Uso en Clínica',
+      descripcion: 'Inventario de insumos de uso médico interno y registro de consumo diario.',
+      ruta: '/farmacia/uso-clinica',
+      icono: <Stethoscope size={26} />,
     },
   ];
 
