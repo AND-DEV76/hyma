@@ -29,6 +29,7 @@ export default function VentaExternaPage() {
 
   // Carrito de venta
   const [itemsVenta, setItemsVenta] = useState([]);
+  const [modalidadVenta, setModalidadVenta] = useState('NORMAL'); // 'NORMAL', 'SR', 'BECADO'
 
   // Proceso de venta
   const [procesando, setProcesando] = useState(false);
@@ -201,13 +202,15 @@ export default function VentaExternaPage() {
     setError('');
 
     try {
+      const esExonerado = modalidadVenta !== 'NORMAL';
       const payload = {
-        cliente: 'Público General',
-        observaciones: 'Venta directa en mostrador',
+        cliente: 'Público General' + (esExonerado ? ` (${modalidadVenta})` : ''),
+        observaciones: esExonerado ? `Dispensación externa ${modalidadVenta} (Exoneración)` : 'Venta directa en mostrador',
+        tipoSalida: modalidadVenta === 'NORMAL' ? 'VENTA_EXTERNA' : modalidadVenta,
         items: itemsVenta.map((it) => ({
           idMedicamento: it.idMedicamento,
           cantidad: it.cantidad,
-          precioUnitario: it.precioUnitario,
+          precioUnitario: esExonerado ? 0 : it.precioUnitario,
         })),
       };
 
@@ -266,6 +269,85 @@ export default function VentaExternaPage() {
             <ArrowLeft size={16} />
             <span>Volver a Dispensación</span>
           </button>
+        </div>
+
+        {/* Barra de Selección de Modalidad */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: '#ffffff',
+          padding: '12px 18px',
+          borderRadius: '12px',
+          border: '1px solid #e2e8f0',
+          marginBottom: '16px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+          flexWrap: 'wrap',
+          gap: '12px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ShoppingBag size={18} color="#0284c7" />
+            <span style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
+              Modalidad de Salida:
+            </span>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>
+              {modalidadVenta === 'NORMAL' ? '(Cobro regular)' : `(Exonerado - Descuenta stock sin cobro monetario)`}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={() => setModalidadVenta('NORMAL')}
+              style={{
+                padding: '7px 18px',
+                borderRadius: '20px',
+                fontSize: '13px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                backgroundColor: modalidadVenta === 'NORMAL' ? '#0284c7' : '#f1f5f9',
+                color: modalidadVenta === 'NORMAL' ? '#ffffff' : '#475569',
+                border: modalidadVenta === 'NORMAL' ? '1px solid #0284c7' : '1px solid #cbd5e1'
+              }}
+            >
+              Normal
+            </button>
+            <button
+              type="button"
+              onClick={() => setModalidadVenta('SR')}
+              style={{
+                padding: '7px 18px',
+                borderRadius: '20px',
+                fontSize: '13px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                backgroundColor: modalidadVenta === 'SR' ? '#0d9488' : '#f1f5f9',
+                color: modalidadVenta === 'SR' ? '#ffffff' : '#475569',
+                border: modalidadVenta === 'SR' ? '1px solid #0d9488' : '1px solid #cbd5e1'
+              }}
+            >
+              S/R
+            </button>
+            <button
+              type="button"
+              onClick={() => setModalidadVenta('BECADO')}
+              style={{
+                padding: '7px 18px',
+                borderRadius: '20px',
+                fontSize: '13px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                backgroundColor: modalidadVenta === 'BECADO' ? '#7c3aed' : '#f1f5f9',
+                color: modalidadVenta === 'BECADO' ? '#ffffff' : '#475569',
+                border: modalidadVenta === 'BECADO' ? '1px solid #7c3aed' : '1px solid #cbd5e1'
+              }}
+            >
+              Becado
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -486,12 +568,19 @@ export default function VentaExternaPage() {
           {/* Barra de Totales y Botón Confirmar Venta */}
           <div className="ve-total-bar">
             <div className="ve-total-info">
-              <span className="ve-total-eyebrow">Total a Cobrar</span>
-              <div className="ve-total-amount">
-                Q {totalPagar.toFixed(2)}
+              <span className="ve-total-eyebrow">
+                {modalidadVenta === 'NORMAL' ? 'Total a Cobrar' : `Total a Cobrar (${modalidadVenta} - Exonerado)`}
+              </span>
+              <div className="ve-total-amount" style={{ color: modalidadVenta === 'NORMAL' ? '#03045e' : '#0d9488' }}>
+                {modalidadVenta === 'NORMAL' ? `Q ${totalPagar.toFixed(2)}` : 'Q 0.00'}
               </div>
               <span className="ve-total-units">
                 {totalUnidades} {totalUnidades === 1 ? 'unidad' : 'unidades'} en total
+                {modalidadVenta !== 'NORMAL' && (
+                  <span style={{ display: 'block', color: '#0d9488', fontWeight: '700', marginTop: '2px', fontSize: '11.5px' }}>
+                    Descuento de stock sin cobro ({modalidadVenta})
+                  </span>
+                )}
               </span>
             </div>
 
@@ -510,16 +599,19 @@ export default function VentaExternaPage() {
                 onClick={handleConfirmarVenta}
                 disabled={itemsVenta.length === 0 || procesando}
                 className="ve-btn-confirmar"
+                style={{
+                  backgroundColor: modalidadVenta === 'NORMAL' ? '#0284c7' : (modalidadVenta === 'SR' ? '#0d9488' : '#7c3aed')
+                }}
               >
                 {procesando ? (
                   <>
                     <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
-                    <span>Registrando Venta...</span>
+                    <span>Registrando Salida...</span>
                   </>
                 ) : (
                   <>
                     <CheckCircle2 size={18} />
-                    <span>Confirmar Venta</span>
+                    <span>{modalidadVenta === 'NORMAL' ? 'Confirmar Venta' : `Confirmar Entrega (${modalidadVenta})`}</span>
                   </>
                 )}
               </button>
@@ -536,9 +628,13 @@ export default function VentaExternaPage() {
                   <CheckCircle2 size={24} color="#059669" />
                 </div>
                 <div>
-                  <h3 className="ve-modal-title">¡Venta Registrada Exitosamente!</h3>
+                  <h3 className="ve-modal-title">
+                    {modalidadVenta === 'NORMAL' ? '¡Venta Registrada Exitosamente!' : `¡Entrega ${modalidadVenta} Registrada Exitosamente!`}
+                  </h3>
                   <p className="ve-modal-sub">
-                    El inventario ha sido descontado por FEFO y el ingreso fue sumado a la recaudación del día.
+                    {modalidadVenta === 'NORMAL' 
+                      ? 'El inventario ha sido descontado por FEFO y el ingreso fue sumado a la recaudación del día.' 
+                      : `El inventario ha sido descontado por FEFO bajo modalidad ${modalidadVenta} sin registrar cobro monetario.`}
                   </p>
                 </div>
               </div>
@@ -550,7 +646,7 @@ export default function VentaExternaPage() {
                     Obras Sociales San Martín
                   </h4>
                   <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>
-                    Comprobante de Venta en Mostrador
+                    {modalidadVenta === 'NORMAL' ? 'Comprobante de Venta en Mostrador' : `Comprobante de Entrega - Modalidad ${modalidadVenta} (Exonerado)`}
                   </p>
                   <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#94a3b8' }}>
                     Salida #{ventaExitosa.idSalida} • {new Date(ventaExitosa.fechaSalida || Date.now()).toLocaleString('es-GT')}

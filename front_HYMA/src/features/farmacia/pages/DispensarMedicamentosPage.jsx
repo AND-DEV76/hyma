@@ -805,18 +805,31 @@ export default function DispensarMedicamentosPage() {
 
                   {medicamentos.length > 0 ? (
                     <div className="dispensar-table-responsive" style={styles.tableResponsive}>
+                      <style>{`
+                        @media (max-width: 1366px) {
+                          .dispensar-table-responsive table {
+                            font-size: 12px !important;
+                          }
+                          .dispensar-table-responsive th,
+                          .dispensar-table-responsive td {
+                            padding: 7px 6px !important;
+                          }
+                          .dispensar-table-responsive input {
+                            font-size: 11.5px !important;
+                            padding: 4px 6px !important;
+                          }
+                        }
+                      `}</style>
                       <table style={styles.table}>
                         <thead>
                           <tr>
-                            <th style={{ ...styles.th, width: '23%' }}>Medicamento</th>
-                            <th style={{ ...styles.th, width: '15%' }}>Presentación / Conc.</th>
+                            <th style={{ ...styles.th, width: '30%' }}>Medicamento</th>
                             <th style={{ ...styles.th, width: '18%' }}>Dosis / Toma</th>
-                            <th style={{ ...styles.th, width: '15%' }}>Frecuencia</th>
-                            <th style={{ ...styles.th, width: '11%' }}>Duración</th>
-                            <th style={{ ...styles.th, width: '12%', textAlign: 'center' }}>
+                            <th style={{ ...styles.th, width: '30%' }}>Posología / Indicaciones</th>
+                            <th style={{ ...styles.th, width: '14%', textAlign: 'center' }}>
                               Cantidad a Entregar
                             </th>
-                            <th style={{ ...styles.th, width: '6%', textAlign: 'center' }}>Acciones</th>
+                            <th style={{ ...styles.th, width: '8%', textAlign: 'center' }}>Acciones</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -830,9 +843,19 @@ export default function DispensarMedicamentosPage() {
                               <tr key={m.idMedicamento} style={styles.tr}>
                                 <td style={styles.td}>
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                                    <strong style={{ color: '#03045e', fontSize: '13.5px' }}>
+                                    <strong style={{ color: '#03045e', fontSize: '13.5px', wordBreak: 'break-word', whiteSpace: 'normal' }}>
                                       {m.nombre}
                                     </strong>
+                                    {(m.presentacion || m.concentracion) && (
+                                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                        {m.presentacion && (
+                                          <span style={styles.badgePres}>{m.presentacion}</span>
+                                        )}
+                                        {m.concentracion && (
+                                          <span style={styles.badgeConc}>{m.concentracion}</span>
+                                        )}
+                                      </div>
+                                    )}
                                     {m.esUsoClinica && (
                                       <span
                                         style={{
@@ -860,20 +883,6 @@ export default function DispensarMedicamentosPage() {
                                 </td>
 
                                 <td style={styles.td}>
-                                  <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'center' }}>
-                                    {m.presentacion && (
-                                      <span style={styles.badgePres}>{m.presentacion}</span>
-                                    )}
-                                    {m.concentracion && (
-                                      <span style={styles.badgeConc}>{m.concentracion}</span>
-                                    )}
-                                    {!m.presentacion && !m.concentracion && (
-                                      <span style={{ color: '#94a3b8' }}>—</span>
-                                    )}
-                                  </div>
-                                </td>
-
-                                <td style={styles.td}>
                                   <input
                                     type="text"
                                     value={m.dosis || ''}
@@ -885,25 +894,24 @@ export default function DispensarMedicamentosPage() {
                                 </td>
 
                                 <td style={styles.td}>
-                                  <input
-                                    type="text"
-                                    value={m.frecuencia || ''}
-                                    onChange={(e) => handleEditarCampoMed(m.idMedicamento, 'frecuencia', e.target.value)}
-                                    style={styles.editableInput}
-                                    placeholder="Frecuencia..."
-                                    title="Modificar frecuencia"
-                                  />
-                                </td>
-
-                                <td style={styles.td}>
-                                  <input
-                                    type="text"
-                                    value={m.duracion || ''}
-                                    onChange={(e) => handleEditarCampoMed(m.idMedicamento, 'duracion', e.target.value)}
-                                    style={styles.editableInput}
-                                    placeholder="Duración..."
-                                    title="Modificar duración"
-                                  />
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                    <input
+                                      type="text"
+                                      value={m.frecuencia || ''}
+                                      onChange={(e) => handleEditarCampoMed(m.idMedicamento, 'frecuencia', e.target.value)}
+                                      style={styles.editableInput}
+                                      placeholder="Frecuencia (ej. c/8h)..."
+                                      title="Modificar frecuencia"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={m.duracion || ''}
+                                      onChange={(e) => handleEditarCampoMed(m.idMedicamento, 'duracion', e.target.value)}
+                                      style={styles.editableInput}
+                                      placeholder="Duración (ej. 5 días)..."
+                                      title="Modificar duración"
+                                    />
+                                  </div>
                                 </td>
 
                                 <td style={{ ...styles.td, textAlign: 'center' }}>
@@ -2144,12 +2152,14 @@ const styles = {
     overflowX: 'auto',
     borderRadius: '8px',
     border: '1px solid #e2e8f0',
+    width: '100%',
   },
   table: {
     width: '100%',
+    tableLayout: 'fixed',
     borderCollapse: 'separate',
     borderSpacing: 0,
-    fontSize: '13.5px',
+    fontSize: '13px',
     textAlign: 'left',
   },
   th: {
@@ -2159,16 +2169,20 @@ const styles = {
     fontSize: '11.5px',
     textTransform: 'uppercase',
     letterSpacing: '0.04em',
-    padding: '11px 14px',
+    padding: '9px 10px',
     borderBottom: '2px solid #e2e8f0',
+    whiteSpace: 'normal',
+    wordBreak: 'break-word',
   },
   tr: {
     borderBottom: '1px solid #f1f5f9',
   },
   td: {
-    padding: '10px 14px',
+    padding: '8px 10px',
     verticalAlign: 'middle',
     borderBottom: '1px solid #f1f5f9',
+    whiteSpace: 'normal',
+    wordBreak: 'break-word',
   },
   badgePres: {
     display: 'inline-block',
@@ -2179,7 +2193,8 @@ const styles = {
     borderRadius: '5px',
     fontSize: '11.5px',
     fontWeight: '600',
-    whiteSpace: 'nowrap',
+    whiteSpace: 'normal',
+    wordBreak: 'break-word',
   },
   badgeConc: {
     display: 'inline-block',
@@ -2190,15 +2205,16 @@ const styles = {
     borderRadius: '5px',
     fontSize: '11.5px',
     fontWeight: '600',
-    whiteSpace: 'nowrap',
+    whiteSpace: 'normal',
+    wordBreak: 'break-word',
   },
   editableInput: {
     width: '100%',
     boxSizing: 'border-box',
     border: '1px solid #cbd5e1',
     borderRadius: '6px',
-    padding: '5px 8px',
-    fontSize: '12.5px',
+    padding: '5px 7px',
+    fontSize: '12px',
     color: '#1e293b',
     background: '#ffffff',
     outline: 'none',

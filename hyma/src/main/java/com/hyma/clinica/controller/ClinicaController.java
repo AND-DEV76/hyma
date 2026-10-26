@@ -41,7 +41,7 @@ public class ClinicaController {
     }
 
     @GetMapping("/pacientes/{idPaciente}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'SOCIAL')")
     public ResponseEntity<PacienteConsultaResponse> obtenerDatosPaciente(
             @PathVariable(name = "idPaciente") Long idPaciente,
             @RequestParam(name = "idCola", required = false) Long idCola) {

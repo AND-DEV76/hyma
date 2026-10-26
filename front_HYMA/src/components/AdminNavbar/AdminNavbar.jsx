@@ -156,6 +156,7 @@ export default function AdminNavbar({ onBeforeNavigate }) {
     }
     if (path === '/preconsulta') return location.pathname.startsWith('/preconsulta');
     if (path === '/pacientes') return location.pathname.startsWith('/pacientes');
+    if (path === '/expedientes') return location.pathname.startsWith('/expedientes');
     if (path === '/clinica') return location.pathname.startsWith('/clinica');
     if (path === '/social') return location.pathname.startsWith('/social');
     if (path === '/configuracion') {
@@ -208,6 +209,12 @@ export default function AdminNavbar({ onBeforeNavigate }) {
       show: isAdmin || isMedico || isEnfermera,
     },
     {
+      label: 'Expedientes',
+      path: '/expedientes',
+      icon: BookOpen,
+      show: isAdmin || isMedico,
+    },
+    {
       label: 'Farmacia',
       path: '/farmacia',
       icon: Pill,
@@ -218,19 +225,6 @@ export default function AdminNavbar({ onBeforeNavigate }) {
       path: '/procedimientos',
       icon: Activity,
       show: isAdmin || isMedico || isFarmacia || isEnfermera,
-      hasSubmenu: true,
-      subItems: [
-        {
-          label: 'Pacientes por Aplicar',
-          path: '/procedimientos',
-          show: isAdmin || isMedico || isFarmacia || isEnfermera,
-        },
-        {
-          label: 'Configuración',
-          path: '/procedimientos/configuracion',
-          show: isAdmin || isEnfermera,
-        },
-      ],
     },
     {
       label: 'Trabajo Social',

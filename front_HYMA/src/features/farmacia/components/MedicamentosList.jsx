@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Search, X, Plus, Edit2, CheckCircle2, XCircle, Pill, ChevronLeft, ChevronRight, AlertTriangle, Clock } from 'lucide-react';
 import MedicamentoModal from './MedicamentoModal';
+import EditarLoteModal from './EditarLoteModal';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -10,6 +11,7 @@ function MedicamentosList({
   categorias = [],
   casas = [],
   onSaveMedicamento,
+  onSaveLote,
   soloConExistencias = false,
   mostrarDesactivar = true,
   mostrarBotonNuevo = true,
@@ -26,6 +28,10 @@ function MedicamentosList({
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState(null);
+
+  // Modal State para Editar Lote (Inventario)
+  const [isLoteModalOpen, setIsLoteModalOpen] = useState(false);
+  const [selectedMedForLote, setSelectedMedForLote] = useState(null);
 
   // Helper para calcular días restantes de vencimiento
   const getDiasParaVencer = (fechaStr) => {
@@ -156,8 +162,13 @@ function MedicamentosList({
   };
 
   const handleOpenEditModal = (item) => {
-    setEditingMedicine(item);
-    setIsModalOpen(true);
+    if (soloConExistencias && onSaveLote) {
+      setSelectedMedForLote(item);
+      setIsLoteModalOpen(true);
+    } else {
+      setEditingMedicine(item);
+      setIsModalOpen(true);
+    }
   };
 
   const handleToggleEstado = async (item) => {
@@ -436,6 +447,7 @@ function MedicamentosList({
                 <th className="farmacia-th">Casa Farmacéutica</th>
                 {!esCatalogo && (
                   <>
+                    <th className="farmacia-th">No. Lote</th>
                     <th className="farmacia-th" style={{ textAlign: 'center' }}>Unidades</th>
                     <th className="farmacia-th" style={{ textAlign: 'right' }}>Precio</th>
                   </>
@@ -521,6 +533,36 @@ function MedicamentosList({
                     </td>
                     {!esCatalogo && (
                       <>
+                        <td className="farmacia-td">
+                          {(() => {
+                            const medLotes = lotesPorMedicamento[item.idMedicamento] || [];
+                            if (medLotes.length === 0) {
+                              return <span className="farmacia-text-subtle">S/L</span>;
+                            }
+                            return (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                {medLotes.map((l, i) => (
+                                  <span
+                                    key={l.idLote || i}
+                                    style={{
+                                      display: 'inline-block',
+                                      background: '#f1f5f9',
+                                      color: '#1e293b',
+                                      border: '1px solid #cbd5e1',
+                                      borderRadius: '4px',
+                                      padding: '1px 6px',
+                                      fontSize: '11px',
+                                      fontWeight: '700',
+                                    }}
+                                    title={`Vence: ${l.fechaExpiracion || '—'} | Cantidad: ${l.stockDisponible ?? l.cantidadInicial}`}
+                                  >
+                                    {l.numeroLote || 'S/L'}
+                                  </span>
+                                ))}
+                              </div>
+                            );
+                          })()}
+                        </td>
                         <td className="farmacia-td" style={{ textAlign: 'center' }}>
                           <span
                             className="farmacia-badge-pill"
@@ -634,7 +676,7 @@ function MedicamentosList({
         )}
       </div>
 
-      {/* Modal de Crear / Editar */}
+      {/* Modal de Crear / Editar Medicamento de Catálogo */}
       {isModalOpen && (
         <MedicamentoModal
           isOpen={isModalOpen}
@@ -647,6 +689,20 @@ function MedicamentosList({
           categorias={categorias}
           casas={casas}
           onSave={onSaveMedicamento}
+        />
+      )}
+
+      {/* Modal de Editar Entrada / Lote de Inventario */}
+      {isLoteModalOpen && (
+        <EditarLoteModal
+          isOpen={isLoteModalOpen}
+          onClose={() => {
+            setIsLoteModalOpen(false);
+            setSelectedMedForLote(null);
+          }}
+          onSave={onSaveLote}
+          medicamento={selectedMedForLote}
+          lotes={selectedMedForLote ? lotesPorMedicamento[selectedMedForLote.idMedicamento] || [] : []}
         />
       )}
     </div>

@@ -141,6 +141,87 @@ export const reporteService = {
     link.parentNode.removeChild(link);
     window.URL.revokeObjectURL(url);
   },
+
+  /**
+   * Descarga el Libro Diario de Pacientes Atendidos en el Mes (Excel).
+   */
+  descargarExcelPacientesMes: async (anio, mes) => {
+    const params = {};
+    if (anio) params.anio = anio;
+    if (mes) params.mes = mes;
+
+    const response = await api.get('/reportes/operativos/pacientes-mes/excel', {
+      params,
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const padMes = String(mes).padStart(2, '0');
+    link.setAttribute('download', `Pacientes_Atendidos_${padMes}_${anio}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  },
+
+  /**
+   * Descarga el Control de Procedimientos de Clínica en el Mes (Excel).
+   */
+  descargarExcelProcedimientosMes: async (anio, mes) => {
+    const params = {};
+    if (anio) params.anio = anio;
+    if (mes) params.mes = mes;
+
+    const response = await api.get('/reportes/operativos/procedimientos-mes/excel', {
+      params,
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const padMes = String(mes).padStart(2, '0');
+    link.setAttribute('download', `Control_Procedimientos_${padMes}_${anio}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  },
+
+  /**
+   * Descarga el Reporte de Medicamentos Vendidos en Ventas Externas en el Mes (Excel).
+   */
+  descargarExcelMedicamentosVendidosMes: async (anio, mes) => {
+    const params = {};
+    if (anio) params.anio = anio;
+    if (mes) params.mes = mes;
+
+    const response = await api.get('/reportes/operativos/medicamentos-vendidos-mes/excel', {
+      params,
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const padMes = String(mes).padStart(2, '0');
+    link.setAttribute('download', `Medicamentos_Vendidos_${padMes}_${anio}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  },
 };
 
 export default reporteService;

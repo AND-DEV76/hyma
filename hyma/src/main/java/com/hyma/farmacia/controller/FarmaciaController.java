@@ -108,6 +108,14 @@ public class FarmaciaController {
         return ResponseEntity.ok(farmaciaService.listarLotes(estado, medicamentoId, hasta));
     }
 
+    @PutMapping("/lotes/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA')")
+    public ResponseEntity<LoteResponse> actualizarLote(
+            @PathVariable(name = "id") Long id,
+            @Valid @RequestBody ActualizarLoteRequest request) {
+        return ResponseEntity.ok(farmaciaService.actualizarLote(id, request));
+    }
+
     @GetMapping("/entradas")
     public ResponseEntity<List<EntradaResponse>> listarEntradas(
             @RequestParam(name = "desde", required = false) LocalDate desde,

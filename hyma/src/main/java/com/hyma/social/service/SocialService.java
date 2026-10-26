@@ -4,6 +4,8 @@ import com.hyma.clinica.model.Diagnostico;
 import com.hyma.clinica.repository.DiagnosticoRepository;
 import com.hyma.consulta.model.Consulta;
 import com.hyma.consulta.repository.ConsultaRepository;
+import com.hyma.doctor.model.Medico;
+import com.hyma.doctor.repository.MedicoRepository;
 import com.hyma.recepcion.model.Paciente;
 import com.hyma.recepcion.repository.PacienteRepository;
 import com.hyma.recepcion.service.PacienteNotFoundException;
@@ -26,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +43,7 @@ public class SocialService {
     private final PacienteRepository pacienteRepository;
     private final ConsultaRepository consultaRepository;
     private final DiagnosticoRepository diagnosticoRepository;
+    private final MedicoRepository medicoRepository;
 
     private static final String[] MESES_ES = {
             "", "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
@@ -428,7 +432,7 @@ public class SocialService {
 
     @Transactional(readOnly = true)
     public List<PacienteResumenSocialResponse> listarPacientesRecientes(String buscar) {
-        PageRequest pageRequest = PageRequest.of(0, 10);
+        PageRequest pageRequest = PageRequest.of(0, 50);
         List<Paciente> pacientes;
         if (buscar != null && !buscar.trim().isEmpty()) {
             pacientes = pacienteRepository.buscarPaginado(buscar.trim(), pageRequest);
@@ -508,5 +512,70 @@ public class SocialService {
                 .ultimaAtencion(p.getFechaRegistro())
                 .totalReferencias(totalRefs)
                 .build();
+    }
+
+    @Transactional
+    public ReferenciaMedicaResponse crearReferenciaManual(CrearReferenciaManualRequest request) {
+        Paciente paciente = pacienteRepository.findById(request.getIdPaciente())
+                .orElseThrow(() -> new PacienteNotFoundException(request.getIdPaciente()));
+
+        EspecialidadReferencia especialidad = especialidadReferenciaRepository.findById(request.getIdEspecialidad())
+                .orElseThrow(() -> new RuntimeException("Especialidad no encontrada con ID: " + request.getIdEspecialidad()));
+
+        Consulta consulta = null;
+        if (request.getIdConsulta() != null) {
+            consulta = consultaRepository.findById(request.getIdConsulta()).orElse(null);
+        }
+        if (consulta == null) {
+            consulta = consultaRepository.findTopByPacienteOrderByFechaConsultaDesc(paciente).orElse(null);
+        }
+
+        if (consulta == null) {
+            throw new IllegalStateException("El paciente no cuenta con consultas médicas registradas para asociar la referencia.");
+        }
+
+        Medico medico = null;
+        if (request.getIdMedico() != null) {
+            medico = medicoRepository.findById(request.getIdMedico()).orElse(null);
+        }
+        if (medico == null) {
+            medico = consulta.getMedico();
+        }
+        if (medico == null) {
+            medico = medicoRepository.findAll().stream().findFirst().orElse(null);
+        }
+
+        String motivo = request.getMotivoReferencia();
+        if (motivo != null && motivo.length() > 300) {
+            motivo = motivo.substring(0, 300);
+        }
+
+        ReferenciaMedica ref = ReferenciaMedica.builder()
+                .paciente(paciente)
+                .especialidad(especialidad)
+                .consulta(consulta)
+                .medico(medico)
+                .fechaReferencia(LocalDateTime.now())
+                .motivoReferencia(motivo)
+                .build();
+
+        ref = referenciaMedicaRepository.save(ref);
+
+        return ReferenciaMedicaResponse.builder()
+                .idReferencia(ref.getIdReferencia())
+                .idConsulta(consulta.getIdConsulta())
+                .idPaciente(paciente.getIdPaciente())
+                .idEspecialidad(especialidad.getIdEspecialidad())
+                .nombreEspecialidad(especialidad.getNombre())
+                .motivoReferencia(ref.getMotivoReferencia())
+                .fechaReferencia(ref.getFechaReferencia())
+                .build();
+    }
+
+    @Transactional
+    public void eliminarReferencia(Long idReferencia) {
+        if (referenciaMedicaRepository.existsById(idReferencia)) {
+            referenciaMedicaRepository.deleteById(idReferencia);
+        }
     }
 }

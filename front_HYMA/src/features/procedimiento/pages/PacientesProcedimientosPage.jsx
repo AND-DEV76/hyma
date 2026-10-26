@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Users,
   Clock,
@@ -19,9 +20,12 @@ import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
 import procedimientoService from '../services/procedimientoService';
 
 export default function PacientesProcedimientosPage() {
+  const location = useLocation();
   const [procedimientos, setProcedimientos] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filtroEstado, setFiltroEstado] = useState('ESPERA'); // 'ESPERA' | 'ATENDIDO' | 'CANCELADO' | 'TODOS'
+  const [filtroEstado, setFiltroEstado] = useState(() => {
+    return location.pathname.includes('/historial') ? 'ATENDIDO' : 'ESPERA';
+  }); // 'ESPERA' | 'ATENDIDO' | 'CANCELADO' | 'TODOS'
   const [busqueda, setBusqueda] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');

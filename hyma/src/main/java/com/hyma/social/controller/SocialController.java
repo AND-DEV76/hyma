@@ -107,16 +107,30 @@ public class SocialController {
     }
 
     @GetMapping("/pacientes")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SOCIAL')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SOCIAL', 'MEDICO')")
     public ResponseEntity<List<PacienteResumenSocialResponse>> listarPacientes(
             @RequestParam(name = "buscar", required = false) String buscar) {
         return ResponseEntity.ok(socialService.listarPacientesRecientes(buscar));
     }
 
     @GetMapping("/pacientes/{idPaciente}/expediente")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SOCIAL')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SOCIAL', 'MEDICO')")
     public ResponseEntity<ExpedienteSocialResponse> obtenerExpediente(
             @PathVariable(name = "idPaciente") Long idPaciente) {
         return ResponseEntity.ok(socialService.obtenerExpediente(idPaciente));
+    }
+
+    @PostMapping("/referencias")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SOCIAL', 'MEDICO')")
+    public ResponseEntity<ReferenciaMedicaResponse> crearReferenciaManual(
+            @Valid @RequestBody CrearReferenciaManualRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(socialService.crearReferenciaManual(request));
+    }
+
+    @DeleteMapping("/referencias/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SOCIAL')")
+    public ResponseEntity<Void> eliminarReferencia(@PathVariable(name = "id") Long id) {
+        socialService.eliminarReferencia(id);
+        return ResponseEntity.noContent().build();
     }
 }

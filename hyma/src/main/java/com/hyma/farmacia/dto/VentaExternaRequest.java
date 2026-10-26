@@ -15,6 +15,7 @@ public class VentaExternaRequest {
 
     private String cliente;
     private String observaciones;
+    private String tipoSalida;
 
     @NotEmpty(message = "Debe incluir al menos un medicamento para la venta")
     private List<ItemVentaExternaRequest> items;

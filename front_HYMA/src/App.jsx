@@ -36,8 +36,10 @@ import AlergiaPage from './features/alergia/pages/AlergiaPage';
 
 import ClinicaPage from './features/clinica/pages/ClinicaPage';
 import AtencionMedicaPage from './features/clinica/pages/AtencionMedicaPage';
+import ExpedientesClinicosPage from './features/clinica/pages/ExpedientesClinicosPage';
 import DiagnosticosPage from './features/diagnostico/pages/DiagnosticosPage';
 import InformesHubPage from './features/reportes/pages/InformesHubPage';
+import ReportesOperativosPage from './features/reportes/pages/ReportesOperativosPage';
 import EstadisticaMensualPage from './features/reportes/pages/EstadisticaMensualPage';
 import CasosEspecialesPage from './features/reportes/pages/CasosEspecialesPage';
 import InventarioFarmaciaReportePage from './features/reportes/pages/InventarioFarmaciaReportePage';
@@ -45,6 +47,7 @@ import HospitalDashboardPage from './features/reportes/pages/HospitalDashboardPa
 import TarifasPage from './features/tarifa/pages/TarifasPage';
 import ConfiguracionPage from './features/configuracion/pages/ConfiguracionPage';
 import PorcentajeMedicamentoPage from './features/farmacia/pages/PorcentajeMedicamentoPage';
+import ProcedimientosPortalPage from './features/procedimiento/pages/ProcedimientosPortalPage';
 import PacientesProcedimientosPage from './features/procedimiento/pages/PacientesProcedimientosPage';
 import ConfiguracionProcedimientosPage from './features/procedimiento/pages/ConfiguracionProcedimientosPage';
 
@@ -94,21 +97,27 @@ function App() {
             
             <Route path="/clinica" element={<ClinicaPage />} />
             <Route path="/clinica/atencion" element={<AtencionMedicaPage />} />
+            <Route path="/expedientes" element={<ExpedientesClinicosPage />} />
+            <Route path="/expedientes/:idPaciente" element={<ExpedientesClinicosPage />} />
             <Route path="/diagnosticos" element={<DiagnosticosPage />} />
             <Route path="/reportes" element={<InformesHubPage />} />
+            <Route path="/reportes/operativos" element={<ReportesOperativosPage />} />
             <Route path="/reportes/estadistica" element={<EstadisticaMensualPage />} />
             <Route path="/reportes/inventario-farmacia" element={<InventarioFarmaciaReportePage />} />
             <Route path="/reportes/casos-especiales" element={<CasosEspecialesPage />} />
             <Route path="/tarifas" element={<TarifasPage />} />
             <Route path="/configuracion" element={<ConfiguracionPage />} />
             <Route path="/configuracion/porcentaje-medicamento" element={<PorcentajeMedicamentoPage />} />
-            <Route path="/procedimientos" element={<PacientesProcedimientosPage />} />
+            <Route path="/procedimientos" element={<ProcedimientosPortalPage />} />
+            <Route path="/procedimientos/pacientes" element={<PacientesProcedimientosPage />} />
+            <Route path="/procedimientos/historial" element={<PacientesProcedimientosPage />} />
             <Route path="/procedimientos/configuracion" element={<ConfiguracionProcedimientosPage />} />
             
             {/* TRABAJO SOCIAL */}
             <Route path="/social" element={<SocialPortalPage />} />
             <Route path="/social/dashboard-referencias" element={<DashboardReferenciasPage />} />
             <Route path="/social/expedientes" element={<ExpedientesSocialPage />} />
+            <Route path="/social/expedientes/:idPaciente" element={<ExpedientesSocialPage />} />
             <Route path="/social/contactos" element={<ContactosReferenciasPage />} />
 
             <Route path="*" element={<NotFoundPage />} />

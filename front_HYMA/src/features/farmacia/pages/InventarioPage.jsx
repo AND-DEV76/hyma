@@ -17,6 +17,7 @@ export default function InventarioPage() {
     error,
     refresh,
     guardarMedicamento,
+    guardarLote,
   } = useFarmacia();
 
   const [tab, setTab] = useState('stock');
@@ -91,6 +92,7 @@ export default function InventarioPage() {
                 categorias={categorias}
                 casas={casas}
                 onSaveMedicamento={guardarMedicamento}
+                onSaveLote={guardarLote}
                 soloConExistencias={true}
                 mostrarDesactivar={false}
                 mostrarBotonNuevo={false}

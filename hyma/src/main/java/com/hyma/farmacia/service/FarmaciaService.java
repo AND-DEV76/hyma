@@ -223,6 +223,35 @@ public class FarmaciaService {
     }
 
     @Transactional
+    public LoteResponse actualizarLote(Long idLote, ActualizarLoteRequest request) {
+        LoteMedicamento lote = loteRepository.findById(idLote)
+                .orElseThrow(() -> new FarmaciaNotFoundException("Lote no encontrado con ID: " + idLote));
+
+        if (request.getNumeroLote() != null && !request.getNumeroLote().isBlank()) {
+            lote.setNumeroLote(request.getNumeroLote().trim());
+        }
+        if (request.getFechaExpiracion() != null) {
+            lote.setFechaExpiracion(request.getFechaExpiracion());
+        }
+        if (request.getCantidad() != null) {
+            lote.setCantidadInicial(request.getCantidad());
+            if (request.getCantidad() > 0 && lote.getEstado() == EstadoLote.INACTIVO) {
+                lote.setEstado(EstadoLote.ACTIVO);
+            } else if (request.getCantidad() == 0) {
+                lote.setEstado(EstadoLote.INACTIVO);
+            }
+        }
+        if (request.getPrecioUnitario() != null) {
+            lote.setPrecioUnitario(request.getPrecioUnitario());
+            BigDecimal porcentaje = obtenerPorcentajeMedicamento();
+            lote.setPrecioVenta(calcularPrecioVenta(request.getPrecioUnitario(), porcentaje));
+        }
+
+        lote = loteRepository.save(lote);
+        return mapper.toLoteResponse(lote);
+    }
+
+    @Transactional
     public EntradaResponse registrarEntrada(EntradaRequest request, String username) {
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new FarmaciaNotFoundException("Usuario de la entrada no encontrado"));
@@ -1039,7 +1068,21 @@ public class FarmaciaService {
         }
 
         String cliente = request.getCliente() != null ? request.getCliente().trim() : null;
-        String obs = "Venta externa en mostrador";
+
+        String tipoSalida = "VENTA_EXTERNA";
+        boolean esExonerado = false;
+        if (request.getTipoSalida() != null && !request.getTipoSalida().isBlank()) {
+            String ts = request.getTipoSalida().trim().toUpperCase();
+            if ("SR".equals(ts) || "S/R".equals(ts)) {
+                tipoSalida = "SR";
+                esExonerado = true;
+            } else if ("BECADO".equals(ts)) {
+                tipoSalida = "BECADO";
+                esExonerado = true;
+            }
+        }
+
+        String obs = "VENTA_EXTERNA".equals(tipoSalida) ? "Venta externa en mostrador" : ("Dispensación externa " + tipoSalida + " (Exoneración)");
         if (cliente != null && !cliente.isBlank()) {
             obs += " - Cliente: " + cliente;
         }
@@ -1051,7 +1094,7 @@ public class FarmaciaService {
                 .consulta(null)
                 .usuario(usuario)
                 .fechaSalida(LocalDateTime.now())
-                .tipoSalida("VENTA_EXTERNA")
+                .tipoSalida(tipoSalida)
                 .observaciones(obs)
                 .costoConsulta(BigDecimal.ZERO)
                 .build();
@@ -1092,12 +1135,15 @@ public class FarmaciaService {
                 }
                 loteRepository.save(lote);
 
-                // Precio unitario: si se envió en la petición se usa, de lo contrario el del lote
-                BigDecimal precioUnit = itemReq.getPrecioUnitario() != null
-                        ? itemReq.getPrecioUnitario()
-                        : (lote.getPrecioVenta() != null
-                                ? lote.getPrecioVenta()
-                                : (lote.getPrecioUnitario() != null ? lote.getPrecioUnitario() : BigDecimal.ZERO));
+                // Precio unitario: si es exonerado es 0, de lo contrario se usa el del request o lote
+                BigDecimal precioUnit = BigDecimal.ZERO;
+                if (!esExonerado) {
+                    precioUnit = itemReq.getPrecioUnitario() != null
+                            ? itemReq.getPrecioUnitario()
+                            : (lote.getPrecioVenta() != null
+                                    ? lote.getPrecioVenta()
+                                    : (lote.getPrecioUnitario() != null ? lote.getPrecioUnitario() : BigDecimal.ZERO));
+                }
                 BigDecimal subtotal = precioUnit.multiply(BigDecimal.valueOf(aDescontar));
 
                 DetalleSalidaMedicamento detalleSalida = DetalleSalidaMedicamento.builder()

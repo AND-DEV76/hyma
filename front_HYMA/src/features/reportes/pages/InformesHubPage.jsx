@@ -6,7 +6,8 @@ import {
   ChevronRight,
   TrendingUp,
   Award,
-  Boxes
+  Boxes,
+  FileText
 } from 'lucide-react';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
@@ -36,6 +37,13 @@ export default function InformesHubPage() {
       descripcion: 'Registro y control de atenciones y medicamentos 100% donados / exonerados.',
       ruta: '/reportes/casos-especiales',
       icono: <HeartHandshake size={26} />,
+    },
+    {
+      id: 'reportes-operativos',
+      titulo: 'Libros y Reportes Mensuales',
+      descripcion: 'Control diario de pacientes atendidos, procedimientos clínicos y medicamentos vendidos en mostrador.',
+      ruta: '/reportes/operativos',
+      icono: <FileText size={26} />,
     },
   ];
 

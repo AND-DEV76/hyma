@@ -69,6 +69,16 @@ export const obtenerExpediente = async (idPaciente) => {
   return response.data;
 };
 
+export const crearReferenciaManual = async (data) => {
+  const response = await api.post('/social/referencias', data);
+  return response.data;
+};
+
+export const eliminarReferencia = async (idReferencia) => {
+  const response = await api.delete(`/social/referencias/${idReferencia}`);
+  return response.data;
+};
+
 const socialService = {
   buscarEspecialidades,
   listarEspecialidadesConContactos,
@@ -85,7 +95,9 @@ const socialService = {
   getPacientesRecientes: listarPacientes,
   listarPacientes,
   getExpedientePaciente: obtenerExpediente,
-  obtenerExpediente
+  obtenerExpediente,
+  crearReferenciaManual,
+  eliminarReferencia
 };
 
 export default socialService;
