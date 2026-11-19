@@ -510,6 +510,135 @@ export default function HistorialConsultasAccordion({ consultas = [], ultimaCons
                             </p>
                           </div>
                         )}
+
+                        {/* Medicamentos No Dispensados en Farmacia (si existen) */}
+                        {consulta.recetasExternas && consulta.recetasExternas.filter(r => r.tipo === 'NO_DISPENSADO_FARMACIA').length > 0 && (
+                          <div style={{
+                            backgroundColor: '#fffbeb',
+                            border: '1.5px solid #fde68a',
+                            borderRadius: '8px',
+                            padding: '12px 14px',
+                            marginTop: '10px'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                              <span style={{
+                                backgroundColor: '#fef3c7',
+                                color: '#b45309',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '11px',
+                                fontWeight: '800',
+                                textTransform: 'uppercase'
+                              }}>
+                                Atención Farmacia
+                              </span>
+                              <span style={{ fontSize: '13px', fontWeight: '800', color: '#92400e' }}>
+                                Medicamentos Recetados No Adquiridos en Farmacia
+                              </span>
+                            </div>
+                            <p style={{ margin: '0 0 10px', fontSize: '12px', color: '#b45309' }}>
+                              El médico recetó los siguientes fármacos pero el paciente no los adquirió en farmacia (no se cobraron ni se descontaron del inventario):
+                            </p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              {consulta.recetasExternas.filter(r => r.tipo === 'NO_DISPENSADO_FARMACIA').map((r, rIdx) => (
+                                <div key={rIdx} style={{
+                                  backgroundColor: '#ffffff',
+                                  border: '1px solid #fef08a',
+                                  borderRadius: '6px',
+                                  padding: '8px 12px',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  flexWrap: 'wrap',
+                                  gap: '8px'
+                                }}>
+                                  <div>
+                                    <strong style={{ color: '#78350f', fontSize: '13px' }}>{r.nombreMedicamento}</strong>
+                                    {r.presentacion && <span style={{ color: '#64748b', fontSize: '12px', marginLeft: '6px' }}>({r.presentacion})</span>}
+                                    <div style={{ fontSize: '12px', color: '#475569', marginTop: '2px' }}>
+                                      {r.dosis} {r.frecuencia && `• ${r.frecuencia}`} {r.duracion && `• por ${r.duracion}`}
+                                    </div>
+                                  </div>
+                                  <div style={{ textAlign: 'right' }}>
+                                    <span style={{
+                                      fontSize: '11px',
+                                      fontWeight: '700',
+                                      color: '#b45309',
+                                      backgroundColor: '#fef3c7',
+                                      padding: '3px 8px',
+                                      borderRadius: '4px'
+                                    }}>
+                                      {r.motivo || 'No adquirido'} ({r.cantidad || 1} un.)
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Medicamentos de Receta Externa / No Manejados en Clínica (si existen) */}
+                        {consulta.recetasExternas && consulta.recetasExternas.filter(r => r.tipo === 'EXTERNO_NO_CATALOGO').length > 0 && (
+                          <div style={{
+                            backgroundColor: '#eef2ff',
+                            border: '1.5px solid #c7d2fe',
+                            borderRadius: '8px',
+                            padding: '12px 14px',
+                            marginTop: '10px'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                              <span style={{
+                                backgroundColor: '#e0e7ff',
+                                color: '#4338ca',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '11px',
+                                fontWeight: '800',
+                                textTransform: 'uppercase'
+                              }}>
+                                Receta Externa
+                              </span>
+                              <span style={{ fontSize: '13px', fontWeight: '800', color: '#312e81' }}>
+                                Medicamentos No Manejados en Clínica (Adquisición Externa)
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              {consulta.recetasExternas.filter(r => r.tipo === 'EXTERNO_NO_CATALOGO').map((r, rIdx) => (
+                                <div key={rIdx} style={{
+                                  backgroundColor: '#ffffff',
+                                  border: '1px solid #e0e7ff',
+                                  borderRadius: '6px',
+                                  padding: '8px 12px',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  flexWrap: 'wrap',
+                                  gap: '8px'
+                                }}>
+                                  <div>
+                                    <strong style={{ color: '#1e1b4b', fontSize: '13px' }}>{r.nombreMedicamento}</strong>
+                                    {r.presentacion && <span style={{ color: '#64748b', fontSize: '12px', marginLeft: '6px' }}>({r.presentacion})</span>}
+                                    <div style={{ fontSize: '12px', color: '#334155', marginTop: '2px' }}>
+                                      {r.dosis} {r.frecuencia && `• ${r.frecuencia}`} {r.duracion && `• por ${r.duracion}`}
+                                    </div>
+                                  </div>
+                                  <div style={{ textAlign: 'right' }}>
+                                    <span style={{
+                                      fontSize: '11px',
+                                      fontWeight: '700',
+                                      color: '#4338ca',
+                                      backgroundColor: '#e0e7ff',
+                                      padding: '3px 8px',
+                                      borderRadius: '4px'
+                                    }}>
+                                      Cant: {r.cantidad || 1}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Examen Físico si existe */}

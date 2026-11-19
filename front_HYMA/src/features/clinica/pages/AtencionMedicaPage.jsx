@@ -456,6 +456,34 @@ export default function AtencionMedicaPage() {
   const [searchMed, setSearchMed] = useState('');
   const [medResults, setMedResults] = useState([]);
 
+  // Section F.2: Medicamentos Externos / No manejados en clínica (Receta Externa)
+  const [medicamentosExternos, setMedicamentosExternos] = useState([
+    { idTemp: 1, nombreMedicamento: '', presentacion: '', dosis: '', cantidad: 1 }
+  ]);
+
+  const handleUpdateExterno = (idTemp, campo, valor) => {
+    setMedicamentosExternos((prev) =>
+      prev.map((m) => (m.idTemp === idTemp ? { ...m, [campo]: valor } : m))
+    );
+  };
+
+  const handleAgregarOtroExterno = () => {
+    setMedicamentosExternos((prev) => [
+      ...prev,
+      { idTemp: Date.now(), nombreMedicamento: '', presentacion: '', dosis: '', cantidad: 1 }
+    ]);
+  };
+
+  const handleEliminarMedicamentoExterno = (idTemp) => {
+    if (medicamentosExternos.length <= 1) {
+      setMedicamentosExternos([
+        { idTemp: Date.now(), nombreMedicamento: '', presentacion: '', dosis: '', cantidad: 1 }
+      ]);
+    } else {
+      setMedicamentosExternos((prev) => prev.filter((m) => m.idTemp !== idTemp));
+    }
+  };
+
   // Estado y modal para Poner en Observación
   const [modalObservacionVisible, setModalObservacionVisible] = useState(false);
   const [guardandoObservacion, setGuardandoObservacion] = useState(false);
@@ -488,6 +516,9 @@ export default function AtencionMedicaPage() {
             if (b.detallesTratamiento) setDetallesTratamiento(b.detallesTratamiento);
             if (b.procedimientosSeleccionados)
               setProcedimientosSeleccionados(b.procedimientosSeleccionados);
+            if (b.medicamentosExternos && Array.isArray(b.medicamentosExternos) && b.medicamentosExternos.length > 0) {
+              setMedicamentosExternos(b.medicamentosExternos);
+            }
             if (b.pasoActual) setPasoActual(b.pasoActual);
           } catch (e) {
             console.error('Error restaurando borrador de consulta', e);
@@ -800,6 +831,7 @@ export default function AtencionMedicaPage() {
         observacionesTratamiento,
         detallesTratamiento,
         procedimientosSeleccionados,
+        medicamentosExternos,
       };
       await clinicaService.ponerEnObservacion(idCola, JSON.stringify(borrador));
       consultaFinalizadaRef.current = true;
@@ -835,6 +867,17 @@ export default function AtencionMedicaPage() {
         examenFisico: { ...examenFisico },
         laboratorio: laboratorio?.trim() ? laboratorio.trim() : null,
         diagnosticos,
+        medicamentosExternos: medicamentosExternos
+          .filter((m) => m && m.nombreMedicamento && m.nombreMedicamento.trim().length > 0)
+          .map((m) => ({
+            nombreMedicamento: m.nombreMedicamento.trim(),
+            presentacion: m.presentacion?.trim() || 'No especificada',
+            dosis: m.dosis?.trim() || 'Según indicación médica',
+            frecuencia: '',
+            duracion: '',
+            cantidad: Number(m.cantidad) > 0 ? Number(m.cantidad) : 1,
+            motivo: 'No comercializado en clínica',
+          })),
         tratamiento: {
           observaciones: observacionesTratamiento,
           detalles: detallesTratamiento.map((dt) => ({
@@ -2263,7 +2306,7 @@ export default function AtencionMedicaPage() {
                 </div>
 
                 {detallesTratamiento.length > 0 ? (
-                  <div className="clinica-table-responsive" style={{ ...styles.tableContainer, marginTop: '16px' }}>
+                  <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <datalist id="frecuencia-options">
                       <option value="Cada 4 hrs" label="Cada 4 horas (6 al día)" />
                       <option value="Cada 6 hrs" label="Cada 6 horas (4 al día)" />
@@ -2282,27 +2325,50 @@ export default function AtencionMedicaPage() {
                       <option value="30 días" />
                     </datalist>
 
-                    <table style={styles.table}>
-                      <thead>
-                        <tr>
-                          <th style={{ ...styles.th, width: '22%' }}>Medicamento</th>
-                          <th style={{ ...styles.th, width: '13%' }}>Presentación</th>
-                          <th style={{ ...styles.th, width: '13%' }}>Frecuencia</th>
-                          <th style={{ ...styles.th, width: '11%' }}>Duración</th>
-                          <th style={{ ...styles.th, width: '13%' }}>Dosis</th>
-                          <th style={{ ...styles.th, width: '12%' }}>Cantidad</th>
-                          <th style={{ ...styles.th, width: '12%', textAlign: 'center' }}>¿Uso en Clínica?</th>
-                          <th style={{ ...styles.th, width: '4%', textAlign: 'center' }}></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {detallesTratamiento.map((dt) => {
-                          const sinStock = dt.unidades !== null && dt.unidades !== undefined && dt.unidades <= 0;
-                          return (
-                            <tr key={dt.idMedicamento} style={styles.tr}>
-                              <td style={styles.td}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                  <strong style={{ color: '#03045e', fontSize: '13.5px', fontWeight: '600' }}>
+                    {detallesTratamiento.map((dt) => {
+                      const sinStock = dt.unidades !== null && dt.unidades !== undefined && dt.unidades <= 0;
+                      return (
+                        <div
+                          key={dt.idMedicamento}
+                          style={{
+                            backgroundColor: '#ffffff',
+                            borderRadius: '12px',
+                            border: '1px solid #e2e8f0',
+                            padding: '16px 18px',
+                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          {/* Fila Superior: Medicamento, Presentación y Acciones */}
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              flexWrap: 'wrap',
+                              gap: '12px',
+                              paddingBottom: '12px',
+                              borderBottom: '1px solid #f1f5f9',
+                              marginBottom: '14px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                              <div>
+                                <span
+                                  style={{
+                                    display: 'block',
+                                    fontSize: '0.72rem',
+                                    fontWeight: '700',
+                                    color: '#64748b',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.5px',
+                                    marginBottom: '3px',
+                                  }}
+                                >
+                                  Medicamento
+                                </span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                  <strong style={{ color: '#03045e', fontSize: '15px', fontWeight: '700' }}>
                                     {dt.nombreMedicamento}
                                   </strong>
                                   {sinStock && (
@@ -2311,55 +2377,237 @@ export default function AtencionMedicaPage() {
                                     </span>
                                   )}
                                 </div>
-                              </td>
-                              <td style={styles.td}>
-                                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
-                                  {dt.presentacion && (
-                                    <span style={styles.badgePres}>
-                                      {dt.presentacion}
-                                    </span>
-                                  )}
-                                  {dt.concentracion && (
-                                    <span style={styles.badgeConc}>
-                                      {dt.concentracion}
-                                    </span>
-                                  )}
+                              </div>
+
+                              {(dt.presentacion || dt.concentracion) && (
+                                <div>
+                                  <span
+                                    style={{
+                                      display: 'block',
+                                      fontSize: '0.72rem',
+                                      fontWeight: '700',
+                                      color: '#64748b',
+                                      textTransform: 'uppercase',
+                                      letterSpacing: '0.5px',
+                                      marginBottom: '3px',
+                                    }}
+                                  >
+                                    Presentación
+                                  </span>
+                                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                    {dt.presentacion && (
+                                      <span
+                                        style={{
+                                          display: 'inline-block',
+                                          background: '#f1f5f9',
+                                          color: '#1e293b',
+                                          border: '1px solid #cbd5e1',
+                                          borderRadius: '6px',
+                                          padding: '2px 8px',
+                                          fontSize: '12px',
+                                          fontWeight: '600',
+                                        }}
+                                      >
+                                        {dt.presentacion}
+                                      </span>
+                                    )}
+                                    {dt.concentracion && (
+                                      <span
+                                        style={{
+                                          display: 'inline-block',
+                                          background: '#e0f2fe',
+                                          color: '#0369a1',
+                                          border: '1px solid #bae6fd',
+                                          borderRadius: '6px',
+                                          padding: '2px 8px',
+                                          fontSize: '12px',
+                                          fontWeight: '600',
+                                        }}
+                                      >
+                                        {dt.concentracion}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
-                              </td>
-                              <td style={styles.td}>
+                              )}
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              {/* Toggle Switch Uso en Clínica */}
+                              <label
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '8px',
+                                  cursor: 'pointer',
+                                  padding: '5px 12px',
+                                  borderRadius: '20px',
+                                  backgroundColor: dt.esUsoClinica ? '#fef3c7' : '#f8fafc',
+                                  border: `1px solid ${dt.esUsoClinica ? '#f59e0b' : '#cbd5e1'}`,
+                                  userSelect: 'none',
+                                  transition: 'all 0.2s ease',
+                                }}
+                                title="Marcar si este medicamento fue administrado al paciente en la clínica"
+                              >
+                                <div
+                                  style={{
+                                    width: '32px',
+                                    height: '18px',
+                                    backgroundColor: dt.esUsoClinica ? '#d97706' : '#94a3b8',
+                                    borderRadius: '10px',
+                                    position: 'relative',
+                                    transition: 'background-color 0.2s',
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      width: '14px',
+                                      height: '14px',
+                                      backgroundColor: '#ffffff',
+                                      borderRadius: '50%',
+                                      position: 'absolute',
+                                      top: '2px',
+                                      left: dt.esUsoClinica ? '16px' : '2px',
+                                      transition: 'left 0.2s',
+                                      boxShadow: '0 1px 2px rgba(0,0,0,0.25)',
+                                    }}
+                                  />
+                                </div>
                                 <input
-                                  list="frecuencia-options"
-                                  placeholder="Cada 8 hrs"
-                                  value={dt.frecuencia}
-                                  onChange={(e) =>
-                                    updateDetalle(
-                                      dt.idMedicamento,
-                                      'frecuencia',
-                                      e.target.value
-                                    )
-                                  }
-                                  style={styles.tableInput}
+                                  type="checkbox"
+                                  checked={Boolean(dt.esUsoClinica)}
+                                  onChange={(e) => updateDetalle(dt.idMedicamento, 'esUsoClinica', e.target.checked)}
+                                  style={{ display: 'none' }}
                                 />
-                              </td>
-                              <td style={styles.td}>
-                                <input
-                                  list="duracion-options"
-                                  placeholder="5 días"
-                                  value={dt.duracion}
-                                  onChange={(e) =>
-                                    updateDetalle(
-                                      dt.idMedicamento,
-                                      'duracion',
-                                      e.target.value
-                                    )
-                                  }
-                                  style={styles.tableInput}
-                                />
-                              </td>
-                              {/* Columna Dosis adaptativa */}
-                              <td style={styles.td}>
+                                <span
+                                  style={{
+                                    fontSize: '12.5px',
+                                    fontWeight: dt.esUsoClinica ? '700' : '600',
+                                    color: dt.esUsoClinica ? '#b45309' : '#475569',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  Uso en Clínica
+                                </span>
+                              </label>
+
+                              {/* Botón Eliminar */}
+                              <button
+                                type="button"
+                                onClick={() => removeDetalle(dt.idMedicamento)}
+                                title="Eliminar medicamento"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  width: '34px',
+                                  height: '34px',
+                                  borderRadius: '8px',
+                                  border: '1px solid #fecaca',
+                                  backgroundColor: '#fff1f2',
+                                  color: '#dc2626',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s ease',
+                                }}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Fila Inferior: Inputs en Grid Responsivo */}
+                          <div
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                              gap: '14px',
+                              alignItems: 'flex-start',
+                            }}
+                          >
+                            {/* Frecuencia */}
+                            <div>
+                              <label
+                                style={{
+                                  display: 'block',
+                                  fontSize: '0.8rem',
+                                  fontWeight: '600',
+                                  color: '#334155',
+                                  marginBottom: '5px',
+                                }}
+                              >
+                                Frecuencia
+                              </label>
+                              <input
+                                list="frecuencia-options"
+                                placeholder="Ej. Cada 8 horas"
+                                value={dt.frecuencia}
+                                onChange={(e) => updateDetalle(dt.idMedicamento, 'frecuencia', e.target.value)}
+                                style={{
+                                  width: '100%',
+                                  height: '38px',
+                                  padding: '0 12px',
+                                  borderRadius: '8px',
+                                  border: '1px solid #cbd5e1',
+                                  fontSize: '14px',
+                                  fontWeight: '500',
+                                  color: '#0f172a',
+                                  backgroundColor: '#ffffff',
+                                  boxSizing: 'border-box',
+                                  outline: 'none',
+                                }}
+                              />
+                            </div>
+
+                            {/* Duración */}
+                            <div>
+                              <label
+                                style={{
+                                  display: 'block',
+                                  fontSize: '0.8rem',
+                                  fontWeight: '600',
+                                  color: '#334155',
+                                  marginBottom: '5px',
+                                }}
+                              >
+                                Duración
+                              </label>
+                              <input
+                                list="duracion-options"
+                                placeholder="Ej. 5 días"
+                                value={dt.duracion}
+                                onChange={(e) => updateDetalle(dt.idMedicamento, 'duracion', e.target.value)}
+                                style={{
+                                  width: '100%',
+                                  height: '38px',
+                                  padding: '0 12px',
+                                  borderRadius: '8px',
+                                  border: '1px solid #cbd5e1',
+                                  fontSize: '14px',
+                                  fontWeight: '500',
+                                  color: '#0f172a',
+                                  backgroundColor: '#ffffff',
+                                  boxSizing: 'border-box',
+                                  outline: 'none',
+                                }}
+                              />
+                            </div>
+
+                            {/* Dosis */}
+                            <div>
+                              <label
+                                style={{
+                                  display: 'block',
+                                  fontSize: '0.8rem',
+                                  fontWeight: '600',
+                                  color: '#334155',
+                                  marginBottom: '5px',
+                                }}
+                              >
+                                Dosis
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 {dt.esLiquido ? (
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <>
                                     <input
                                       type="number"
                                       min="0.5"
@@ -2371,20 +2619,23 @@ export default function AtencionMedicaPage() {
                                         updateDetalle(dt.idMedicamento, 'dosisCm', Math.min(30, Math.max(0.5, v)));
                                       }}
                                       style={{
-                                        width: '60px',
-                                        padding: '6px 8px',
+                                        width: '80px',
+                                        height: '38px',
+                                        padding: '0 10px',
                                         textAlign: 'center',
-                                        borderRadius: '6px',
+                                        borderRadius: '8px',
                                         border: '1px solid #cbd5e1',
                                         fontWeight: '700',
-                                        fontSize: '13px',
-                                        backgroundColor: '#ffffff'
+                                        fontSize: '14px',
+                                        color: '#0f172a',
+                                        backgroundColor: '#ffffff',
+                                        boxSizing: 'border-box',
                                       }}
                                     />
                                     <span style={{ fontSize: '13px', fontWeight: '700', color: '#0077b6' }}>cm</span>
-                                  </div>
+                                  </>
                                 ) : dt.esGotas ? (
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <>
                                     <input
                                       type="number"
                                       min="1"
@@ -2395,28 +2646,35 @@ export default function AtencionMedicaPage() {
                                         updateDetalle(dt.idMedicamento, 'gotasPorToma', v);
                                       }}
                                       style={{
-                                        width: '55px',
-                                        padding: '6px 8px',
+                                        width: '80px',
+                                        height: '38px',
+                                        padding: '0 10px',
                                         textAlign: 'center',
-                                        borderRadius: '6px',
+                                        borderRadius: '8px',
                                         border: '1px solid #cbd5e1',
                                         fontWeight: '700',
-                                        fontSize: '13px',
-                                        backgroundColor: '#ffffff'
+                                        fontSize: '14px',
+                                        color: '#0f172a',
+                                        backgroundColor: '#ffffff',
+                                        boxSizing: 'border-box',
                                       }}
                                     />
-                                    <span style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>gotas</span>
-                                  </div>
+                                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>gotas</span>
+                                  </>
                                 ) : dt.esTopico ? (
-                                  <span style={{ fontSize: '12.5px', color: '#64748b', fontStyle: 'italic' }}>
-                                    Aplicar en la zona
-                                  </span>
+                                  <div style={{ height: '38px', display: 'flex', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '13px', color: '#64748b', fontStyle: 'italic' }}>
+                                      Aplicar en la zona
+                                    </span>
+                                  </div>
                                 ) : dt.esInhalador ? (
-                                  <span style={{ fontSize: '12.5px', color: '#64748b', fontStyle: 'italic' }}>
-                                    1 disparo / puff
-                                  </span>
+                                  <div style={{ height: '38px', display: 'flex', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '13px', color: '#64748b', fontStyle: 'italic' }}>
+                                      1 disparo / puff
+                                    </span>
+                                  </div>
                                 ) : (
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <>
                                     <input
                                       type="number"
                                       min="0.5"
@@ -2428,100 +2686,75 @@ export default function AtencionMedicaPage() {
                                         updateDetalle(dt.idMedicamento, 'unidadesPorToma', Math.max(0.5, v));
                                       }}
                                       style={{
-                                        width: '55px',
-                                        padding: '6px 8px',
+                                        width: '80px',
+                                        height: '38px',
+                                        padding: '0 10px',
                                         textAlign: 'center',
-                                        borderRadius: '6px',
+                                        borderRadius: '8px',
                                         border: '1px solid #cbd5e1',
                                         fontWeight: '700',
-                                        fontSize: '13px',
-                                        backgroundColor: '#ffffff'
+                                        fontSize: '14px',
+                                        color: '#0f172a',
+                                        backgroundColor: '#ffffff',
+                                        boxSizing: 'border-box',
                                       }}
                                     />
-                                    <span style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>unid.</span>
-                                  </div>
+                                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>unid.</span>
+                                  </>
                                 )}
-                              </td>
-                              {/* Columna Cantidad sin texto de sugerencia */}
-                              <td style={styles.td}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    value={dt.cantidad}
-                                    onChange={(e) =>
-                                      updateDetalle(
-                                        dt.idMedicamento,
-                                        'cantidad',
-                                        e.target.value
-                                      )
-                                    }
-                                    style={styles.quantityInput}
-                                  />
-                                  <span style={styles.unitLabel}>
-                                    {dt.esGotas
-                                      ? 'gotero'
-                                      : dt.esTopico
-                                      ? 'tubo'
-                                      : dt.esLiquido
-                                      ? 'frasco'
-                                      : dt.esInhalador
-                                      ? 'inhalador'
-                                      : 'unid.'}
-                                  </span>
-                                </div>
-                              </td>
-                              <td style={{ ...styles.td, textAlign: 'center' }}>
-                                <label
+                              </div>
+                            </div>
+
+                            {/* Cantidad */}
+                            <div>
+                              <label
+                                style={{
+                                  display: 'block',
+                                  fontSize: '0.8rem',
+                                  fontWeight: '600',
+                                  color: '#334155',
+                                  marginBottom: '5px',
+                                }}
+                              >
+                                Cantidad
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={dt.cantidad}
+                                  onChange={(e) => updateDetalle(dt.idMedicamento, 'cantidad', e.target.value)}
                                   style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    cursor: 'pointer',
-                                    padding: '5px 10px',
-                                    borderRadius: '6px',
-                                    backgroundColor: dt.esUsoClinica ? '#fef3c7' : '#ffffff',
-                                    border: `1px solid ${dt.esUsoClinica ? '#f59e0b' : '#cbd5e1'}`,
-                                    userSelect: 'none',
-                                    transition: 'all 0.15s ease',
+                                    width: '80px',
+                                    height: '38px',
+                                    padding: '0 10px',
+                                    textAlign: 'center',
+                                    borderRadius: '8px',
+                                    border: '1px solid #cbd5e1',
+                                    fontWeight: '700',
+                                    fontSize: '14px',
+                                    color: '#03045e',
+                                    backgroundColor: '#ffffff',
+                                    boxSizing: 'border-box',
                                   }}
-                                  title="Marcar si este medicamento fue administrado/inyectado al paciente en la clínica"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={Boolean(dt.esUsoClinica)}
-                                    onChange={(e) =>
-                                      updateDetalle(dt.idMedicamento, 'esUsoClinica', e.target.checked)
-                                    }
-                                    style={{ cursor: 'pointer', accentColor: '#d97706', width: '15px', height: '15px' }}
-                                  />
-                                  <span
-                                    style={{
-                                      fontSize: '12px',
-                                      fontWeight: dt.esUsoClinica ? '700' : '500',
-                                      color: dt.esUsoClinica ? '#b45309' : '#475569',
-                                      whiteSpace: 'nowrap',
-                                    }}
-                                  >
-                                    Uso en Clínica
-                                  </span>
-                                </label>
-                              </td>
-                              <td style={{ ...styles.td, textAlign: 'center' }}>
-                                <button
-                                  type="button"
-                                  onClick={() => removeDetalle(dt.idMedicamento)}
-                                  style={styles.btnTableDelete}
-                                  title="Eliminar medicamento"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                                />
+                                <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>
+                                  {dt.esGotas
+                                    ? 'gotero'
+                                    : dt.esTopico
+                                    ? 'tubo'
+                                    : dt.esLiquido
+                                    ? 'frasco'
+                                    : dt.esInhalador
+                                    ? 'inhalador'
+                                    : 'unid.'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div style={{ ...styles.emptyDiagBox, marginTop: '20px' }}>
@@ -2531,6 +2764,259 @@ export default function AtencionMedicaPage() {
                     </p>
                   </div>
                 )}
+
+                {/* Sub-Sección: Medicamentos Externos / No Manejados en Clínica */}
+                <div style={{
+                  marginTop: '30px',
+                  paddingTop: '22px',
+                  borderTop: '2px dashed #cbd5e1',
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '16px',
+                    flexWrap: 'wrap',
+                    gap: '10px'
+                  }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{
+                          backgroundColor: '#e0e7ff',
+                          color: '#4338ca',
+                          padding: '3px 9px',
+                          borderRadius: '6px',
+                          fontSize: '11.5px',
+                          fontWeight: '800',
+                          textTransform: 'uppercase'
+                        }}>
+                          Receta Externa
+                        </span>
+                        <h4 style={{ margin: 0, fontSize: '16.5px', fontWeight: '800', color: '#1e1b4b' }}>
+                          Medicamentos No Manejados en Clínica (Externos)
+                        </h4>
+                      </div>
+                      <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#64748b' }}>
+                        Escriba directamente los medicamentos que el paciente debe comprar en farmacias externas. Se guardarán automáticamente al <strong>Finalizar Consulta</strong>.
+                      </p>
+                    </div>
+
+                    {medicamentosExternos.some(m => m.nombreMedicamento?.trim()) && (
+                      <span style={{
+                        fontSize: '12.5px',
+                        fontWeight: '700',
+                        color: '#4338ca',
+                        backgroundColor: '#e0e7ff',
+                        padding: '4px 12px',
+                        borderRadius: '20px'
+                      }}>
+                        {medicamentosExternos.filter(m => m.nombreMedicamento?.trim()).length} por guardar
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Lista de Secciones / Formularios de Medicamentos Externos */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '16px' }}>
+                    {medicamentosExternos.map((medExt, index) => (
+                      <div
+                        key={medExt.idTemp}
+                        style={{
+                          backgroundColor: '#f8faff',
+                          border: '1.5px solid #c7d2fe',
+                          borderRadius: '12px',
+                          padding: '16px 18px',
+                          boxShadow: '0 1px 3px rgba(67, 56, 202, 0.05)',
+                        }}
+                      >
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginBottom: '12px',
+                          borderBottom: '1px solid #e0e7ff',
+                          paddingBottom: '8px'
+                        }}>
+                          <span style={{
+                            fontSize: '13px',
+                            fontWeight: '800',
+                            color: '#4338ca',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            Medicamento Externo #{index + 1}
+                          </span>
+
+                          {(medicamentosExternos.length > 1 || medExt.nombreMedicamento.trim().length > 0) && (
+                            <button
+                              type="button"
+                              onClick={() => handleEliminarMedicamentoExterno(medExt.idTemp)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                backgroundColor: '#fff1f2',
+                                color: '#e11d48',
+                                border: '1px solid #fecdd3',
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease'
+                              }}
+                              title="Quitar este medicamento"
+                            >
+                              <Trash2 size={13} />
+                              <span>{medicamentosExternos.length > 1 ? 'Eliminar' : 'Limpiar'}</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Campos de captura más grandes y responsivos */}
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+                          gap: '14px',
+                          alignItems: 'start'
+                        }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '13.5px', fontWeight: '700', color: '#1e293b', marginBottom: '6px' }}>
+                              Nombre del Medicamento
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Ej: Insulina Glargina 100UI"
+                              value={medExt.nombreMedicamento}
+                              onChange={(e) => handleUpdateExterno(medExt.idTemp, 'nombreMedicamento', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '11px 14px',
+                                borderRadius: '8px',
+                                border: '1.5px solid #cbd5e1',
+                                fontSize: '14.5px',
+                                color: '#0f172a',
+                                outline: 'none',
+                                boxSizing: 'border-box',
+                                backgroundColor: '#ffffff',
+                                transition: 'border-color 0.2s'
+                              }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ display: 'block', fontSize: '13.5px', fontWeight: '700', color: '#1e293b', marginBottom: '6px' }}>
+                              Presentación
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Ej: Pluma prellenada, Frasco..."
+                              value={medExt.presentacion}
+                              onChange={(e) => handleUpdateExterno(medExt.idTemp, 'presentacion', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '11px 14px',
+                                borderRadius: '8px',
+                                border: '1.5px solid #cbd5e1',
+                                fontSize: '14.5px',
+                                color: '#0f172a',
+                                outline: 'none',
+                                boxSizing: 'border-box',
+                                backgroundColor: '#ffffff',
+                                transition: 'border-color 0.2s'
+                              }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ display: 'block', fontSize: '13.5px', fontWeight: '700', color: '#1e293b', marginBottom: '6px' }}>
+                              Dosis & Indicaciones
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Ej: 1 cada 12 hrs por 7 días"
+                              value={medExt.dosis}
+                              onChange={(e) => handleUpdateExterno(medExt.idTemp, 'dosis', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '11px 14px',
+                                borderRadius: '8px',
+                                border: '1.5px solid #cbd5e1',
+                                fontSize: '14.5px',
+                                color: '#0f172a',
+                                outline: 'none',
+                                boxSizing: 'border-box',
+                                backgroundColor: '#ffffff',
+                                transition: 'border-color 0.2s'
+                              }}
+                            />
+                          </div>
+
+                          <div style={{ maxWidth: '140px' }}>
+                            <label style={{ display: 'block', fontSize: '13.5px', fontWeight: '700', color: '#1e293b', marginBottom: '6px' }}>
+                              Cantidad
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={medExt.cantidad}
+                              onChange={(e) => handleUpdateExterno(medExt.idTemp, 'cantidad', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '11px 12px',
+                                borderRadius: '8px',
+                                border: '1.5px solid #cbd5e1',
+                                fontSize: '15px',
+                                fontWeight: '700',
+                                color: '#4338ca',
+                                textAlign: 'center',
+                                outline: 'none',
+                                boxSizing: 'border-box',
+                                backgroundColor: '#ffffff',
+                                transition: 'border-color 0.2s'
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Botón para agregar otra sección / medicamento externo */}
+                  <div>
+                    <button
+                      type="button"
+                      onClick={handleAgregarOtroExterno}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        backgroundColor: '#ffffff',
+                        color: '#4338ca',
+                        border: '1.5px dashed #6366f1',
+                        padding: '11px 20px',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f5f3ff';
+                        e.currentTarget.style.borderColor = '#4338ca';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#ffffff';
+                        e.currentTarget.style.borderColor = '#6366f1';
+                      }}
+                      title="Agregar otro medicamento externo"
+                    >
+                      <Plus size={16} />
+                      <span>+ Agregar Otro Medicamento Externo</span>
+                    </button>
+                  </div>
+                </div>
+
               </div>
             </div>
           )}

@@ -116,6 +116,16 @@ public class FarmaciaController {
         return ResponseEntity.ok(farmaciaService.actualizarLote(id, request));
     }
 
+    @PostMapping("/lotes/{id}/desechar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA') or hasAnyAuthority('ROLE_ADMIN', 'ROLE_FARMACIA', 'ADMIN', 'FARMACIA')")
+    public ResponseEntity<LoteResponse> desecharLote(
+            @PathVariable(name = "id") Long id,
+            @RequestBody(required = false) DesecharLoteRequest request,
+            Authentication authentication) {
+        String username = authentication != null ? authentication.getName() : null;
+        return ResponseEntity.ok(farmaciaService.desecharLotePorVencimiento(id, request, username));
+    }
+
     @GetMapping("/entradas")
     public ResponseEntity<List<EntradaResponse>> listarEntradas(
             @RequestParam(name = "desde", required = false) LocalDate desde,

@@ -58,6 +58,7 @@ public class ClinicaService {
     private final com.hyma.social.repository.ReferenciaMedicaRepository referenciaMedicaRepository;
     private final com.hyma.procedimiento.repository.ProcedimientoRepository procedimientoRepository;
     private final com.hyma.procedimiento.repository.ConsultaProcedimientoRepository consultaProcedimientoRepository;
+    private final RecetaExternaRepository recetaExternaRepository;
 
     @Transactional
     public PacienteConsultaResponse obtenerDatosPacienteParaConsulta(Long idPaciente, Long idCola) {
@@ -144,6 +145,23 @@ public class ClinicaService {
                         .build())
                 .orElse(null);
 
+        // Recetas Externas y No Dispensadas
+        List<RecetaExterna> recetasExt = recetaExternaRepository.findByConsultaIdConsultaOrderByFechaRegistroAsc(c.getIdConsulta());
+        List<RecetaExternaResponse> recetasExtResp = recetasExt.stream()
+                .map(re -> RecetaExternaResponse.builder()
+                        .idRecetaExterna(re.getIdRecetaExterna())
+                        .nombreMedicamento(re.getNombreMedicamento())
+                        .presentacion(re.getPresentacion())
+                        .dosis(re.getDosis())
+                        .frecuencia(re.getFrecuencia())
+                        .duracion(re.getDuracion())
+                        .cantidad(re.getCantidad())
+                        .tipo(re.getTipo())
+                        .motivo(re.getMotivo())
+                        .fechaRegistro(re.getFechaRegistro())
+                        .build())
+                .toList();
+
         String medicoNombre = null;
         String medicoEspecialidad = null;
         if (c.getMedico() != null) {
@@ -180,6 +198,7 @@ public class ClinicaService {
                 .diagnosticos(diagList)
                 .indicacionesTratamiento(indicaciones)
                 .medicamentos(medsList)
+                .recetasExternas(recetasExtResp)
                 .examenFisico(efResp)
                 .signoVital(svResp)
                 .build();
@@ -312,6 +331,26 @@ public class ClinicaService {
                         .esUsoClinica(Boolean.TRUE.equals(detReq.getEsUsoClinica()))
                         .build();
                 detalleTratamientoRepository.save(detalle);
+            }
+        }
+
+        // 5.5. Crear Recetas Externas (Medicamentos no manejados en clínica)
+        if (request.getMedicamentosExternos() != null && !request.getMedicamentosExternos().isEmpty()) {
+            for (RecetaExternaRequest extReq : request.getMedicamentosExternos()) {
+                if (extReq == null || extReq.getNombreMedicamento() == null || extReq.getNombreMedicamento().isBlank()) continue;
+                RecetaExterna re = RecetaExterna.builder()
+                        .consulta(consulta)
+                        .nombreMedicamento(extReq.getNombreMedicamento().trim())
+                        .presentacion(extReq.getPresentacion() != null ? extReq.getPresentacion().trim() : null)
+                        .dosis(extReq.getDosis() != null ? extReq.getDosis().trim() : null)
+                        .frecuencia(extReq.getFrecuencia() != null ? extReq.getFrecuencia().trim() : null)
+                        .duracion(extReq.getDuracion() != null ? extReq.getDuracion().trim() : null)
+                        .cantidad(extReq.getCantidad() != null && extReq.getCantidad() > 0 ? extReq.getCantidad() : 1)
+                        .tipo("EXTERNO_NO_CATALOGO")
+                        .motivo(extReq.getMotivo() != null && !extReq.getMotivo().isBlank() ? extReq.getMotivo().trim() : "No comercializado en clínica")
+                        .fechaRegistro(LocalDateTime.now())
+                        .build();
+                recetaExternaRepository.save(re);
             }
         }
 

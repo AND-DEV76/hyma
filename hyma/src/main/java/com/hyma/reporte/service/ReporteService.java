@@ -2005,6 +2005,7 @@ public class ReporteService {
         Map<Long, Integer> s2PorLote = new HashMap<>();
         Map<Long, Integer> s3PorLote = new HashMap<>();
         Map<Long, Integer> s4PorLote = new HashMap<>();
+        Map<Long, Integer> vencidoPorLote = new HashMap<>();
 
         if (salidas != null && !salidas.isEmpty()) {
             List<Long> idsSalidas = salidas.stream().map(SalidaMedicamento::getIdSalida).filter(Objects::nonNull).toList();
@@ -2013,18 +2014,23 @@ public class ReporteService {
                 for (DetalleSalidaMedicamento det : detallesSalida) {
                     if (det != null && det.getLote() != null && det.getLote().getIdLote() != null && det.getSalida() != null) {
                         LocalDateTime fSal = det.getSalida().getFechaSalida();
+                        String tipoSal = det.getSalida().getTipoSalida();
                         if (fSal != null) {
-                            int dia = fSal.getDayOfMonth();
                             int cant = det.getCantidad() != null ? det.getCantidad() : 0;
                             long idLote = det.getLote().getIdLote();
-                            if (dia <= 7) {
-                                s1PorLote.merge(idLote, cant, Integer::sum);
-                            } else if (dia <= 14) {
-                                s2PorLote.merge(idLote, cant, Integer::sum);
-                            } else if (dia <= 21) {
-                                s3PorLote.merge(idLote, cant, Integer::sum);
+                            if ("VENCIMIENTO".equalsIgnoreCase(tipoSal) || "DESECHO_VENCIMIENTO".equalsIgnoreCase(tipoSal)) {
+                                vencidoPorLote.merge(idLote, cant, Integer::sum);
                             } else {
-                                s4PorLote.merge(idLote, cant, Integer::sum);
+                                int dia = fSal.getDayOfMonth();
+                                if (dia <= 7) {
+                                    s1PorLote.merge(idLote, cant, Integer::sum);
+                                } else if (dia <= 14) {
+                                    s2PorLote.merge(idLote, cant, Integer::sum);
+                                } else if (dia <= 21) {
+                                    s3PorLote.merge(idLote, cant, Integer::sum);
+                                } else {
+                                    s4PorLote.merge(idLote, cant, Integer::sum);
+                                }
                             }
                         }
                     }
@@ -2057,7 +2063,7 @@ public class ReporteService {
             int s3 = s3PorLote.getOrDefault(idLote, 0);
             int s4 = s4PorLote.getOrDefault(idLote, 0);
             int totalEntregado = s1 + s2 + s3 + s4;
-            int vencido = 0;
+            int vencido = vencidoPorLote.getOrDefault(idLote, 0);
             int saldoActual = lote.getCantidadInicial() != null ? lote.getCantidadInicial() : 0;
 
             int mesAnterior = Math.max(0, saldoActual - pedidos - donaciones + totalEntregado + vencido);

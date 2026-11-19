@@ -306,6 +306,14 @@
   animation: modalFadeIn 0.2s ease-out;
 }
 
+.paciente-modal form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 @keyframes modalFadeIn {
   from {
     opacity: 0;
@@ -324,6 +332,7 @@
   padding: 18px 24px;
   border-bottom: 1px solid #e2e8f0;
   background: #f8fafc;
+  flex-shrink: 0;
 }
 
 .paciente-modal-title-box {
@@ -376,6 +385,8 @@
 .paciente-modal-body {
   padding: 24px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -490,6 +501,7 @@
   padding: 16px 24px;
   border-top: 1px solid #e2e8f0;
   background: #f8fafc;
+  flex-shrink: 0;
 }
 
 .btn-cancelar {
@@ -605,5 +617,21 @@
 
   .paciente-form-group.col-span-2 {
     grid-column: span 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .paciente-modal {
+    max-height: 96vh;
+    border-radius: 12px;
+  }
+  .paciente-modal-header {
+    padding: 14px 16px;
+  }
+  .paciente-modal-body {
+    padding: 16px;
+  }
+  .paciente-modal-footer {
+    padding: 12px 16px;
   }
 }

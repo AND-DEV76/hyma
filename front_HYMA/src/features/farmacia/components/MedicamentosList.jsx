@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
-import { Search, X, Plus, Edit2, CheckCircle2, XCircle, Pill, ChevronLeft, ChevronRight, AlertTriangle, Clock } from 'lucide-react';
+import { Search, X, Plus, Edit2, CheckCircle2, XCircle, Pill, ChevronLeft, ChevronRight, AlertTriangle, Clock, AlertOctagon, Trash2, Calendar, PackageX } from 'lucide-react';
 import MedicamentoModal from './MedicamentoModal';
 import EditarLoteModal from './EditarLoteModal';
+import DesecharLoteModal from './DesecharLoteModal';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -12,6 +13,7 @@ function MedicamentosList({
   casas = [],
   onSaveMedicamento,
   onSaveLote,
+  onDesecharLote,
   soloConExistencias = false,
   mostrarDesactivar = true,
   mostrarBotonNuevo = true,
@@ -32,6 +34,10 @@ function MedicamentosList({
   // Modal State para Editar Lote (Inventario)
   const [isLoteModalOpen, setIsLoteModalOpen] = useState(false);
   const [selectedMedForLote, setSelectedMedForLote] = useState(null);
+
+  // Modal State para Desechar Lote (Inventario)
+  const [isDesecharModalOpen, setIsDesecharModalOpen] = useState(false);
+  const [selectedMedForDesechar, setSelectedMedForDesechar] = useState(null);
 
   // Helper para calcular días restantes de vencimiento
   const getDiasParaVencer = (fechaStr) => {
@@ -54,7 +60,7 @@ function MedicamentosList({
     return map;
   }, [lotes]);
 
-  // Obtener unidades, precio y días de vencimiento para cada medicamento
+  // Obtener unidades, precio, días de vencimiento y fecha mínima para cada medicamento
   const getMedMetadata = (item) => {
     const medLotes = lotesPorMedicamento[item.idMedicamento] || [];
 
@@ -78,55 +84,93 @@ function MedicamentosList({
       }
     }
 
-    // 3. Días mínimos para vencer
+    // 3. Días mínimos para vencer y fecha más próxima
     let diasMinimos = null;
+    let fechaMinima = null;
     if (item.proximoVencimiento) {
       diasMinimos = getDiasParaVencer(item.proximoVencimiento);
+      fechaMinima = item.proximoVencimiento;
     } else if (medLotes.length > 0) {
-      const activos = medLotes.filter(
-        (l) => (l.estado == null || l.estado === 'ACTIVO') && l.fechaExpiracion
-      );
-      const diasList = activos
-        .map((l) => getDiasParaVencer(l.fechaExpiracion))
-        .filter((d) => d !== null);
-      if (diasList.length > 0) {
-        diasMinimos = Math.min(...diasList);
+      const conFecha = medLotes.filter((l) => l.fechaExpiracion);
+      if (conFecha.length > 0) {
+        // Encontrar el lote con expiración más próxima o ya vencida
+        const ordenados = [...conFecha].sort((a, b) => new Date(a.fechaExpiracion) - new Date(b.fechaExpiracion));
+        fechaMinima = ordenados[0].fechaExpiracion;
+        diasMinimos = getDiasParaVencer(fechaMinima);
       }
     }
 
-    return { unidades, precio, diasMinimos };
+    return { unidades, precio, diasMinimos, fechaMinima };
   };
 
-  // Medicamentos base (filtrados por stock si soloConExistencias es true)
-  const baseMedicamentos = useMemo(() => {
-    if (!soloConExistencias) return medicamentos;
-    return medicamentos.filter((m) => {
+  // 1. Medicamentos Vencidos (estrictamente por fecha de expiración cumplida)
+  const medicamentosVencidos = useMemo(() => {
+    return (medicamentos || []).filter((m) => {
+      const mLotes = lotesPorMedicamento[m.idMedicamento] || [];
+      if (mLotes.length > 0) {
+        return mLotes.some((l) => {
+          const d = getDiasParaVencer(l.fechaExpiracion);
+          return d !== null && d <= 0;
+        });
+      }
+      const d = m.proximoVencimiento ? getDiasParaVencer(m.proximoVencimiento) : null;
+      return d !== null && d <= 0;
+    });
+  }, [medicamentos, lotesPorMedicamento]);
+
+  const countVencidos = medicamentosVencidos.length;
+
+  // 2. Medicamentos Agotados (0 unidades en existencia física)
+  const medicamentosAgotados = useMemo(() => {
+    return (medicamentos || []).filter((m) => {
+      const { unidades } = getMedMetadata(m);
+      return (Number(unidades) || 0) === 0;
+    });
+  }, [medicamentos, lotesPorMedicamento]);
+
+  const countAgotados = medicamentosAgotados.length;
+
+  // 3. Medicamentos con Existencias (stock > 0)
+  const medicamentosConExistencias = useMemo(() => {
+    return (medicamentos || []).filter((m) => {
       const { unidades } = getMedMetadata(m);
       return (Number(unidades) || 0) > 0;
     });
-  }, [medicamentos, lotesPorMedicamento, soloConExistencias]);
+  }, [medicamentos, lotesPorMedicamento]);
 
-  // Conteos de medicamentos que vencen pronto
+  // Medicamentos base según el filtro activo
+  const baseMedicamentos = useMemo(() => {
+    if (filtroVencimiento === 'vencidos') {
+      return medicamentosVencidos;
+    }
+    if (filtroVencimiento === 'agotados') {
+      return medicamentosAgotados;
+    }
+    if (!soloConExistencias) return medicamentos;
+    return medicamentosConExistencias;
+  }, [medicamentos, lotesPorMedicamento, soloConExistencias, filtroVencimiento, medicamentosVencidos, medicamentosAgotados, medicamentosConExistencias]);
+
+  // Conteos de medicamentos vigentes que vencen pronto (de los que tienen stock)
   const count30 = useMemo(() => {
-    return baseMedicamentos.filter((m) => {
+    return medicamentosConExistencias.filter((m) => {
       const { diasMinimos } = getMedMetadata(m);
-      return diasMinimos !== null && diasMinimos <= 30;
+      return diasMinimos !== null && diasMinimos > 0 && diasMinimos <= 30;
     }).length;
-  }, [baseMedicamentos, lotesPorMedicamento]);
+  }, [medicamentosConExistencias, lotesPorMedicamento]);
 
   const count60 = useMemo(() => {
-    return baseMedicamentos.filter((m) => {
+    return medicamentosConExistencias.filter((m) => {
       const { diasMinimos } = getMedMetadata(m);
-      return diasMinimos !== null && diasMinimos <= 60;
+      return diasMinimos !== null && diasMinimos > 0 && diasMinimos <= 60;
     }).length;
-  }, [baseMedicamentos, lotesPorMedicamento]);
+  }, [medicamentosConExistencias, lotesPorMedicamento]);
 
   const count90 = useMemo(() => {
-    return baseMedicamentos.filter((m) => {
+    return medicamentosConExistencias.filter((m) => {
       const { diasMinimos } = getMedMetadata(m);
-      return diasMinimos !== null && diasMinimos <= 90;
+      return diasMinimos !== null && diasMinimos > 0 && diasMinimos <= 90;
     }).length;
-  }, [baseMedicamentos, lotesPorMedicamento]);
+  }, [medicamentosConExistencias, lotesPorMedicamento]);
 
   // Filtering
   const filteredMedicamentos = useMemo(() => {
@@ -139,10 +183,10 @@ function MedicamentosList({
 
       // Filtro de vencimiento (30, 60, 90 días)
       let matchesVencimiento = true;
-      if (filtroVencimiento) {
+      if (filtroVencimiento && filtroVencimiento !== 'vencidos' && filtroVencimiento !== 'agotados') {
         const { diasMinimos } = getMedMetadata(item);
         const maxDias = Number(filtroVencimiento);
-        matchesVencimiento = diasMinimos !== null && diasMinimos <= maxDias;
+        matchesVencimiento = diasMinimos !== null && diasMinimos > 0 && diasMinimos <= maxDias;
       }
 
       return matchesSearch && matchesCat && matchesCasa && matchesEstado && matchesVencimiento;
@@ -169,6 +213,11 @@ function MedicamentosList({
       setEditingMedicine(item);
       setIsModalOpen(true);
     }
+  };
+
+  const handleOpenDesecharModal = (item) => {
+    setSelectedMedForDesechar(item);
+    setIsDesecharModalOpen(true);
   };
 
   const handleToggleEstado = async (item) => {
@@ -246,7 +295,7 @@ function MedicamentosList({
       {!esCatalogo && (
         <div className="farmacia-quick-filters-bar" style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
           <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginRight: '4px' }}>
-            Vencimientos:
+            Vencimientos / Stock:
           </span>
           <button
             type="button"
@@ -264,7 +313,7 @@ function MedicamentosList({
               transition: 'all 0.2s',
             }}
           >
-            Todos ({baseMedicamentos.length})
+            Todos ({soloConExistencias ? medicamentosConExistencias.length : medicamentos.length})
           </button>
 
           <button
@@ -334,6 +383,52 @@ function MedicamentosList({
           >
             <Clock size={13} />
             Vencen en 90 días ({count90})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setFiltroVencimiento('vencidos'); setCurrentPage(1); }}
+            className={`farmacia-quick-pill ${filtroVencimiento === 'vencidos' ? 'active' : ''}`}
+            style={{
+              padding: '5px 12px',
+              borderRadius: '20px',
+              border: '1px solid ' + (filtroVencimiento === 'vencidos' ? '#991b1b' : '#fecaca'),
+              background: filtroVencimiento === 'vencidos' ? '#991b1b' : '#fff5f5',
+              color: filtroVencimiento === 'vencidos' ? 'white' : '#991b1b',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+            }}
+          >
+            <AlertOctagon size={13} />
+            Medicamento Vencido ({countVencidos})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setFiltroVencimiento('agotados'); setCurrentPage(1); }}
+            className={`farmacia-quick-pill ${filtroVencimiento === 'agotados' ? 'active' : ''}`}
+            style={{
+              padding: '5px 12px',
+              borderRadius: '20px',
+              border: '1px solid ' + (filtroVencimiento === 'agotados' ? '#475569' : '#cbd5e1'),
+              background: filtroVencimiento === 'agotados' ? '#475569' : '#f8fafc',
+              color: filtroVencimiento === 'agotados' ? 'white' : '#475569',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+            }}
+          >
+            <PackageX size={13} />
+            Agotados ({countAgotados})
           </button>
         </div>
       )}
@@ -413,6 +508,8 @@ function MedicamentosList({
               <option value="30">Vencen en 30 días</option>
               <option value="60">Vencen en 60 días</option>
               <option value="90">Vencen en 90 días</option>
+              <option value="vencidos">Medicamento Vencido</option>
+              <option value="agotados">Agotados / Sin Existencias</option>
             </select>
           </div>
         )}
@@ -447,7 +544,7 @@ function MedicamentosList({
                 <th className="farmacia-th">Casa Farmacéutica</th>
                 {!esCatalogo && (
                   <>
-                    <th className="farmacia-th">No. Lote</th>
+                    <th className="farmacia-th">No. Lote / Vencimiento</th>
                     <th className="farmacia-th" style={{ textAlign: 'center' }}>Unidades</th>
                     <th className="farmacia-th" style={{ textAlign: 'right' }}>Precio</th>
                   </>
@@ -458,7 +555,7 @@ function MedicamentosList({
             </thead>
             <tbody>
               {displayedMedicamentos.map((item) => {
-                const { unidades, precio, diasMinimos } = getMedMetadata(item);
+                const { unidades, precio, diasMinimos, fechaMinima } = getMedMetadata(item);
                 const cantUnidades = Number(unidades) || 0;
 
                 return (
@@ -469,46 +566,74 @@ function MedicamentosList({
                         <span className="farmacia-med-conc">
                           {item.concentracion || 'Sin concentración especificada'}
                         </span>
-                        {!esCatalogo && diasMinimos !== null && diasMinimos <= 90 && (
-                          <span
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              width: 'fit-content',
-                              marginTop: '3px',
-                              padding: '1px 6px',
-                              borderRadius: '4px',
-                              fontSize: '0.68rem',
-                              fontWeight: 700,
-                              background:
-                                diasMinimos <= 30
-                                  ? '#fee2e2'
-                                  : diasMinimos <= 60
-                                  ? '#fef3c7'
-                                  : '#e0f2fe',
-                              color:
-                                diasMinimos <= 30
-                                  ? '#dc2626'
-                                  : diasMinimos <= 60
-                                  ? '#b45309'
-                                  : '#0369a1',
-                              border:
-                                '1px solid ' +
-                                (diasMinimos <= 30
-                                  ? '#fecaca'
-                                  : diasMinimos <= 60
-                                  ? '#fde68a'
-                                  : '#bae6fd'),
-                            }}
-                          >
-                            <Clock size={10} />
-                            {diasMinimos < 0
-                              ? `Vencido hace ${Math.abs(diasMinimos)}d`
-                              : diasMinimos === 0
-                              ? 'Vence hoy'
-                              : `Vence en ${diasMinimos} días`}
-                          </span>
+                        {!esCatalogo && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '3px' }}>
+                            {diasMinimos !== null && diasMinimos <= 90 && (
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '2px 7px',
+                                  borderRadius: '4px',
+                                  fontSize: '0.68rem',
+                                  fontWeight: 700,
+                                  background:
+                                    diasMinimos <= 0
+                                      ? '#fee2e2'
+                                      : diasMinimos <= 30
+                                      ? '#fff1f2'
+                                      : diasMinimos <= 60
+                                      ? '#fef3c7'
+                                      : '#e0f2fe',
+                                  color:
+                                    diasMinimos <= 0
+                                      ? '#991b1b'
+                                      : diasMinimos <= 30
+                                      ? '#dc2626'
+                                      : diasMinimos <= 60
+                                      ? '#b45309'
+                                      : '#0369a1',
+                                  border:
+                                    '1px solid ' +
+                                    (diasMinimos <= 0
+                                      ? '#fca5a5'
+                                      : diasMinimos <= 30
+                                      ? '#fecaca'
+                                      : diasMinimos <= 60
+                                      ? '#fde68a'
+                                      : '#bae6fd'),
+                                }}
+                              >
+                                <Clock size={10} />
+                                {diasMinimos < 0
+                                  ? `Vencido hace ${Math.abs(diasMinimos)}d`
+                                  : diasMinimos === 0
+                                  ? 'Vence hoy'
+                                  : `Vence en ${diasMinimos}d`}
+                                {fechaMinima ? ` (${fechaMinima})` : ''}
+                              </span>
+                            )}
+                            {cantUnidades === 0 && (
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '3px',
+                                  padding: '2px 6px',
+                                  borderRadius: '4px',
+                                  fontSize: '0.68rem',
+                                  fontWeight: 700,
+                                  background: '#f1f5f9',
+                                  color: '#64748b',
+                                  border: '1px solid #cbd5e1',
+                                }}
+                              >
+                                <PackageX size={10} />
+                                Agotado
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
                     </td>
@@ -537,28 +662,64 @@ function MedicamentosList({
                           {(() => {
                             const medLotes = lotesPorMedicamento[item.idMedicamento] || [];
                             if (medLotes.length === 0) {
-                              return <span className="farmacia-text-subtle">S/L</span>;
+                              return (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                  <span className="farmacia-text-subtle" style={{ fontWeight: 600 }}>S/L</span>
+                                  {item.proximoVencimiento ? (
+                                    <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                      <Calendar size={11} /> {item.proximoVencimiento}
+                                    </span>
+                                  ) : (
+                                    <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Sin fecha reg.</span>
+                                  )}
+                                </div>
+                              );
                             }
                             return (
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                                {medLotes.map((l, i) => (
-                                  <span
-                                    key={l.idLote || i}
-                                    style={{
-                                      display: 'inline-block',
-                                      background: '#f1f5f9',
-                                      color: '#1e293b',
-                                      border: '1px solid #cbd5e1',
-                                      borderRadius: '4px',
-                                      padding: '1px 6px',
-                                      fontSize: '11px',
-                                      fontWeight: '700',
-                                    }}
-                                    title={`Vence: ${l.fechaExpiracion || '—'} | Cantidad: ${l.stockDisponible ?? l.cantidadInicial}`}
-                                  >
-                                    {l.numeroLote || 'S/L'}
-                                  </span>
-                                ))}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                {medLotes.map((l, i) => {
+                                  const diasLote = getDiasParaVencer(l.fechaExpiracion);
+                                  const estaVencido = diasLote !== null && diasLote <= 0;
+                                  const vencePronto = diasLote !== null && diasLote > 0 && diasLote <= 60;
+                                  
+                                  const bgBadge = estaVencido ? '#fef2f2' : vencePronto ? '#fffbeb' : '#f8fafc';
+                                  const borderBadge = estaVencido ? '#fca5a5' : vencePronto ? '#fde68a' : '#cbd5e1';
+                                  const textLote = estaVencido ? '#991b1b' : '#0f172a';
+                                  const textFecha = estaVencido ? '#dc2626' : vencePronto ? '#b45309' : '#475569';
+                                  const stockLote = l.stockDisponible ?? l.cantidadInicial ?? 0;
+
+                                  return (
+                                    <div
+                                      key={l.idLote || i}
+                                      style={{
+                                        display: 'inline-flex',
+                                        flexDirection: 'column',
+                                        background: bgBadge,
+                                        border: `1px solid ${borderBadge}`,
+                                        borderRadius: '6px',
+                                        padding: '4px 8px',
+                                        minWidth: '130px',
+                                        lineHeight: 1.3,
+                                      }}
+                                    >
+                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                                        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: textLote }}>
+                                          {l.numeroLote ? `Lote: ${l.numeroLote}` : 'S/L'}
+                                        </span>
+                                        <span style={{ fontSize: '0.68rem', fontWeight: 600, color: stockLote > 0 ? '#0369a1' : '#94a3b8' }}>
+                                          ({stockLote} uds)
+                                        </span>
+                                      </div>
+                                      <div style={{ fontSize: '0.72rem', fontWeight: 600, color: textFecha, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                                        <Calendar size={11} style={{ flexShrink: 0 }} />
+                                        <span>
+                                          {estaVencido ? 'Venció: ' : 'Vence: '}
+                                          {l.fechaExpiracion || 'S/F'}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             );
                           })()}
@@ -600,6 +761,34 @@ function MedicamentosList({
                           <Edit2 size={13} />
                           <span>Editar</span>
                         </button>
+
+                        {onDesecharLote && (
+                          <button
+                            type="button"
+                            className="farmacia-action-btn discard"
+                            onClick={() => handleOpenDesecharModal(item)}
+                            title={cantUnidades > 0 ? "Desechar medicamento por vencimiento" : "Sin existencias activas para desechar"}
+                            disabled={cantUnidades === 0}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '5px 9px',
+                              borderRadius: '6px',
+                              border: '1px solid ' + (cantUnidades > 0 ? '#fca5a5' : '#e2e8f0'),
+                              background: cantUnidades > 0 ? '#fef2f2' : '#f8fafc',
+                              color: cantUnidades > 0 ? '#dc2626' : '#94a3b8',
+                              fontSize: '0.74rem',
+                              fontWeight: 600,
+                              cursor: cantUnidades > 0 ? 'pointer' : 'not-allowed',
+                              opacity: cantUnidades > 0 ? 1 : 0.6,
+                              transition: 'all 0.15s ease',
+                            }}
+                          >
+                            <Trash2 size={13} />
+                            <span>{cantUnidades === 0 ? 'Desechado' : 'Desechar'}</span>
+                          </button>
+                        )}
 
                         {mostrarDesactivar && (
                           <button
@@ -703,6 +892,24 @@ function MedicamentosList({
           onSave={onSaveLote}
           medicamento={selectedMedForLote}
           lotes={selectedMedForLote ? lotesPorMedicamento[selectedMedForLote.idMedicamento] || [] : []}
+        />
+      )}
+
+      {/* Modal de Desechar por Vencimiento */}
+      {isDesecharModalOpen && (
+        <DesecharLoteModal
+          isOpen={isDesecharModalOpen}
+          onClose={() => {
+            setIsDesecharModalOpen(false);
+            setSelectedMedForDesechar(null);
+          }}
+          onConfirm={async (idLote, data) => {
+            if (onDesecharLote) {
+              await onDesecharLote(idLote, data);
+            }
+          }}
+          medicamento={selectedMedForDesechar}
+          lotes={selectedMedForDesechar ? lotesPorMedicamento[selectedMedForDesechar.idMedicamento] || [] : []}
         />
       )}
     </div>

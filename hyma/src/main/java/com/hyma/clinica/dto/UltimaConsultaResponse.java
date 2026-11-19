@@ -27,6 +27,7 @@ public class UltimaConsultaResponse {
     private List<DiagnosticoItemResponse> diagnosticos;
     private String indicacionesTratamiento;
     private List<MedicamentoRecetadoItemResponse> medicamentos;
+    private List<RecetaExternaResponse> recetasExternas;
     private ExamenFisicoItemResponse examenFisico;
     private SignoVitalResponse signoVital;
 

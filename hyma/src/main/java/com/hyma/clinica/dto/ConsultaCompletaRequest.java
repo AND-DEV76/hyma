@@ -38,4 +38,7 @@ public class ConsultaCompletaRequest {
 
     @Valid
     private List<com.hyma.procedimiento.dto.ConsultaProcedimientoRequest> procedimientos;
+
+    @Valid
+    private List<RecetaExternaRequest> medicamentosExternos;
 }

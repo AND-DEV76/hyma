@@ -21,7 +21,9 @@ import com.hyma.consulta.model.Consulta;
 import com.hyma.consulta.repository.ConsultaRepository;
 import com.hyma.clinica.model.Tratamiento;
 import com.hyma.clinica.model.DetalleTratamiento;
+import com.hyma.clinica.model.RecetaExterna;
 import com.hyma.clinica.repository.TratamientoRepository;
+import com.hyma.clinica.repository.RecetaExternaRepository;
 import com.hyma.tarifa.service.TarifaServicioService;
 
 import java.math.BigDecimal;
@@ -54,6 +56,7 @@ public class FarmaciaService {
     private final com.hyma.procedimiento.repository.ConsultaProcedimientoRepository consultaProcedimientoRepository;
     private final com.hyma.procedimiento.repository.ProcedimientoRepository procedimientoRepository;
     private final com.hyma.procedimiento.service.ProcedimientoService procedimientoService;
+    private final RecetaExternaRepository recetaExternaRepository;
 
     @Transactional(readOnly = true)
     public List<CatalogoFarmaciaResponse> listarCategorias() {
@@ -248,6 +251,57 @@ public class FarmaciaService {
         }
 
         lote = loteRepository.save(lote);
+        return mapper.toLoteResponse(lote);
+    }
+
+    @Transactional
+    public LoteResponse desecharLotePorVencimiento(Long idLote, DesecharLoteRequest request, String username) {
+        LoteMedicamento lote = loteRepository.findById(idLote)
+                .orElseThrow(() -> new FarmaciaNotFoundException("Lote no encontrado con ID: " + idLote));
+
+        int stockActual = lote.getCantidadInicial() != null ? lote.getCantidadInicial() : 0;
+        if (stockActual <= 0) {
+            throw new IllegalArgumentException("El lote no cuenta con unidades disponibles para desechar.");
+        }
+
+        int aDesechar = (request != null && request.getCantidad() != null && request.getCantidad() > 0)
+                ? Math.min(request.getCantidad(), stockActual)
+                : stockActual;
+
+        Usuario usuario = null;
+        if (username != null && !username.isBlank()) {
+            usuario = usuarioRepository.findByUsername(username).orElse(null);
+        }
+
+        String motivo = (request != null && request.getMotivo() != null && !request.getMotivo().isBlank())
+                ? request.getMotivo().trim()
+                : "Desechado por vencimiento";
+
+        SalidaMedicamento salida = SalidaMedicamento.builder()
+                .usuario(usuario)
+                .fechaSalida(LocalDateTime.now())
+                .tipoSalida("VENCIMIENTO")
+                .observaciones(motivo)
+                .costoConsulta(BigDecimal.ZERO)
+                .build();
+        salida = salidaMedicamentoRepository.save(salida);
+
+        BigDecimal precioUnit = lote.getPrecioUnitario() != null ? lote.getPrecioUnitario() : BigDecimal.ZERO;
+        DetalleSalidaMedicamento detalle = DetalleSalidaMedicamento.builder()
+                .salida(salida)
+                .lote(lote)
+                .cantidad(aDesechar)
+                .precioUnitario(precioUnit)
+                .build();
+        detalleSalidaMedicamentoRepository.save(detalle);
+
+        int nuevoStock = stockActual - aDesechar;
+        lote.setCantidadInicial(nuevoStock);
+        if (nuevoStock <= 0) {
+            lote.setEstado(EstadoLote.INACTIVO);
+        }
+        lote = loteRepository.save(lote);
+
         return mapper.toLoteResponse(lote);
     }
 
@@ -773,6 +827,31 @@ public class FarmaciaService {
                         tratamiento = tratamientoRepository.save(tratamiento);
                     }
                     if (tratamiento != null) {
+                        // Resguardar medicamentos recetados por el médico que el paciente NO se llevó en farmacia
+                        List<DetalleTratamiento> detallesOriginales = new ArrayList<>(tratamiento.getDetalles());
+                        Set<Long> idsEntregados = request.getMedicamentos().stream()
+                                .filter(m -> m != null && m.getIdMedicamento() != null)
+                                .map(MedicamentoDispensacionItemRequest::getIdMedicamento)
+                                .collect(Collectors.toSet());
+
+                        for (DetalleTratamiento detOrig : detallesOriginales) {
+                            if (detOrig.getMedicamento() != null && !idsEntregados.contains(detOrig.getMedicamento().getIdMedicamento())) {
+                                RecetaExterna re = RecetaExterna.builder()
+                                        .consulta(consulta)
+                                        .nombreMedicamento(detOrig.getMedicamento().getNombre())
+                                        .presentacion(detOrig.getMedicamento().getPresentacion())
+                                        .dosis(detOrig.getDosis())
+                                        .frecuencia(detOrig.getFrecuencia())
+                                        .duracion(detOrig.getDuracion())
+                                        .cantidad(detOrig.getCantidad())
+                                        .tipo("NO_DISPENSADO_FARMACIA")
+                                        .motivo("No adquirido por el paciente en farmacia")
+                                        .fechaRegistro(LocalDateTime.now())
+                                        .build();
+                                recetaExternaRepository.save(re);
+                            }
+                        }
+
                         tratamiento.getDetalles().clear();
                         for (MedicamentoDispensacionItemRequest mReq : request.getMedicamentos()) {
                             if (mReq == null || mReq.getIdMedicamento() == null) continue;

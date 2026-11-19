@@ -38,7 +38,7 @@ public class ProcedimientoController {
     }
 
     @PutMapping("/{id}/precio")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ENFERMERA') or hasAnyAuthority('ROLE_ADMIN', 'ROLE_ENFERMERA', 'ADMIN', 'ENFERMERA')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FARMACIA') or hasAnyAuthority('ROLE_ADMIN', 'ROLE_FARMACIA', 'ADMIN', 'FARMACIA')")
     public ResponseEntity<ProcedimientoDTO> actualizarPrecio(
             @PathVariable Long id,
             @Valid @RequestBody ActualizarPrecioProcedimientoRequest request) {

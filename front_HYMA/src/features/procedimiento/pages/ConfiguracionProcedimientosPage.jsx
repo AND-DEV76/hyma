@@ -9,13 +9,26 @@ import {
   CheckCircle2,
   AlertCircle,
   Activity,
-  Search
+  Search,
+  Lock
 } from 'lucide-react';
 import AdminNavbar from '../../../components/AdminNavbar/AdminNavbar';
 import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb';
 import procedimientoService from '../services/procedimientoService';
 
 export default function ConfiguracionProcedimientosPage() {
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const normalizeRole = (r) => {
+    if (!r) return '';
+    const str = String(r).trim().toUpperCase();
+    return str.startsWith('ROLE_') ? str.substring(5) : str;
+  };
+  const userRoles = [
+    ...(Array.isArray(user?.roles) ? user.roles : []),
+    ...(user?.nombreRol ? [user.nombreRol] : [])
+  ].map(normalizeRole);
+  const puedeCambiarPrecio = userRoles.includes('ADMIN') || userRoles.includes('FARMACIA');
+
   const [procedimientos, setProcedimientos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
@@ -44,6 +57,7 @@ export default function ConfiguracionProcedimientosPage() {
   }, []);
 
   const iniciarEdicion = (proc) => {
+    if (!puedeCambiarPrecio) return;
     setEditandoId(proc.idProcedimiento);
     setPrecioInput(Number(proc.precio || 0).toFixed(2));
     setSuccessMsg('');
@@ -74,6 +88,10 @@ export default function ConfiguracionProcedimientosPage() {
   };
 
   const guardarPrecio = async (id, nombre) => {
+    if (!puedeCambiarPrecio) {
+      setErrorMsg('No tiene permisos para modificar precios. Solo ADMIN y FARMACIA están autorizados.');
+      return;
+    }
     if (guardando) return;
     if (precioInput === '' || precioInput === null) {
       setErrorMsg('Debe ingresar un monto válido.');
@@ -237,7 +255,25 @@ export default function ConfiguracionProcedimientosPage() {
                           )}
                         </td>
                         <td style={{ ...styles.td, textAlign: 'center' }}>
-                          {esEditando ? (
+                          {!puedeCambiarPrecio ? (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                fontSize: '0.78rem',
+                                color: '#64748b',
+                                background: '#f1f5f9',
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                fontWeight: '500',
+                              }}
+                              title="Solo ADMIN y FARMACIA pueden modificar tarifas"
+                            >
+                              <Lock size={12} />
+                              Solo Lectura
+                            </span>
+                          ) : esEditando ? (
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                               <button
                                 type="button"

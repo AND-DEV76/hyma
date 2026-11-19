@@ -8,3 +8,7 @@ export const actualizarLote = async (id, data) => (
   await api.put(`/farmacia/lotes/${id}`, data)
 ).data;
 
+export const desecharLote = async (id, data = {}) => (
+  await api.post(`/farmacia/lotes/${id}/desechar`, data)
+).data;
+

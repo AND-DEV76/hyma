@@ -14,7 +14,7 @@ import {
   crearMedicamento,
   listarMedicamentos,
 } from '../services/medicamentoService';
-import { listarLotes, actualizarLote } from '../services/loteService';
+import { listarLotes, actualizarLote, desecharLote } from '../services/loteService';
 import { listarEntradas, registrarEntrada } from '../services/entradaService';
 import { obtenerDashboardFarmacia } from '../services/dashboardService';
 import { actualizarParametro, listarParametros } from '../services/parametroService';
@@ -152,6 +152,10 @@ export const useFarmacia = () => {
     ),
     guardarLote: (id, data) => ejecutar(
       () => actualizarLote(id, data),
+      cargarTodo
+    ),
+    desecharLote: (id, data) => ejecutar(
+      () => desecharLote(id, data),
       cargarTodo
     ),
     actualizarParametro: (clave, data) => ejecutar(
